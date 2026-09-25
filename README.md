@@ -1,0 +1,174 @@
+# Atlas Eye
+
+A live window onto anywhere on Earth. A 3D satellite globe scattered with public live
+streams — spin it, click a point, and watch what is happening there right now.
+
+No accounts. No API keys. No backend. No tracking.
+
+## Run it
+
+```sh
+npm install
+npm run dev          # http://localhost:3000
+```
+
+On Windows you can double-click **`start.bat`** instead: it installs dependencies on
+first run, starts the dev server and opens the browser.
+
+Deploy: import the repo into Vercel — zero configuration, no environment variables.
+The page is fully static; the catalog is a file in `public/data/`.
+
+| Script | What it does |
+|---|---|
+| `npm run dev` / `build` / `start` | Next.js |
+| `npm run import` | Re-pull both upstream catalogs, validate, geocode, write `public/data/streams.json` + `rejected.json` |
+| `npm run import -- --offline` | Same, from the committed snapshots in `data/upstream/` (for tuning the geocoder) |
+| `npm run gazetteer` | Rebuild `data/gazetteer/cities.tsv` from GeoNames (~210 MB download; rarely needed) |
+| `npm test` | Assert-based self-test of the geocoder, solar math and clocks |
+| `npm run typecheck` | `tsc --noEmit` |
+
+## How the data gets here
+
+```
+Famelack webcams ─┐                                   ┌─ public/data/streams.json   (the globe)
+                  ├─ Zod ─ dedupe ─ overrides ─ geocode ┤
+camlisted ────────┘                                   └─ public/data/rejected.json  (every drop + reason)
+```
+
+`scripts/import-catalog.ts` runs offline (by you, or weekly by
+`.github/workflows/refresh-catalog.yml`) and commits its output. The app never calls it.
+
+- **Sources.** [Famelack](https://github.com/famelack/famelack-data) webcams (MIT) and
+  [camlisted](https://github.com/tantran21501/camlisted) (MIT — checked; both licenses are in
+  `ATTRIBUTION.md`). Both are **vendored**: validated snapshots live in `data/upstream/`.
+- **Only live, embeddable streams.** From camlisted we keep entries with `status: live`,
+  `content_type: live` (not ended VOD archives), `embeddable`, approved and not hidden.
+  Famelack already verifies embed + live status.
+- **Fails loudly.** Both sources are parsed with Zod. On any schema mismatch the script prints
+  the first issues, exits 1 and **leaves the existing catalog untouched**. It also refuses to
+  write if the catalog would shrink by more than half (override with `--force`) or would be empty.
+- **Dedupe** on YouTube video ID; Famelack wins (cleaner names, hand-assigned categories).
+- **Timezones** come from coordinates at build time: a gazetteer match carries its GeoNames
+  timezone; an override takes the timezone of the nearest GeoNames place.
+
+### Current numbers (catalog built 2026-09-25)
+
+| | |
+|---|---|
+| Unique live streams upstream | 4,726 |
+| Placed on the globe | **2,208** (146 hand-placed overrides) |
+| Dropped | 2,518 (53.3%) — every one listed in `public/data/rejected.json` |
+
+The drop rate is deliberate. Most drops are streams whose title names no findable place
+("Bridge Cam", "Osprey Nest 2") — those need an override, not a guess.
+
+## How to add an override (the main way to improve quality)
+
+`data/overrides.json` maps a YouTube video ID to exact coordinates. It always wins over automatic
+matching.
+
+```json
+{
+  "dfVK7ld38Ys": {
+    "name": "Shibuya Scramble Crossing",
+    "latitude": 35.6595,
+    "longitude": 139.7005,
+    "place": "Shibuya, Tokyo",
+    "country": "JP",
+    "category": "city"
+  }
+}
+```
+
+1. Find candidates in `public/data/rejected.json` (or a misplaced pin — click it, the URL has its ID).
+2. Look up the real coordinates of the camera (or of the landmark it films). Only add it if you are sure.
+3. `npm run import -- --offline`, check the pin, commit.
+
+`category` is optional (defaults to the upstream category). Overrides for IDs that are no longer
+upstream are reported and ignored — an override never creates a stream on its own, because we
+can't verify it is live.
+
+**Removal requests:** add the video ID to `data/excluded.json`; it is dropped on the next import.
+
+## How geocoding works
+
+Neither source has coordinates, so they come from the stream title (and, for camlisted, the
+channel name) matched against an offline gazetteer: **GeoNames `cities1000`** (171k places)
+plus language-tagged, non-historic alternate names so `東京`, `Wien` and `Kromeriz` all resolve.
+
+1. **Overrides first** (see above).
+2. **Candidate names.** Latin-script text is split into words and every 1–6 word n-gram is looked
+   up; CJK/Hangul/Thai runs are matched by substring. A Latin name must be capitalised
+   ("nice view" ≠ Nice). Matches are kept **longest-first**, non-overlapping — "New York" beats "York".
+3. **Filters that kill false positives:**
+   - the source's **country field** removes candidates in other countries (the Springfield problem);
+   - a name followed by *Street / Field / Mountain / County…* or preceded by *Mount / Lake /
+     North / Outer…* belongs to a feature, not the town ("Duval Street", "Mount Fuji", "Outer Banks");
+   - `scripts/stopwords.ts` lists gazetteer names that are everyday words in titles
+     (Beach, Green, Summit, 海岸…);
+   - if several same-named places exist in the country and the biggest holds < 75% of their
+     combined population — and the title doesn't name the state/prefecture — the stream is
+     **rejected as ambiguous** rather than put in the biggest one;
+   - two strong matches > 75 km apart ("Tokyo to Osaka") → rejected as ambiguous;
+   - a smaller place within 40 km of a bigger one (Shibuya in Tokyo) is preferred as more precise.
+4. **Confidence score (0–1):**
+
+   ```
+   0.25 · name length      (short names are riskier; multi-word names get a bonus)
+   0.20 · country agreed   (1 if the source gave a country, 0.3 if not)
+   0.25 · population       (log-scaled: 1k → 0, 10M → 1)
+   0.15 · field            (title 1, channel name 0.5)
+   0.15 · unambiguity      (share of same-name population, or 1 if the state is named)
+   ```
+
+**Threshold: 0.65.** Tuned by eye against random samples of placements in each confidence band.
+The 0.60–0.65 band was dominated by generic words matched to small towns ("Scenic", "Lakes",
+"Pantai" = beach), so it's cut. Above 0.65 errors were rare in the samples; each one found was
+fixed with a rule, a stopword or an override — but automatic matching is not perfect, and
+`rejected.json` plus spot-checking pins is how it keeps improving. Short-named big cities
+(Lyon, Riga, Oslo) clear the threshold through the population term.
+
+## Decisions & deviations (noted as the prompt asked)
+
+- **`cities1000` instead of `cities15000`.** Webcams are disproportionately in small towns
+  (ski villages, beach towns). With the filters above, cities1000 placed ~19% more streams than
+  cities5000 with comparable precision in the samples checked.
+- **Zod schemas live in `scripts/import-catalog.ts`,** not `lib/stream.ts`, so Zod never ships in
+  the client bundle. `lib/stream.ts` holds the shared types.
+- **Timezones without a lookup library.** GeoNames already gives each place its IANA zone; overrides
+  use the nearest place's zone. Ceiling: an override within a few km of a timezone border could
+  pick the neighbour's zone — check the panel's TIMEZONE row when adding one near a border.
+- **camlisted `parking` category is excluded** (parking-lot security cameras read as
+  surveillance). Moving streams (walking tours, dashcams) are pinned at the city they're in.
+- **Streams with no place on Earth** (ISS feeds) are excluded — there is no honest pin for them.
+- **Satellite imagery:** the globe shows EOX *Sentinel-2 cloudless 2016* (CC BY 4.0, keyless),
+  with OpenStreetMap borders and place names from OpenFreeMap (CARTO fallback) drawn on top. The
+  2016 layer is used deliberately: EOX's later years are CC BY-NC-SA, which would forbid commercial use.
+- **Rim light is CSS, not MapLibre's atmosphere,** which can't be tinted. The limb is found by
+  projecting points outward from the view centre each frame.
+- **Cluster counts are drawn in Geist Mono via canvas** (`styleimagemissing`), because map glyph
+  servers only carry sans fonts.
+- **"Stream unavailable" detection** uses the YouTube player's postMessage events (no API script,
+  no key): `onError` (e.g. 150, embedding disabled) or 12 s of silence from the player.
+- **Overrides place the pin at the landmark the stream shows** when the camera's own spot isn't
+  known exactly (e.g. "Mount Fuji" feeds). All override coordinates were checked by hand.
+
+## Project layout
+
+```
+app/                page, /about, error + 404 screens
+components/globe/   GlobeView (map, pins, clusters, terminator, rim light), Starfield
+components/stream/  StreamPanel, Player (+ unavailable state), Clocks
+components/chrome/  Header (categories, random), Search, StatusBar, icons
+lib/                stream types, geo, solar (terminator), time, readout store
+scripts/            import-catalog, geocode, stopwords, build-gazetteer, selftest
+data/               overrides.json, excluded.json, gazetteer/, upstream/ snapshots
+public/data/        streams.json, rejected.json
+```
+
+## Keyboard
+
+`R` random · `←` `→` walk outward through the nearest streams · `/` search · `Esc` close ·
+`F` fullscreen · `M` mute
+
+Attribution and full license texts: [`ATTRIBUTION.md`](ATTRIBUTION.md).

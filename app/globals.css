@@ -1,0 +1,134 @@
+@import 'tailwindcss';
+
+:root {
+  --bg-void:        #040508;  /* space */
+  --bg-panel:       #0B0D12;
+  --bg-raised:      #12161E;
+  --bg-hover:       #1A1F2A;
+  --border-subtle:  #181D27;
+  --border-strong:  #29313F;
+
+  --text-primary:   #E6EAF2;
+  --text-secondary: #8B94A7;
+  --text-tertiary:  #565E70;
+
+  --accent:         #4DE1FF;
+  --accent-muted:   #1B5567;
+  --accent-glow:    #4DE1FF26;
+
+  --status-live:    #2BE88A;
+  --status-night:   #6C7BA8;
+  --status-dead:    #FF5A5A;
+
+  --radius:         4px;
+  --ease:           cubic-bezier(0.16, 1, 0.3, 1);
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-void: var(--bg-void);
+  --color-panel: var(--bg-panel);
+  --color-raised: var(--bg-raised);
+  --color-hover: var(--bg-hover);
+  --color-subtle: var(--border-subtle);
+  --color-strong: var(--border-strong);
+  --color-primary: var(--text-primary);
+  --color-secondary: var(--text-secondary);
+  --color-tertiary: var(--text-tertiary);
+  --color-accent: var(--accent);
+  --color-accent-muted: var(--accent-muted);
+  --color-accent-glow: var(--accent-glow);
+  --color-live: var(--status-live);
+  --color-night: var(--status-night);
+  --color-dead: var(--status-dead);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --ease-atlas: var(--ease);
+  --radius-atlas: var(--radius);
+}
+
+* { font-variant-numeric: tabular-nums; }
+
+html, body {
+  height: 100%;
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--accent-muted); color: var(--text-primary); }
+
+:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
+
+/* Section caption: mono, uppercase, 10px, tracked. */
+.label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.kbd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 14px;
+  padding: 0 4px;
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+  color: var(--text-secondary);
+}
+
+/* Map canvas: no radius, transparent so the starfield shows around the globe. */
+.maplibregl-canvas { outline: none; }
+.maplibregl-map { background: transparent !important; }
+
+/* The one selected-stream pulse. */
+.pulse {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  pointer-events: none;
+}
+.pulse::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  animation: pulse 2s var(--ease) infinite;
+}
+@keyframes pulse {
+  from { transform: scale(1); opacity: 0.6; }
+  to   { transform: scale(2.2); opacity: 0; }
+}
+
+.live-dot { animation: breathe 2.4s ease-in-out infinite; }
+@keyframes breathe { 50% { opacity: 0.35; } }
+
+.ellipsis::after {
+  content: '';
+  display: inline-block;
+  width: 1.5em;
+  text-align: left;
+  animation: ellipsis 1.2s steps(4) infinite;
+}
+@keyframes ellipsis {
+  0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; }
+}
+
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse::after, .live-dot, .ellipsis::after { animation: none; }
+  .ellipsis::after { content: '...'; }
+  *, *::before, *::after { transition-duration: 0ms !important; }
+}
+
+* { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
