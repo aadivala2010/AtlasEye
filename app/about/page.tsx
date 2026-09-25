@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 
 export const metadata: Metadata = { title: 'About — Atlas Eye' };
 
-const REPO = 'https://github.com/'; // ponytail: set to this project's repository URL once published.
+const REPO = 'https://github.com/aadivala2010/AtlasEye/issues';
 
 export default function About() {
   return (
