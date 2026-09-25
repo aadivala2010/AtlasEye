@@ -10,12 +10,16 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { z } from 'zod';
 import type { Catalog, Category, Stream } from '../lib/stream';
-import { geocode, loadGazetteer, nearestPlace, normalize, placeLabel, CONFIDENCE_THRESHOLD, type GeocodeHit } from './geocode';
+import {
+  distanceKm, geocode, loadGazetteer, nearestPlace, normalize, placeLabel, CONFIDENCE_THRESHOLD, type GeocodeHit,
+} from './geocode';
+import { AGENCIES, SchemaError, verifyHls, type AgencyCam } from './agencies';
 
 const OFFLINE = process.argv.includes('--offline');
 const FORCE = process.argv.includes('--force');
 const FAMELACK = 'https://raw.githubusercontent.com/famelack/famelack-data/main/webcams/raw';
 const CAMLISTED = 'https://raw.githubusercontent.com/tantran21501/camlisted/main/data/streams.json';
+const CAMLISTED_LOCATIONS = 'https://raw.githubusercontent.com/tantran21501/camlisted/main/data/location_resolve.json';
 const CATALOG = 'public/data/streams.json';
 
 // ── upstream schemas ─────────────────────────────────────────────────────────
@@ -47,6 +51,15 @@ const CamlistedFile = z.object({
   generatedAt: z.string(),
   streams: z.array(CamlistedEntry).min(1),
 });
+
+/** camlisted's own location resolution. We trust only uploader GPS outright; place hints must agree with us. */
+const CamlistedLocations = z.object({
+  cameras: z.array(z.object({
+    video_id: z.string(),
+    location: z.object({ lat: z.number(), lng: z.number(), source: z.string() }).nullable(),
+  })).min(1),
+});
+interface HintLoc { lat: number; lng: number; gps: boolean }
 
 const Override = z.object({
   name: z.string().min(1),
@@ -180,11 +193,59 @@ async function loadCamlisted(): Promise<Candidate[]> {
   });
 }
 
+async function loadCamlistedLocations(): Promise<Map<string, HintLoc>> {
+  const snapshot = 'data/upstream/camlisted-locations.json';
+  let pruned: Record<string, HintLoc>;
+  if (OFFLINE) {
+    pruned = JSON.parse(readFileSync(snapshot, 'utf8')) as Record<string, HintLoc>;
+  } else {
+    const data = parse(CamlistedLocations, await getJson(CAMLISTED_LOCATIONS), 'camlisted location_resolve.json');
+    pruned = {};
+    for (const c of data.cameras) {
+      const l = c.location;
+      if (!l || !Number.isFinite(l.lat) || !Number.isFinite(l.lng)) continue;
+      // Country-centroid fallbacks are never usable; everything else is kept for the agreement check.
+      if (l.source === 'youtube-channel-country') continue;
+      pruned[c.video_id] = { lat: l.lat, lng: l.lng, gps: l.source === 'youtube-recordingDetails' };
+    }
+    writeFileSync(snapshot, JSON.stringify(pruned));
+  }
+  return new Map(Object.entries(pruned));
+}
+
+/**
+ * Agency cameras. A schema change aborts the import; an agency that is merely unreachable keeps
+ * its cameras from the previous catalog, so one flaky server doesn't blank a whole region.
+ */
+async function loadAgencies(previous: Catalog | null): Promise<{ cams: AgencyCam[]; carried: Stream[]; dead: number }> {
+  const snapshot = 'data/upstream/agencies.json';
+  if (OFFLINE) return { cams: JSON.parse(readFileSync(snapshot, 'utf8')) as AgencyCam[], carried: [], dead: 0 };
+  const cams: AgencyCam[] = [];
+  const carried: Stream[] = [];
+  for (const [name, load] of Object.entries(AGENCIES)) {
+    try {
+      const got = await load();
+      console.log(`  ${name.padEnd(11)} ${got.length} cameras`);
+      cams.push(...got);
+    } catch (e) {
+      if (e instanceof SchemaError) fail(e.message);
+      const keep = previous?.streams.filter((s) => s.source === name) ?? [];
+      console.warn(`  ⚠ ${name} unreachable (${e instanceof Error ? e.message : String(e)}); keeping ${keep.length} from the previous catalog`);
+      carried.push(...keep);
+    }
+  }
+  console.log(`  probing ${cams.filter((c) => c.kind === 'hls').length} live video streams…`);
+  const verified = await verifyHls(cams);
+  writeFileSync(snapshot, JSON.stringify(verified.cams));
+  return { ...verified, carried };
+}
+
 // ── main ─────────────────────────────────────────────────────────────────────
 
 mkdirSync('data/upstream', { recursive: true });
 const famelack = await loadFamelack();
 const camlisted = await loadCamlisted();
+const hints = await loadCamlistedLocations();
 const overrides = parse(Overrides, JSON.parse(readFileSync('data/overrides.json', 'utf8')), 'data/overrides.json');
 /** Broadcaster removal requests: video IDs never shown, whatever upstream says. */
 const excluded = new Set(parse(z.array(z.string()), JSON.parse(readFileSync('data/excluded.json', 'utf8')), 'data/excluded.json'));
@@ -193,6 +254,7 @@ const gazetteer = loadGazetteer();
 const previous: Catalog | null = existsSync(CATALOG) ? JSON.parse(readFileSync(CATALOG, 'utf8')) as Catalog : null;
 const previousAdded = new Map(previous?.streams.map((s) => [s.id, s.addedAt]));
 const now = new Date().toISOString();
+const agencies = await loadAgencies(previous);
 
 // Dedupe on video ID; Famelack first — its names are already clean and its categories hand-assigned.
 const candidates = new Map<string, Candidate>();
@@ -202,18 +264,49 @@ const streams: Stream[] = [];
 const rejected: { id: string; title: string; source: string; country?: string; reason: string; best?: { matched: string; place: string; confidence: number } }[] = [];
 const describe = (h?: GeocodeHit) => h && { matched: h.matched, place: `${placeLabel(h.place)}, ${h.place.country}`, confidence: h.confidence };
 
+const round = (x: number) => Math.round(x * 1e5) / 1e5;
+const counts = { gps: 0, agreed: 0 };
+
 for (const c of candidates.values()) {
-  const base = { id: c.id, title: c.title, source: c.source, addedAt: previousAdded.get(c.id) ?? c.addedAt ?? now };
+  const base = { id: c.id, kind: 'youtube' as const, title: c.title, source: c.source, addedAt: previousAdded.get(c.id) ?? c.addedAt ?? now };
   const o = overrides[c.id];
   if (o) {
     streams.push({
       ...base, name: o.name, latitude: o.latitude, longitude: o.longitude, place: o.place, country: o.country,
-      timezone: nearestPlace(gazetteer, o.latitude, o.longitude).timezone,
+      timezone: nearestPlace(gazetteer, o.latitude, o.longitude).place.timezone,
       category: o.category ?? c.category, geocode: 'override', confidence: 1,
     });
     continue;
   }
   const r = geocode(gazetteer, { title: c.title, channel: c.channel }, c.country);
+  const hint = hints.get(c.id);
+  if (!r.ok && hint?.gps) {
+    // The broadcaster's own YouTube recording location, sanity-checked against the country field.
+    const near = nearestPlace(gazetteer, hint.lat, hint.lng);
+    if (near.km < 60 && (!c.country || near.place.country === c.country)) {
+      counts.gps++;
+      const place = placeLabel(near.place);
+      streams.push({
+        ...base, name: c.source === 'famelack' ? c.title : cleanName(c.title, '', place),
+        latitude: round(hint.lat), longitude: round(hint.lng), place, country: near.place.country,
+        timezone: near.place.timezone, category: c.category, geocode: 'gps', confidence: 0.9,
+      });
+      continue;
+    }
+  }
+  if (!r.ok && r.best && hint && r.best.confidence >= 0.5
+    && distanceKm(r.best.place.lat, r.best.place.lon, hint.lat, hint.lng) < 30) {
+    // Two independent geocoders (ours and camlisted's) agree on a borderline match: accept it.
+    counts.agreed++;
+    const p = r.best.place;
+    const place = placeLabel(p);
+    streams.push({
+      ...base, name: c.source === 'famelack' ? c.title : cleanName(c.title, r.best.matched, place),
+      latitude: p.lat, longitude: p.lon, place, country: p.country, timezone: p.timezone,
+      category: c.category, geocode: 'gazetteer', confidence: Math.max(r.best.confidence, 0.7),
+    });
+    continue;
+  }
   if (!r.ok) {
     rejected.push({ id: c.id, title: c.title, source: c.source, country: c.country, reason: r.reason, best: describe(r.best) });
     continue;
@@ -226,6 +319,27 @@ for (const c of candidates.values()) {
     category: c.category, geocode: 'gazetteer', confidence: r.hit.confidence,
   });
 }
+
+// YouTube: keep the upstream title only when it differs from the display name.
+for (const s of streams) if (s.title === s.name) delete s.title;
+
+// ── agency cameras ───────────────────────────────────────────────────────────
+const agencyStreams: Stream[] = [...agencies.carried];
+for (const cam of agencies.cams) {
+  const near = nearestPlace(gazetteer, cam.latitude, cam.longitude);
+  agencyStreams.push({
+    id: cam.id, kind: cam.kind, url: cam.url, ...(cam.refresh ? { refresh: cam.refresh } : {}),
+    name: cam.name, latitude: round(cam.latitude), longitude: round(cam.longitude),
+    place: cam.place ?? placeLabel(near.place), country: cam.country, timezone: near.place.timezone,
+    category: cam.category, source: cam.source, geocode: 'operator', confidence: 1,
+    addedAt: previousAdded.get(cam.id) ?? now,
+  });
+}
+const youtubeCount = streams.length;
+streams.push(...agencyStreams);
+const tally = (list: Stream[], key: (s: Stream) => string) =>
+  Object.entries(list.reduce<Record<string, number>>((m, s) => ((m[key(s)] = (m[key(s)] ?? 0) + 1), m), {}))
+    .sort((a, b) => b[1] - a[1]).map(([k, v]) => `    ${String(v).padStart(5)}  ${k}`).join('\n');
 
 // ── report & write ───────────────────────────────────────────────────────────
 
@@ -241,9 +355,15 @@ console.log(`
   famelack   ${famelack.length} streams
   camlisted  ${camlisted.length} live streams
   unique     ${total}
-  placed     ${streams.length}  (${streams.filter((s) => s.geocode === 'override').length} by override, threshold ${CONFIDENCE_THRESHOLD})
+  placed     ${youtubeCount}  (${streams.filter((s) => s.geocode === 'override').length} by override, ${counts.gps} by uploader GPS, ${counts.agreed} by geocoder agreement; threshold ${CONFIDENCE_THRESHOLD})
   dropped    ${rejected.length}  (${((rejected.length / total) * 100).toFixed(1)}%)
-${[...reasons].sort((a, b) => b[1] - a[1]).map(([k, v]) => `    ${String(v).padStart(5)}  ${k}`).join('\n')}`);
+${[...reasons].sort((a, b) => b[1] - a[1]).map(([k, v]) => `    ${String(v).padStart(5)}  ${k}`).join('\n')}
+
+  agency cameras  ${agencyStreams.length}  (${agencies.dead} dead video streams dropped or downgraded to snapshots)
+${tally(agencyStreams, (s) => `${s.source} ${s.kind}`)}
+
+  TOTAL ON GLOBE  ${streams.length}
+${tally(streams, (s) => s.kind)}`);
 if (staleOverrides.length) console.log(`  ${staleOverrides.length} override(s) not in upstream (stream ended?): ${staleOverrides.join(', ')}`);
 
 if (streams.length === 0) fail('no streams placed');

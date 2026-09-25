@@ -136,7 +136,7 @@ function buildStyle(base: Base | null): StyleSpecification {
   };
 }
 
-type PinFeature = GeoJSON.Feature<GeoJSON.Point, { id: string; night: boolean; rank: number }>;
+type PinFeature = GeoJSON.Feature<GeoJSON.Point, { id: string; night: boolean; snap: boolean; rank: number }>;
 
 function pinData(streams: Stream[], sweepFromLon: number): GeoJSON.FeatureCollection<GeoJSON.Point> {
   const sun = subsolarPoint(new Date());
@@ -148,6 +148,7 @@ function pinData(streams: Stream[], sweepFromLon: number): GeoJSON.FeatureCollec
       properties: {
         id: s.id,
         night: sunAltitude(s.latitude, s.longitude, sun) < -0.833,
+        snap: s.kind === 'snapshot',
         // 0→1 around the globe eastward from the left limb: drives the first-load sweep.
         rank: ((((s.longitude - sweepFromLon) % 360) + 360) % 360) / 360,
       },
@@ -253,6 +254,11 @@ export default function GlobeView(props: Props) {
         fadeDuration: 0,
       });
       map.touchZoomRotate.disableRotation();
+      // Imagery tiles over open ocean or outside coverage fail to decode; that's expected, not an error.
+      map.on('error', (e) => {
+        if ((e as { sourceId?: string }).sourceId === 'satellite') return;
+        console.error(e.error);
+      });
       mapRef.current = map;
       sweepFrom.current = (initialCamera?.lon ?? -30) - 90;
 
@@ -275,10 +281,12 @@ export default function GlobeView(props: Props) {
         map.addImage(e.id, ctx.getImageData(0, 0, canvas.width, canvas.height), { pixelRatio: dpr });
       });
 
-      map.on('load', () => {
+      // 'style.load', not 'load': 'load' waits for every initial satellite tile, which can keep pins
+      // and the terminator off the globe for seconds on a slow connection.
+      map.once('style.load', () => {
         if (!map) return;
         map.addSource('night', { type: 'geojson', data: nightBands(new Date()) });
-        map.addLayer({ id: 'night', type: 'fill', source: 'night', paint: { 'fill-color': '#02040C', 'fill-opacity': 0.12, 'fill-antialias': false } });
+        map.addLayer({ id: 'night', type: 'fill', source: 'night', paint: { 'fill-color': '#01020A', 'fill-opacity': 0.13, 'fill-antialias': false } });
 
         map.addSource('streams', {
           type: 'geojson',
@@ -311,7 +319,8 @@ export default function GlobeView(props: Props) {
         map.addLayer({
           id: 'pins', type: 'circle', source: 'streams', filter: ['!', ['has', 'point_count']],
           paint: {
-            'circle-radius': 4.5,
+            // Snapshot cameras are smaller: present, but visually secondary to live video.
+            'circle-radius': ['case', ['get', 'snap'], 3, 4.5],
             'circle-color': ['case', ['get', 'night'], C.night, C.live],
             'circle-stroke-width': 1, 'circle-stroke-color': C.void,
             'circle-opacity': op, 'circle-stroke-opacity': op,
@@ -414,6 +423,7 @@ export default function GlobeView(props: Props) {
         cb.current.onCamera({ lon: c.lng, lat: c.lat, zoom: map.getZoom() });
       });
       map.once('idle', countInView);
+      map.once('style.load', countInView);
       if (pendingFly.current) { const [s, m] = pendingFly.current; pendingFly.current = null; fly(map, s, m); }
     })();
 

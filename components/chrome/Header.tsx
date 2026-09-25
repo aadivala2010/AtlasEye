@@ -14,6 +14,9 @@ interface Props {
   onReset(): void;
   onPick(s: Stream): void;
   onRandom(): void;
+  snapshots: boolean;
+  snapshotCount: number;
+  onToggleSnapshots(): void;
 }
 
 export default function Header(p: Props) {
@@ -37,6 +40,19 @@ export default function Header(p: Props) {
           </button>
         );
       })}
+      <span className="mx-1 h-4 w-px shrink-0 bg-strong" aria-hidden />
+      <button
+        type="button"
+        aria-pressed={p.snapshots}
+        onClick={p.onToggleSnapshots}
+        title="Still images from traffic and weather cameras, refreshed every few seconds to minutes"
+        className={`flex h-6 shrink-0 items-center gap-1.5 rounded-[2px] border px-2 font-mono text-[10px] uppercase tracking-[0.08em] transition-colors duration-200 ease-atlas ${
+          p.snapshots ? 'border-strong bg-raised text-primary hover:border-accent-muted' : 'border-subtle text-tertiary hover:text-secondary'
+        }`}
+      >
+        Snapshots
+        <span className="text-tertiary">{p.snapshotCount}</span>
+      </button>
       {filtered && (
         <button type="button" onClick={p.onReset} className="h-6 shrink-0 px-2 font-mono text-[10px] uppercase tracking-[0.08em] text-accent hover:underline">
           All

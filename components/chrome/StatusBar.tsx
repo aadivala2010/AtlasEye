@@ -21,6 +21,8 @@ export default function StatusBar({ total, builtAt, loading }: Props) {
 
   return (
     <footer className="relative z-20 flex h-7 shrink-0 items-center gap-4 overflow-hidden border-t border-subtle bg-panel px-4 max-sm:gap-2 max-sm:px-3 font-mono text-[10px] whitespace-nowrap text-secondary">
+      {/* Readouts give way before the attribution does: it must stay visible at every width. */}
+      <div className="flex min-w-0 flex-1 items-center gap-4 overflow-hidden max-sm:gap-2">
       <span className="max-md:hidden">
         <F k="LAT">{cursor ? cursor.lat.toFixed(4) : '—'}</F>
         <F k="LON">{cursor ? cursor.lon.toFixed(4) : '—'}</F>
@@ -35,9 +37,10 @@ export default function StatusBar({ total, builtAt, loading }: Props) {
         </>
       )}
       <F k="UTC" className="max-sm:hidden">{now ? utcClock(now) : '--:--:--'}</F>
-      {builtAt && <F k="BUILT" className="max-lg:hidden">{builtAt.slice(0, 10)}</F>}
-      <a href="/about" className="ml-auto shrink-0 text-tertiary transition-colors duration-200 ease-atlas hover:text-secondary">
-        <span className="max-md:hidden">Imagery: Sentinel-2 cloudless by EOX · © OpenStreetMap contributors · GeoNames CC BY 4.0 · Streams: Famelack, camlisted · Embedded via YouTube</span>
+      {builtAt && <F k="BUILT" className="max-xl:hidden">{builtAt.slice(0, 10)}</F>}
+      </div>
+      <a href="/about" className="shrink-0 text-tertiary transition-colors duration-200 ease-atlas hover:text-secondary">
+        <span className="max-md:hidden">Imagery © EOX Sentinel-2 cloudless · © OpenStreetMap · GeoNames CC BY 4.0 · Famelack · camlisted · Road cams: public agencies · via YouTube</span>
         <span className="md:hidden">©EOX·OSM·GeoNames·Famelack·camlisted·YouTube</span>
       </a>
     </footer>

@@ -1,6 +1,6 @@
 /** `npm test` — assert-based checks for the parts that are easy to break silently. */
 import assert from 'node:assert/strict';
-import { geocode, loadGazetteer } from './geocode';
+import { geocode, loadGazetteer, nearestPlace } from './geocode';
 import { nightBands, subsolarPoint, sunAltitude } from '../lib/solar';
 import { zonedClock } from '../lib/time';
 
@@ -27,6 +27,11 @@ assert.match(place('富士山ライブカメラ', 'JP'), /^REJECT/);
 assert.equal(place('渋谷スクランブル交差点', 'JP'), 'Shibuya, JP');
 // Lowercase common words aren't proper nouns.
 assert.match(place('a nice view of the harbour', 'FR'), /^REJECT/);
+
+// Nearest place (agency cameras, overrides): right zone even for DST-free Creston, BC.
+assert.equal(nearestPlace(g, 49.1093, -116.1695).place.timezone, 'America/Creston');
+assert.equal(nearestPlace(g, 40.7324, -73.9849).place.timezone, 'America/New_York');
+assert.ok(nearestPlace(g, 60.3858, 23.9049).km < 20);
 
 // Solar: at the June solstice the subsolar point sits on the Tropic of Cancer, near 0° at 12:00 UTC.
 const solstice = subsolarPoint(new Date('2026-06-21T12:00:00Z'));

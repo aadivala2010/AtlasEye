@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, type ReactNode, type Ref } from 'react';
-import type { Stream } from '@/lib/stream';
+import { SOURCE_CREDIT, type Stream } from '@/lib/stream';
 import { distanceKm, formatCoord, formatDistance } from '@/lib/geo';
 import Player, { type PlayerHandle } from './Player';
 import Clocks from './Clocks';
@@ -48,9 +48,11 @@ export default function StreamPanel(p: Props) {
       {/* status strip */}
       <div className="flex h-9 shrink-0 items-center justify-between border-b border-subtle px-4">
         <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.08em] text-secondary">
-          <span className="live-dot h-1.5 w-1.5 rounded-full bg-live" />
-          Live
-          <span className="text-tertiary">/ {s.category}</span>
+          {s.kind === 'snapshot'
+            ? <span className="h-1.5 w-1.5 rounded-full border border-night" />
+            : <span className="live-dot h-1.5 w-1.5 rounded-full bg-live" />}
+          {s.kind === 'snapshot' ? 'Snapshot' : 'Live'}
+          <span className="text-tertiary">/ {s.kind === 'hls' ? 'video' : s.kind === 'youtube' ? 'youtube' : 'still'} / {s.category}</span>
         </div>
         <IconButton label="Close panel (Esc)" onClick={p.onClose}><IconClose /></IconButton>
       </div>
@@ -74,7 +76,12 @@ export default function StreamPanel(p: Props) {
           <Row label="Category">{s.category}</Row>
           <Row label="Timezone">{s.timezone}</Row>
           <Row label="Located by">
-            {s.geocode === 'override' ? 'hand-placed' : `gazetteer · ${s.confidence.toFixed(2)}`}
+            {LOCATED[s.geocode](s)}
+          </Row>
+          <Row label="Source">
+            <a href={SOURCE_CREDIT[s.source].href} target="_blank" rel="noopener noreferrer" className="hover:text-accent">
+              {SOURCE_CREDIT[s.source].label}
+            </a>
           </Row>
           <Row label="Distance">
             {p.userPos ? (
@@ -94,19 +101,21 @@ export default function StreamPanel(p: Props) {
           <IconButton label="Previous nearest (←)" onClick={p.onPrev}><IconPrev /></IconButton>
           <IconButton label="Next nearest (→)" onClick={p.onNext}><IconNext /></IconButton>
           <IconButton label="Random stream (R)" onClick={p.onRandom}><IconRandom /></IconButton>
-          <IconButton label={p.muted ? 'Unmute (M)' : 'Mute (M)'} onClick={p.onToggleMute} active={!p.muted}>
-            {p.muted ? <IconMuted /> : <IconSound />}
-          </IconButton>
+          {s.kind !== 'snapshot' && (
+            <IconButton label={p.muted ? 'Unmute (M)' : 'Mute (M)'} onClick={p.onToggleMute} active={!p.muted}>
+              {p.muted ? <IconMuted /> : <IconSound />}
+            </IconButton>
+          )}
           <IconButton label="Fullscreen (F)" onClick={p.onFullscreen}><IconFullscreen /></IconButton>
           <IconButton label={copied ? 'Link copied' : 'Copy link'} onClick={copyLink} active={copied}>
             {copied ? <IconCheck /> : <IconLink />}
           </IconButton>
           <a
-            href={`https://www.youtube.com/watch?v=${s.id}`}
+            href={s.kind === 'youtube' ? `https://www.youtube.com/watch?v=${s.id}` : s.url}
             target="_blank"
             rel="noopener noreferrer"
-            title="Open on YouTube"
-            aria-label="Open on YouTube"
+            title={s.kind === 'youtube' ? 'Open on YouTube' : 'Open source feed'}
+            aria-label={s.kind === 'youtube' ? 'Open on YouTube' : 'Open source feed'}
             className={ICON_BUTTON}
           >
             <IconExternal />
@@ -125,6 +134,13 @@ export default function StreamPanel(p: Props) {
     </div>
   );
 }
+
+const LOCATED: Record<Stream['geocode'], (s: Stream) => string> = {
+  override: () => 'hand-placed',
+  gazetteer: (s) => `gazetteer · ${s.confidence.toFixed(2)}`,
+  gps: () => 'broadcaster GPS',
+  operator: () => 'camera operator',
+};
 
 const ICON_BUTTON =
   'grid h-8 w-8 place-items-center rounded-[2px] border border-subtle bg-raised text-secondary transition-colors duration-200 ease-atlas hover:bg-hover hover:text-accent';

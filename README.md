@@ -1,7 +1,7 @@
 # Atlas Eye
 
-A live window onto anywhere on Earth. A 3D satellite globe scattered with public live
-streams — spin it, click a point, and watch what is happening there right now.
+A live window onto anywhere on Earth. A 3D satellite globe scattered with ~10,000 public live
+cameras — spin it, click a point, and watch what is happening there right now.
 
 No accounts. No API keys. No backend. No tracking.
 
@@ -21,7 +21,7 @@ The page is fully static; the catalog is a file in `public/data/`.
 | Script | What it does |
 |---|---|
 | `npm run dev` / `build` / `start` | Next.js |
-| `npm run import` | Re-pull both upstream catalogs, validate, geocode, write `public/data/streams.json` + `rejected.json` |
+| `npm run import` | Re-pull every source, validate, geocode, probe live video, write `public/data/streams.json` + `rejected.json` (~4 min) |
 | `npm run import -- --offline` | Same, from the committed snapshots in `data/upstream/` (for tuning the geocoder) |
 | `npm run gazetteer` | Rebuild `data/gazetteer/cities.tsv` from GeoNames (~210 MB download; rarely needed) |
 | `npm test` | Assert-based self-test of the geocoder, solar math and clocks |
@@ -30,36 +30,56 @@ The page is fully static; the catalog is a file in `public/data/`.
 ## How the data gets here
 
 ```
-Famelack webcams ─┐                                   ┌─ public/data/streams.json   (the globe)
-                  ├─ Zod ─ dedupe ─ overrides ─ geocode ┤
-camlisted ────────┘                                   └─ public/data/rejected.json  (every drop + reason)
+Famelack webcams ──┐                                             ┌─ public/data/streams.json  (the globe)
+camlisted ─────────┼─ Zod ─ dedupe ─ overrides ─ geocode / GPS ──┤
+                   │                                             └─ public/data/rejected.json (every YouTube drop + reason)
+Caltrans, DelDOT, ─┴─ Zod ─ probe live video ─ nearest place/timezone ─┘
+NYC DOT, DriveBC,
+Digitraffic, HK TD
 ```
 
 `scripts/import-catalog.ts` runs offline (by you, or weekly by
 `.github/workflows/refresh-catalog.yml`) and commits its output. The app never calls it.
 
-- **Sources.** [Famelack](https://github.com/famelack/famelack-data) webcams (MIT) and
-  [camlisted](https://github.com/tantran21501/camlisted) (MIT — checked; both licenses are in
-  `ATTRIBUTION.md`). Both are **vendored**: validated snapshots live in `data/upstream/`.
-- **Only live, embeddable streams.** From camlisted we keep entries with `status: live`,
+### Three kinds of stream
+
+| Kind | Where from | Plays as | Coordinates |
+|---|---|---|---|
+| **YouTube** | [Famelack](https://github.com/famelack/famelack-data), [camlisted](https://github.com/tantran21501/camlisted) (both MIT) | youtube-nocookie iframe | geocoded from the title (below), or the broadcaster's own YouTube GPS |
+| **Live video** | Caltrans, Delaware DOT road cameras | HLS via hls.js (loaded only when opened) | published by the operator |
+| **Snapshot** | Caltrans, NYC DOT, DriveBC, Digitraffic (Finland), Hong Kong TD | a still the operator refreshes every 5 s – 5 min, re-fetched on that cadence and labelled **SNAPSHOT** | published by the operator |
+
+Snapshots can be hidden with the **SNAPSHOTS** chip in the header; their pins are drawn smaller,
+and Random picks them rarely.
+
+- **Vendored.** Validated snapshots of every source live in `data/upstream/`
+  (`agencies.json` is the normalised, probed camera list).
+- **Only live, embeddable YouTube streams.** From camlisted we keep `status: live`,
   `content_type: live` (not ended VOD archives), `embeddable`, approved and not hidden.
   Famelack already verifies embed + live status.
-- **Fails loudly.** Both sources are parsed with Zod. On any schema mismatch the script prints
-  the first issues, exits 1 and **leaves the existing catalog untouched**. It also refuses to
-  write if the catalog would shrink by more than half (override with `--force`) or would be empty.
+- **Live video is verified at import.** Every HLS playlist is fetched; one that doesn't answer
+  with `#EXTM3U` within 8 s is dropped (Caltrans cameras fall back to their still image).
+- **Fails loudly.** Every source is parsed with Zod. On any schema mismatch the script prints the
+  first issues, exits 1 and **leaves the existing catalog untouched**. It also refuses to write if
+  the catalog would shrink by more than half (override with `--force`) or would be empty. An agency
+  that is merely *unreachable* keeps its cameras from the previous catalog (with a warning), so one
+  flaky server doesn't blank a region.
 - **Dedupe** on YouTube video ID; Famelack wins (cleaner names, hand-assigned categories).
-- **Timezones** come from coordinates at build time: a gazetteer match carries its GeoNames
-  timezone; an override takes the timezone of the nearest GeoNames place.
+- **Timezones and place names** come from coordinates at build time: a gazetteer match carries its
+  GeoNames timezone; everything else takes the nearest GeoNames place (a 1° grid index keeps
+  that fast for ~10,000 cameras).
 
 ### Current numbers (catalog built 2026-09-25)
 
 | | |
 |---|---|
-| Unique live streams upstream | 4,726 |
-| Placed on the globe | **2,208** (146 hand-placed overrides) |
-| Dropped | 2,518 (53.3%) — every one listed in `public/data/rejected.json` |
+| **On the globe** | **9,963** |
+| YouTube live streams placed | 2,386 of 4,726 upstream (146 hand-placed, 152 by broadcaster GPS) |
+| Live road-camera video | 1,868 (playlist verified live at import) |
+| Snapshot cameras | 5,709 |
+| YouTube streams dropped | 2,340 (49.5%) — every one listed in `public/data/rejected.json` |
 
-The drop rate is deliberate. Most drops are streams whose title names no findable place
+The YouTube drop rate is deliberate. Most drops are streams whose title names no findable place
 ("Bridge Cam", "Osprey Nest 2") — those need an override, not a guess.
 
 ## How to add an override (the main way to improve quality)
@@ -121,6 +141,13 @@ plus language-tagged, non-historic alternate names so `東京`, `Wien` and `Krom
    0.15 · unambiguity      (share of same-name population, or 1 if the state is named)
    ```
 
+5. **Second opinions from camlisted.** camlisted publishes its own location resolution. When our
+   gazetteer can't place a stream, the broadcaster's own **YouTube recording location (GPS)** is used,
+   provided it lies within 60 km of a known place in the stream's country. camlisted's *text-based*
+   geocodes are too often wrong to trust alone ("Catalina Island" → Paramaribo), so they only count
+   when they land **within 30 km of our own best borderline candidate** — two independent geocoders
+   agreeing. Country-level fallbacks are never used.
+
 **Threshold: 0.65.** Tuned by eye against random samples of placements in each confidence band.
 The 0.60–0.65 band was dominated by generic words matched to small towns ("Scenic", "Lakes",
 "Pantai" = beach), so it's cut. Above 0.65 errors were rare in the samples; each one found was
@@ -141,6 +168,13 @@ fixed with a rule, a stopword or an override — but automatic matching is not p
 - **camlisted `parking` category is excluded** (parking-lot security cameras read as
   surveillance). Moving streams (walking tours, dashcams) are pinned at the city they're in.
 - **Streams with no place on Earth** (ISS feeds) are excluded — there is no honest pin for them.
+- **Road cameras and snapshots (added on request for many more streams).** The prompt's catalog is
+  YouTube-only; transport agencies publish thousands of public cameras with exact coordinates, which
+  need no geocoding at all. Live video is verified at import. Still-image cameras are included but
+  never passed off as video: labelled SNAPSHOT, drawn smaller, hideable, and rarely picked by Random.
+  Keyed agency APIs (most US 511 systems, WSDOT, Ontario, Alberta) are skipped — no keys is a
+  project rule. [Ora](https://github.com/warner-wvez/Ora) has ~46k US cameras but is licensed
+  PolyForm Noncommercial, so none of its data is used.
 - **Satellite imagery:** the globe shows EOX *Sentinel-2 cloudless 2016* (CC BY 4.0, keyless),
   with OpenStreetMap borders and place names from OpenFreeMap (CARTO fallback) drawn on top. The
   2016 layer is used deliberately: EOX's later years are CC BY-NC-SA, which would forbid commercial use.

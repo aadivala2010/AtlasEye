@@ -43,6 +43,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [enabled, setEnabled] = useState<Set<Category>>(() => new Set(CATEGORIES));
+  const [snapshots, setSnapshots] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [muted, setMuted] = useState(true);
   const [userPos, setUserPos] = useState<{ lat: number; lon: number } | null>(null);
@@ -86,7 +87,10 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
     return () => ctrl.abort();
   }, [attempt]);
 
-  const streams = useMemo(() => catalog?.streams.filter((s) => enabled.has(s.category)) ?? null, [catalog, enabled]);
+  const streams = useMemo(
+    () => catalog?.streams.filter((s) => enabled.has(s.category) && (snapshots || s.kind !== 'snapshot')) ?? null,
+    [catalog, enabled, snapshots],
+  );
   const counts = useMemo(() => {
     const c = Object.fromEntries(CATEGORIES.map((k) => [k, 0])) as Record<Category, number>;
     for (const s of catalog?.streams ?? []) c[s.category]++;
@@ -103,9 +107,11 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
 
   const random = useCallback(() => {
     if (!streams?.length) return;
-    // Weighted toward confident and hand-placed entries — those are the best-located, best-named streams.
+    // Weighted toward hand-placed and confidently placed YouTube streams (the most interesting and
+    // best named), then live agency video; snapshots only occasionally.
     const pool = streams.filter((s) => s.id !== selectedId);
-    const weights = pool.map((s) => s.confidence ** 2 * (s.geocode === 'override' ? 3 : 1));
+    const kindWeight = { youtube: 1, hls: 0.12, snapshot: 0.02 } as const;
+    const weights = pool.map((s) => kindWeight[s.kind] * s.confidence ** 2 * (s.geocode === 'override' ? 3 : 1));
     let r = Math.random() * weights.reduce((a, b) => a + b, 0);
     const pick = pool.find((_, i) => (r -= weights[i]) <= 0) ?? pool[pool.length - 1];
     if (pick) select(pick, 'travel');
@@ -219,6 +225,9 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
           return next;
         })}
         onReset={() => setEnabled(new Set(CATEGORIES))}
+        snapshots={snapshots}
+        snapshotCount={catalog?.streams.filter((s) => s.kind === 'snapshot').length ?? 0}
+        onToggleSnapshots={() => setSnapshots((v) => !v)}
         onPick={(s) => select(s, 'travel')}
         onRandom={random}
       />

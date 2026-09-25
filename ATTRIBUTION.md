@@ -10,6 +10,12 @@ texts are reproduced in full here and in `licenses/`.
 | [GeoNames](https://www.geonames.org/) | `cities1000`, `alternateNamesV2`, `admin1CodesASCII` | CC BY 4.0 | `data/gazetteer/cities.tsv` (pruned; see below) |
 | [Sentinel-2 cloudless 2016](https://s2maps.eu) by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2016) | satellite imagery of the globe | CC BY 4.0 (text below) | not stored; tiles are fetched from tiles.maps.eox.at at runtime |
 | [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors | map data in the basemap tiles | ODbL 1.0 | not stored; tiles are fetched from OpenFreeMap / CARTO at runtime |
+| [Caltrans](https://cwwp2.dot.ca.gov/) CCTV status feeds | camera list, coordinates, live video / still URLs | public California state data | `data/upstream/agencies.json` (normalised); video and images are not stored |
+| [Delaware DOT](https://tmc.deldot.gov/json/videocamera.json) | camera list, coordinates, live video URLs | public state data | as above |
+| [NYC DOT](https://webcams.nyctmc.org/) | camera list, coordinates, still-image URLs | public city data | as above |
+| [DriveBC](https://www.drivebc.ca/) | webcam list, coordinates, still-image URLs | [Open Government Licence – British Columbia](https://www2.gov.bc.ca/gov/content/data/open-data/open-government-licence-bc) | as above |
+| [Fintraffic / Digitraffic](https://www.digitraffic.fi/en/) | road weather camera stations and image URLs | CC BY 4.0 | as above |
+| Transport Department, HKSAR via [DATA.GOV.HK](https://data.gov.hk/) | traffic snapshot camera locations and image URLs | [DATA.GOV.HK terms of use](https://data.gov.hk/en/terms-and-conditions) | as above |
 | YouTube | stream playback | YouTube Terms of Service | not stored; streams embedded via the public player |
 
 Data sourced from Famelack (famelack.com).
@@ -19,6 +25,10 @@ is a derivative of GeoNames: it keeps the id, name, coordinates, country,
 first-level admin code and name, population and timezone of each place in
 `cities1000`, plus alternate names that are tagged with a language and not
 marked historic or colloquial. All other columns and records are dropped.
+
+**Required notices.** Contains information licensed under the Open Government Licence – British Columbia.
+Source: Fintraffic / digitraffic.fi, licence CC 4.0 BY. Traffic snapshot data: Transport Department,
+The Government of the Hong Kong SAR, via DATA.GOV.HK.
 
 **Streams** are the property of their respective broadcasters. Atlas Eye stores
 only their public YouTube video IDs and titles, and plays them through

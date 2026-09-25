@@ -209,16 +209,36 @@ export function geocode(
   return { ok: true, hit: best };
 }
 
-/** Nearest gazetteer place — used to derive a timezone for hand-placed overrides. */
-export function nearestPlace(g: Gazetteer, lat: number, lon: number): Place {
-  // ponytail: linear scan over ~70k places; fine for a few hundred overrides, use a k-d tree if it's ever per-stream.
-  let best = g.places[0];
-  let bestD = Infinity;
-  for (const p of g.places) {
-    const d = distanceKm(lat, lon, p.lat, p.lon);
-    if (d < bestD) { best = p; bestD = d; }
+/** 1°×1° buckets of places, built on first use, for nearest-place lookups. */
+let grid: Map<string, Place[]> | null = null;
+const cell = (lat: number, lon: number) => `${Math.floor(lat)},${Math.floor(lon)}`;
+
+/** Nearest gazetteer place — gives agency cameras and overrides a timezone and a place name. */
+export function nearestPlace(g: Gazetteer, lat: number, lon: number): { place: Place; km: number } {
+  if (!grid) {
+    grid = new Map();
+    for (const p of g.places) {
+      const k = cell(p.lat, p.lon);
+      const list = grid.get(k);
+      if (list) list.push(p); else grid.set(k, [p]);
+    }
   }
-  return best;
+  let best = g.places[0];
+  let bestKm = Infinity;
+  // Search outward ring by ring; stop once the ring is farther than the best hit (~111 km per ring).
+  for (let r = 0; r <= 30; r++) {
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+        for (const p of grid.get(cell(lat + dy, lon + dx)) ?? []) {
+          const d = distanceKm(lat, lon, p.lat, p.lon);
+          if (d < bestKm) { best = p; bestKm = d; }
+        }
+      }
+    }
+    if (bestKm < r * 111 * Math.cos((Math.min(89, Math.abs(lat)) * Math.PI) / 180)) break;
+  }
+  return { place: best, km: bestKm };
 }
 
 export function placeLabel(p: Place): string {

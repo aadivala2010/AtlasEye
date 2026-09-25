@@ -18,8 +18,9 @@ export default function About() {
 
         <Section title="What this is">
           <p>
-            Every pin is a public YouTube live stream that its broadcaster chose to publish — city cameras, beaches,
-            harbours, wildlife feeds, volcano watches. The list comes from two openly licensed catalogs that verify
+            Every pin is a public live camera that its operator chose to publish: YouTube live streams (city cameras,
+            beaches, harbours, wildlife feeds, volcano watches), live road-camera video from transport agencies, and
+            clearly labelled snapshot cameras that refresh every few seconds to minutes. The list comes from two openly licensed catalogs that verify
             the streams are live and embeddable. Atlas Eye places each one on the globe from its title using an offline
             gazetteer, or from hand-placed coordinates for famous landmarks. A stream whose location can&apos;t be
             resolved with confidence is left off the globe rather than guessed.
@@ -56,6 +57,17 @@ export default function About() {
               © 2026 Famelack) and{' '}
               <a className="text-accent hover:underline" href="https://github.com/tantran21501/camlisted">camlisted</a> (MIT,
               © 2026 zenith605). License notices are retained in ATTRIBUTION.md.
+            </Credit>
+            <Credit k="Camera operators">
+              Public traffic and weather cameras, shown with each operator&apos;s published coordinates:{' '}
+              <a className="text-accent hover:underline" href="https://cwwp2.dot.ca.gov/">Caltrans</a> (California),{' '}
+              <a className="text-accent hover:underline" href="https://deldot.gov/map/">Delaware DOT</a>,{' '}
+              <a className="text-accent hover:underline" href="https://webcams.nyctmc.org/">NYC DOT</a>,{' '}
+              <a className="text-accent hover:underline" href="https://www.drivebc.ca/">DriveBC</a> — contains information licensed under the{' '}
+              <a className="text-accent hover:underline" href="https://www2.gov.bc.ca/gov/content/data/open-data/open-government-licence-bc">Open Government Licence – British Columbia</a>,{' '}
+              <a className="text-accent hover:underline" href="https://www.digitraffic.fi/en/">Fintraffic / digitraffic.fi</a> (road weather cameras, CC BY 4.0), and the{' '}
+              Transport Department of the Hong Kong SAR via <a className="text-accent hover:underline" href="https://data.gov.hk/en-data/dataset/hk-td-tis_2-traffic-snapshot-images">DATA.GOV.HK</a>.
+              {' '}Snapshot cameras are still images the operator refreshes every few seconds to minutes; they are labelled SNAPSHOT.
             </Credit>
             <Credit k="Place data">
               <a className="text-accent hover:underline" href="https://www.geonames.org/">GeoNames</a>, licensed under{' '}
