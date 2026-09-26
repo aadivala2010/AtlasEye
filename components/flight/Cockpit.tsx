@@ -5,6 +5,7 @@ import type { Map as MLMap } from 'maplibre-gl';
 import { project, type Flight } from '@/lib/flights';
 import { subsolarPoint, sunAltitude } from '@/lib/solar';
 import { SATELLITE } from '@/components/globe/GlobeView';
+import { cockpitFor } from '@/lib/cockpits';
 
 export interface CockpitHandle { fullscreen(): void }
 
@@ -21,7 +22,8 @@ const SKY_NIGHT = { 'sky-color': '#03060F', 'horizon-color': '#1A2440', 'fog-col
 /**
  * Synthetic out-of-the-window view: a second MapLibre map whose camera is placed at the
  * aircraft's (dead-reckoned) position and altitude, looking along its track, then framed by
- * cockpit windows. Satellite imagery + terrain, not a real camera on the aircraft.
+ * a real cockpit photo of the type (windows cut out), or a drawn frame for unknown types.
+ * Satellite imagery + terrain, not a real camera on the aircraft.
  */
 export default function Cockpit({ flight, ref }: { flight: Flight; ref?: Ref<CockpitHandle> }) {
   const wrap = useRef<HTMLDivElement>(null);
@@ -104,10 +106,27 @@ export default function Cockpit({ flight, ref }: { flight: Flight; ref?: Ref<Coc
   const hdg = String(Math.round(flight.track) % 360).padStart(3, '0');
   const vs = `${flight.vs > 0 ? '+' : ''}${Math.round(flight.vs)}`;
 
+  const photo = cockpitFor(flight.type);
+
   return (
-    <div ref={wrap} className="relative aspect-video w-full overflow-hidden rounded-[2px] border border-subtle bg-void">
-      <div ref={container} className="absolute inset-0 h-full w-full" />
-      {/* Cockpit frame: everything but the window panes is solid. */}
+    // Fullscreen letterboxes the box on black instead of stretching it off the photo's aspect.
+    <div ref={wrap} className="flex items-center justify-center bg-void">
+    <div
+      className="relative aspect-video w-full overflow-hidden rounded-[2px] border border-subtle bg-void [:fullscreen>&]:h-full [:fullscreen>&]:w-auto [:fullscreen>&]:max-w-full"
+      style={photo && { aspectRatio: photo.aspect }}
+    >
+      {/* Shifted so the map's vanishing point sits behind the photo's windscreen. */}
+      <div ref={container} className="absolute inset-x-0 h-full w-full" style={{ top: `${(photo?.horizon ?? 50) - 50}%` }} />
+      {photo ? (
+        <>
+          <img src={photo.src} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-contain" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/80 to-transparent px-2 pt-6 pb-1.5 font-mono text-[10px] tracking-[0.08em] text-accent">
+            <span>HDG {hdg} · ALT {flight.ground ? 'GND' : Math.round(flight.alt).toLocaleString('en-US')} · GS {Math.round(flight.gs)} · V/S {vs}</span>
+            <span className="text-[9px] text-tertiary">Photo: {photo.credit}</span>
+          </div>
+        </>
+      ) : (
+      /* Cockpit frame: everything but the window panes is solid. */
       <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
         <defs>
           <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
@@ -138,6 +157,8 @@ export default function Cockpit({ flight, ref }: { flight: Flight; ref?: Ref<Coc
           SYNTHETIC VIEW · SATELLITE IMAGERY FROM REPORTED POSITION
         </text>
       </svg>
+      )}
+    </div>
     </div>
   );
 }

@@ -16,6 +16,7 @@ texts are reproduced in full here and in `licenses/`.
 | [DriveBC](https://www.drivebc.ca/) | webcam list, coordinates, still-image URLs | [Open Government Licence – British Columbia](https://www2.gov.bc.ca/gov/content/data/open-data/open-government-licence-bc) | as above |
 | [Fintraffic / Digitraffic](https://www.digitraffic.fi/en/) | road weather camera stations and image URLs | CC BY 4.0 | as above |
 | Transport Department, HKSAR via [DATA.GOV.HK](https://data.gov.hk/) | traffic snapshot camera locations and image URLs | [DATA.GOV.HK terms of use](https://data.gov.hk/en/terms-and-conditions) | as above |
+| [Wikimedia Commons](https://commons.wikimedia.org/) photographers (list below) | cockpit photos | CC BY / CC BY-SA / GFDL / CC0, per photo | `public/cockpits/*.webp` (modified, see below) |
 | YouTube | stream playback | YouTube Terms of Service | not stored; streams embedded via the public player |
 
 Data sourced from Famelack (famelack.com).
@@ -29,6 +30,23 @@ marked historic or colloquial. All other columns and records are dropped.
 **Required notices.** Contains information licensed under the Open Government Licence – British Columbia.
 Source: Fintraffic / digitraffic.fi, licence CC 4.0 BY. Traffic snapshot data: Transport Department,
 The Government of the Hong Kong SAR, via DATA.GOV.HK.
+
+
+**Cockpit photos.** Each is resized, re-encoded as WebP, and has its windscreen made
+transparent; the modified files are licensed under the same terms as the originals.
+
+- `a320.webp`: [Cockpit View PR-AVP A320-214 msn 4891 (6349154954).jpg](https://commons.wikimedia.org/wiki/File:Cockpit_View_PR-AVP_A320-214_msn_4891_(6349154954).jpg) by Joao Carlos Medau from Campinas, Brazil, CC BY 2.0
+- `b737.webp`: [Boeing 737 S7 VQ-BKW cockpit May 2011.jpg](https://commons.wikimedia.org/wiki/File:Boeing_737_S7_VQ-BKW_cockpit_May_2011.jpg) by Alex Beltyukov, CC BY-SA 3.0
+- `b787.webp`: [Boeing 787-8 N787BA cockpit.jpg](https://commons.wikimedia.org/wiki/File:Boeing_787-8_N787BA_cockpit.jpg) by Alex Beltyukov, CC BY-SA 3.0
+- `b777.webp`: [Boeing 777-200LR Flightdeck.jpg](https://commons.wikimedia.org/wiki/File:Boeing_777-200LR_Flightdeck.jpg) by Aaron Davis, CC BY-SA 4.0
+- `a330.webp`: [Airbus A330-302 Iberia EC-LYF cockpit (10983484845).jpg](https://commons.wikimedia.org/wiki/File:Airbus_A330-302_Iberia_EC-LYF_cockpit_(10983484845).jpg) by Curimedia | P H O T O G R A P H Y, CC BY 2.0
+- `a350.webp`: [Airbus A-350 XWB F-WWYB cockpit view.jpg](https://commons.wikimedia.org/wiki/File:Airbus_A-350_XWB_F-WWYB_cockpit_view.jpg) by Joao Carlos Medau (https://secure.flickr.com/photos/medau/), CC BY 2.0
+- `b757.webp`: [Boeing 757-300 Cockpit.JPG](https://commons.wikimedia.org/wiki/File:Boeing_757-300_Cockpit.JPG) by JHenryW, CC BY-SA 3.0
+- `b767.webp`: [Continental Airlines Boeing 767-400ER flight deck.jpg](https://commons.wikimedia.org/wiki/File:Continental_Airlines_Boeing_767-400ER_flight_deck.jpg) by Ken Iwelumo, GFDL 1.2
+- `ejet.webp`: [Embraer E195-E2 cockpit.jpg](https://commons.wikimedia.org/wiki/File:Embraer_E195-E2_cockpit.jpg) by EneasMx, CC BY 4.0
+- `crj.webp`: [The CRJ-900ER Flight Deck (2806000295).jpg](https://commons.wikimedia.org/wiki/File:The_CRJ-900ER_Flight_Deck_(2806000295).jpg) by Cory W. Watts from Madison, Wisconsin, United States of America, CC BY-SA 2.0
+- `dh8d.webp`: [Q400 NextGen aircraft cockpit.jpg](https://commons.wikimedia.org/wiki/File:Q400_NextGen_aircraft_cockpit.jpg) by Rick Rydell, CC0
+- `atr.webp`: [Virgin Australia ATR cockpit in hangar - Brisbane Airport.jpg](https://commons.wikimedia.org/wiki/File:Virgin_Australia_ATR_cockpit_in_hangar_-_Brisbane_Airport.jpg) by Aviationbystirling, CC BY 4.0
 
 **Streams** are the property of their respective broadcasters. Atlas Eye stores
 only their public YouTube video IDs and titles, and plays them through
