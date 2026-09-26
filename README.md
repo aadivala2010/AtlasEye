@@ -16,7 +16,7 @@ On Windows you can double-click **`start.bat`** instead: it installs dependencie
 first run, starts the dev server and opens the browser.
 
 Deploy: import the repo into Vercel — zero configuration, no environment variables.
-The page is static (the catalog is a file in `public/data/`) apart from `app/api/flights` (caching proxy to adsb.lol, live near the view) and `app/api/flights/global` (OpenSky worldwide snapshot, cached 15 min; set `OPENSKY_CLIENT_ID` / `OPENSKY_CLIENT_SECRET` from a free OpenSky account for 90 s refreshes).
+The page is static (the catalog is a file in `public/data/`) apart from `app/api/flights` (caching proxy to adsb.lol, live near the view) and `app/api/flights/global` (worldwide airliners from adsb.lol, one aircraft type per CDN-cached request).
 
 | Script | What it does |
 |---|---|

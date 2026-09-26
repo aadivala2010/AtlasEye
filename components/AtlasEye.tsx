@@ -351,7 +351,7 @@ function FlightNotice({ error, count }: { error: boolean; count: number | null }
   const { zoom } = useReadout();
   const text = error ? 'FLIGHT FEED BUSY — RETRYING'
     : count === 0 ? 'NO AIRCRAFT REPORTED'
-    : zoom < 4.5 ? 'LIVE WITHIN 460 KM OF VIEW CENTRE · ELSEWHERE UP TO 15 MIN OLD'
+    : zoom < 4.5 ? 'ALL AIRCRAFT LIVE NEAR VIEW CENTRE · ELSEWHERE AIRLINERS, UPDATED EACH MINUTE'
     : null;
   if (!text) return null;
   return (

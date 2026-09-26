@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { AIRLINER_TYPES } from './airliners';
 
 /** One aircraft from adsb.lol (readsb JSON), trimmed to what we draw. */
 export interface Flight {
@@ -68,7 +69,7 @@ export const fetchFlights = (lat: number, lon: number, nm: number, signal?: Abor
 
 /**
  * Dead-reckoned position at `now`: straight along the track at ground speed (1 nm = 1 arcminute).
- * ponytail: flat-earth straight line, capped at 15 min (the worldwide snapshot's age); turns
+ * ponytail: flat-earth straight line, capped at 15 min (worst-case age of a stale cached worldwide sweep); turns
  * aren't modelled, so far-off aircraft drift until the next snapshot.
  */
 export function project(f: Flight, now: number): { lat: number; lon: number } {
@@ -82,7 +83,7 @@ export function project(f: Flight, now: number): { lat: number; lon: number } {
 
 /**
  * Poll live aircraft around `center()` every 10 s while `on`; with `worldwide`, also merge in the
- * OpenSky snapshot of every aircraft on Earth (live data wins per aircraft). Keeps the last good
+ * worldwide airliner sweep (live data wins per aircraft). Keeps the last good
  * lists on errors.
  */
 export function useFlights(on: boolean, center: () => { lat: number; lon: number } | null, nm = 250, worldwide = false) {
@@ -116,10 +117,20 @@ export function useFlights(on: boolean, center: () => { lat: number; lon: number
   useEffect(() => {
     if (!on || !worldwide) { setWorld(null); return; }
     const ctrl = new AbortController();
-    const tick = () => getFlights('/api/flights/global', ctrl.signal).then(setWorld, () => undefined);
+    const byType = new Map<string, Flight[]>();
+    let i = 0;
+    let timer = 0;
+    // One type every 2.5 s: a full worldwide refresh a minute, mostly served from the CDN.
+    const tick = async () => {
+      const type = AIRLINER_TYPES[i++ % AIRLINER_TYPES.length];
+      try {
+        byType.set(type, await getFlights(`/api/flights/global?type=${type}`, ctrl.signal));
+        setWorld([...byType.values()].flat());
+      } catch { /* busy or aborted: keep what we have, try the next type */ }
+      if (!ctrl.signal.aborted) timer = window.setTimeout(tick, 2500);
+    };
     tick();
-    const t = window.setInterval(tick, 60_000); // the CDN answers most of these from cache
-    return () => { ctrl.abort(); clearInterval(t); };
+    return () => { ctrl.abort(); clearTimeout(timer); };
   }, [on, worldwide]);
 
   const flights = useMemo(() => {
