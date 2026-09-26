@@ -56,7 +56,7 @@ export function parseFlights(ac: Raw[], now: number): Flight[] {
 
 /** Aircraft within `nm` nautical miles (adsb.lol caps it at 250) of a point. */
 export async function fetchFlights(lat: number, lon: number, nm: number, signal?: AbortSignal): Promise<Flight[]> {
-  const r = await fetch(`/api/adsb/point/${lat.toFixed(3)}/${lon.toFixed(3)}/${nm}`, { signal });
+  const r = await fetch(`/api/flights?lat=${lat.toFixed(3)}&lon=${lon.toFixed(3)}&nm=${nm}`, { signal });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   const j = (await r.json()) as { ac?: Raw[] };
   return parseFlights(j.ac ?? [], Date.now());

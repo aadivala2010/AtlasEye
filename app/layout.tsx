@@ -5,7 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Atlas Eye — a live window onto anywhere on Earth',
+  title: 'Atlas Eye',
   description: 'A dark 3D globe of public live streams. Spin it, click a point, and watch what is happening there right now.',
 };
 

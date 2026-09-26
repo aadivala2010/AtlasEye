@@ -3,7 +3,7 @@
 A live window onto anywhere on Earth. A 3D satellite globe scattered with ~10,000 public live
 cameras — spin it, click a point, and watch what is happening there right now.
 
-No accounts. No API keys. No backend. No tracking.
+No accounts. No API keys. No tracking. One tiny server route: a caching proxy for live flights.
 
 ## Run it
 
@@ -16,7 +16,7 @@ On Windows you can double-click **`start.bat`** instead: it installs dependencie
 first run, starts the dev server and opens the browser.
 
 Deploy: import the repo into Vercel — zero configuration, no environment variables.
-The page is fully static; the catalog is a file in `public/data/`.
+The page is static (the catalog is a file in `public/data/`) apart from `app/api/flights`, a caching proxy to adsb.lol.
 
 | Script | What it does |
 |---|---|

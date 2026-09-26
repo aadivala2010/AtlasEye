@@ -283,6 +283,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
             />
           )}
           {catalog && !error && <EmptyNotice />}
+          {layers.flights && <FlightNotice error={flightError} count={flights?.length ?? null} />}
           {error && <CatalogError message={error} onRetry={() => setAttempt((a) => a + 1)} />}
         </section>
 
@@ -341,6 +342,21 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
       </main>
 
       <StatusBar total={catalog?.count ?? null} builtAt={catalog?.builtAt ?? null} loading={!catalog && !error} />
+    </div>
+  );
+}
+
+/** Why the sky might look empty: adsb.lol only answers for a 250 nm circle around the view centre. */
+function FlightNotice({ error, count }: { error: boolean; count: number | null }) {
+  const { zoom } = useReadout();
+  const text = error ? 'FLIGHT FEED BUSY — RETRYING'
+    : count === 0 ? 'NO AIRCRAFT REPORTED WITHIN 460 KM OF VIEW CENTRE'
+    : zoom < 4.5 ? 'FLIGHTS SHOWN WITHIN 460 KM OF VIEW CENTRE — ZOOM IN'
+    : null;
+  if (!text) return null;
+  return (
+    <div className="pointer-events-none absolute inset-x-0 top-3 z-10 text-center font-mono text-[10px] tracking-[0.08em] text-flight">
+      {text}
     </div>
   );
 }
