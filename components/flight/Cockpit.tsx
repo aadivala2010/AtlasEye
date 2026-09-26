@@ -120,10 +120,10 @@ export default function Cockpit({ flight, ref }: { flight: Flight; ref?: Ref<Coc
       {photo ? (
         <>
           <img src={photo.src} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-contain" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/80 to-transparent px-2 pt-6 pb-1.5 font-mono text-[10px] tracking-[0.08em] text-accent">
-            <span>HDG {hdg} · ALT {flight.ground ? 'GND' : Math.round(flight.alt).toLocaleString('en-US')} · GS {Math.round(flight.gs)} · V/S {vs}</span>
-            <span className="text-[9px] text-tertiary">Photo: {photo.credit}</span>
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-2 pt-6 pb-1.5 font-mono text-[10px] tracking-[0.08em] text-accent">
+            HDG {hdg} · ALT {flight.ground ? 'GND' : Math.round(flight.alt).toLocaleString('en-US')} · GS {Math.round(flight.gs)} · V/S {vs}
           </div>
+          <div className="pointer-events-none absolute top-1 right-1.5 rounded-[2px] bg-black/50 px-1 font-mono text-[8px] text-tertiary">Photo: {photo.credit}</div>
         </>
       ) : (
       /* Cockpit frame: everything but the window panes is solid. */
