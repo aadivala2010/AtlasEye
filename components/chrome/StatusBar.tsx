@@ -40,8 +40,8 @@ export default function StatusBar({ total, builtAt, loading }: Props) {
       {builtAt && <F k="BUILT" className="max-xl:hidden">{builtAt.slice(0, 10)}</F>}
       </div>
       <a href="/about" className="shrink-0 text-tertiary transition-colors duration-200 ease-atlas hover:text-secondary">
-        <span className="max-md:hidden">Imagery © EOX Sentinel-2 cloudless · © OpenStreetMap · GeoNames CC BY 4.0 · Famelack · camlisted · Road cams: public agencies · via YouTube · Flights: adsb.lol (ODbL) · OpenSky Network · Weather: Open-Meteo · Terrain: Mapzen</span>
-        <span className="md:hidden">©EOX·OSM·GeoNames·Famelack·camlisted·YouTube·adsb.lol·OpenSky·Open-Meteo</span>
+        <span className="max-md:hidden">Imagery © EOX Sentinel-2 cloudless · Esri, Maxar, Earthstar Geographics · © OpenStreetMap · GeoNames CC BY 4.0 · Famelack · camlisted · Road cams: public agencies · via YouTube · Flights: adsb.lol (ODbL) · OpenSky Network · Weather: Open-Meteo · Terrain: Mapzen</span>
+        <span className="md:hidden">©EOX·Esri·OSM·GeoNames·Famelack·camlisted·YouTube·adsb.lol·OpenSky·Open-Meteo</span>
       </a>
     </footer>
   );

@@ -130,6 +130,12 @@ async function loadBase(): Promise<Base | null> {
 /** Sentinel-2 cloudless 2016 by EOX (CC BY 4.0): a real, cloud-free view of the planet, no key needed. */
 export const SATELLITE = 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg';
 
+/**
+ * Sentinel-2 is 10 m/pixel and stops at z14, so close in it turns to mush. Esri World Imagery
+ * (sub-metre, no key) fades in over it from z10.5.
+ */
+const HIRES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+
 /** Satellite imagery, with a light OpenMapTiles overlay (borders, places) from whichever base style loaded. */
 function buildStyle(base: Base | null): StyleSpecification {
   const layers: LayerSpecification[] = [
@@ -137,6 +143,10 @@ function buildStyle(base: Base | null): StyleSpecification {
     {
       id: 'satellite', type: 'raster', source: 'satellite',
       paint: { 'raster-fade-duration': 200, 'raster-contrast': 0.08, 'raster-saturation': 0.05 },
+    },
+    {
+      id: 'hires', type: 'raster', source: 'hires', minzoom: 10.5,
+      paint: { 'raster-fade-duration': 200, 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 10.5, 0, 12, 1] },
     },
   ];
   if (base) {
@@ -174,6 +184,10 @@ function buildStyle(base: Base | null): StyleSpecification {
       satellite: {
         type: 'raster', tiles: [SATELLITE], tileSize: 256, maxzoom: 14,
         attribution: 'Sentinel-2 cloudless 2016 by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2016)',
+      },
+      hires: {
+        type: 'raster', tiles: [HIRES], tileSize: 256, maxzoom: 19,
+        attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community',
       },
       ...(base ? { omt: base.source } : {}),
     },
@@ -294,7 +308,7 @@ export default function GlobeView(props: Props) {
         center: initialCamera ? [initialCamera.lon, initialCamera.lat] : [-30, 20],
         zoom,
         minZoom: 0.5,
-        maxZoom: 16,
+        maxZoom: 18,
         maxPitch: 0,
         attributionControl: false,
         dragRotate: false,
@@ -304,7 +318,8 @@ export default function GlobeView(props: Props) {
       map.touchZoomRotate.disableRotation();
       // Imagery tiles over open ocean or outside coverage fail to decode; that's expected, not an error.
       map.on('error', (e) => {
-        if ((e as { sourceId?: string }).sourceId === 'satellite') return;
+        const id = (e as { sourceId?: string }).sourceId;
+        if (id === 'satellite' || id === 'hires') return;
         console.error(e.error);
       });
       mapRef.current = map;
