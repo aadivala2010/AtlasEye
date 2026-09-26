@@ -153,7 +153,7 @@ export function IconButton({ label, onClick, active, children }: { label: string
   );
 }
 
-function Row({ label, children }: { label: string; children: ReactNode }) {
+export function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
     <>
       <dt className="label self-center">{label}</dt>

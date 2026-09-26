@@ -1,15 +1,21 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { CATEGORIES, type Catalog, type Category, type Stream } from '@/lib/stream';
+import type { Catalog, Stream } from '@/lib/stream';
 import { byDistanceFrom } from '@/lib/geo';
+import { project, useFlights, type Flight } from '@/lib/flights';
 import { useReadout } from '@/lib/readout';
 import GlobeView, { type Camera, type GlobeHandle } from './globe/GlobeView';
-import Header from './chrome/Header';
+import Header, { type Layer, type Layers } from './chrome/Header';
 import StatusBar from './chrome/StatusBar';
 import type { SearchHandle } from './chrome/Search';
 import StreamPanel from './stream/StreamPanel';
 import type { PlayerHandle } from './stream/Player';
+import FlightPanel from './flight/FlightPanel';
+import DossierPanel from './dossier/DossierPanel';
+
+/** What the side panel shows when it isn't a stream (streams keep their own id for the URL). */
+type Focus = { kind: 'flight'; flight: Flight } | { kind: 'dossier'; lat: number; lon: number };
 
 interface Boot {
   camera: Camera | null;
@@ -42,7 +48,8 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const [enabled, setEnabled] = useState<Set<Category>>(() => new Set(CATEGORIES));
+  const [layers, setLayers] = useState<Layers>({ cameras: true, flights: false, dossier: false });
+  const [other, setOther] = useState<Focus | null>(null);
   const [snapshots, setSnapshots] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [muted, setMuted] = useState(true);
@@ -88,19 +95,25 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   }, [attempt]);
 
   const streams = useMemo(
-    () => catalog?.streams.filter((s) => enabled.has(s.category) && (snapshots || s.kind !== 'snapshot')) ?? null,
-    [catalog, enabled, snapshots],
+    () => catalog ? (layers.cameras ? catalog.streams.filter((s) => snapshots || s.kind !== 'snapshot') : []) : null,
+    [catalog, layers.cameras, snapshots],
   );
-  const counts = useMemo(() => {
-    const c = Object.fromEntries(CATEGORIES.map((k) => [k, 0])) as Record<Category, number>;
-    for (const s of catalog?.streams ?? []) c[s.category]++;
-    return c;
-  }, [catalog]);
   const selected = useMemo(() => catalog?.streams.find((s) => s.id === selectedId) ?? null, [catalog, selectedId]);
+
+  // ── flights: around the view, or around the tracked aircraft so it never leaves coverage ──
+  const tracked = other?.kind === 'flight' ? other.flight : null;
+  const { flights, error: flightError } = useFlights(layers.flights || !!tracked, () =>
+    tracked ? project(tracked, Date.now()) : globe.current?.center() ?? null);
+  const liveTracked = tracked ? flights?.find((f) => f.hex === tracked.hex) : undefined;
+  // Remember the latest fix, so the panel keeps the aircraft if it drops out of a poll.
+  useEffect(() => {
+    if (liveTracked) setOther((o) => (o?.kind === 'flight' && o.flight.hex === liveTracked.hex ? { kind: 'flight', flight: liveTracked } : o));
+  }, [liveTracked]);
 
   // ── selection ──────────────────────────────────────────────────────────────
   const select = useCallback((s: Stream, mode: 'near' | 'travel', keepWalk = false) => {
     if (!keepWalk) walk.current = null;
+    setOther(null);
     setSelectedId(s.id);
     globe.current?.flyToStream(s, mode);
   }, []);
@@ -129,7 +142,20 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
     select(w.list[i], 'near', true);
   }, [selected, streams, select]);
 
-  const close = useCallback(() => { setSelectedId(null); walk.current = null; setSheet(SHEET_PEEK); }, []);
+  const close = useCallback(() => { setSelectedId(null); setOther(null); walk.current = null; setSheet(SHEET_PEEK); }, []);
+
+  const openFlight = useCallback((f: Flight) => {
+    setSelectedId(null);
+    walk.current = null;
+    setOther({ kind: 'flight', flight: f });
+    const p = project(f, Date.now());
+    globe.current?.flyTo(p.lon, p.lat, 'near');
+  }, []);
+  const openDossier = useCallback((lat: number, lon: number) => {
+    setSelectedId(null);
+    walk.current = null;
+    setOther({ kind: 'dossier', lat, lon });
+  }, []);
 
   // Shared link: once the catalog arrives, open the stream it names.
   const restored = useRef(false);
@@ -210,21 +236,17 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
     },
   };
 
-  const bottomInset = selected && isMobile ? Math.round(sheet * viewportH) : 0;
+  const panelOpen = !!(selected && catalog) || !!other;
+  const bottomInset = panelOpen && isMobile ? Math.round(sheet * viewportH) : 0;
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-void">
       <Header
         streams={streams ?? []}
-        counts={counts}
-        enabled={enabled}
         searchRef={search}
-        onToggle={(c) => setEnabled((prev) => {
-          const next = new Set(prev);
-          if (next.has(c)) next.delete(c); else next.add(c);
-          return next;
-        })}
-        onReset={() => setEnabled(new Set(CATEGORIES))}
+        layers={layers}
+        counts={{ cameras: streams?.length ?? null, flights: layers.flights ? (flightError && !flights ? null : flights?.length ?? null) : null }}
+        onToggleLayer={(l: Layer) => setLayers((prev) => ({ ...prev, [l]: !prev[l] }))}
         snapshots={snapshots}
         snapshotCount={catalog?.streams.filter((s) => s.kind === 'snapshot').length ?? 0}
         onToggleSnapshots={() => setSnapshots((v) => !v)}
@@ -239,7 +261,10 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
             <GlobeView
               ref={globe}
               streams={streams}
-              selected={selected}
+              focus={selected ? { lat: selected.latitude, lon: selected.longitude } : other?.kind === 'dossier' ? other : null}
+              flights={layers.flights || tracked ? flights : null}
+              flightId={tracked?.hex ?? null}
+              dossier={layers.dossier}
               initialCamera={boot.camera}
               reducedMotion={boot.reducedMotion}
               rotate={boot.rotate}
@@ -249,6 +274,11 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
                 const s = catalog?.streams.find((x) => x.id === id);
                 if (s) select(s, 'near');
               }}
+              onFlight={(hex) => {
+                const f = flights?.find((x) => x.hex === hex);
+                if (f) openFlight(f);
+              }}
+              onDossier={openDossier}
               onCamera={onCamera}
             />
           )}
@@ -256,9 +286,9 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
           {error && <CatalogError message={error} onRetry={() => setAttempt((a) => a + 1)} />}
         </section>
 
-        {selected && catalog && (
+        {panelOpen && (
           <aside
-            aria-label="Stream"
+            aria-label={other?.kind === 'flight' ? 'Flight' : other?.kind === 'dossier' ? 'Dossier' : 'Stream'}
             style={isMobile ? { height: `${sheet * 100}dvh` } : undefined}
             className={`z-20 flex flex-col border-subtle bg-panel transition-[translate,opacity] duration-400 ease-atlas starting:opacity-0
               max-lg:absolute max-lg:inset-x-0 max-lg:bottom-0 max-lg:rounded-t-[4px] max-lg:border-t max-lg:shadow-[0_-16px_40px_rgba(0,0,0,0.55)] max-lg:starting:translate-y-8
@@ -272,6 +302,24 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
               <span className="h-1 w-9 rounded-full bg-strong" />
             </div>
             <div className="min-h-0 flex-1">
+              {other?.kind === 'flight' ? (
+                <FlightPanel
+                  flight={other.flight}
+                  live={!!liveTracked}
+                  onClose={close}
+                  onLocate={() => { const p = project(other.flight, Date.now()); globe.current?.flyTo(p.lon, p.lat, 'near'); }}
+                />
+              ) : other?.kind === 'dossier' ? (
+                <DossierPanel
+                  key={`${other.lat},${other.lon}`}
+                  lat={other.lat}
+                  lon={other.lon}
+                  streams={streams ?? []}
+                  onPickStream={(s) => select(s, 'near')}
+                  onPickFlight={openFlight}
+                  onClose={close}
+                />
+              ) : selected && catalog && (
               <StreamPanel
                 stream={selected}
                 builtAt={catalog.builtAt}
@@ -286,6 +334,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
                 onFullscreen={() => player.current?.fullscreen()}
                 onLocate={locate}
               />
+              )}
             </div>
           </aside>
         )}

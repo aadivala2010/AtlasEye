@@ -1,17 +1,25 @@
 'use client';
 
 import type { Ref } from 'react';
-import { CATEGORIES, type Category, type Stream } from '@/lib/stream';
+import type { Stream } from '@/lib/stream';
 import Search, { type SearchHandle } from './Search';
 import { IconEye, IconRandom } from './icons';
 
+export type Layer = 'cameras' | 'flights' | 'dossier';
+export type Layers = Record<Layer, boolean>;
+
+const LAYERS: { id: Layer; label: string; title: string }[] = [
+  { id: 'cameras', label: 'Cameras', title: 'Public live cameras' },
+  { id: 'flights', label: 'Flights', title: 'Live aircraft (ADS-B) around the view; click one for the cockpit view' },
+  { id: 'dossier', label: 'Dossier', title: 'Click anywhere on the globe for a dossier of that spot' },
+];
+
 interface Props {
   streams: Stream[];
-  counts: Record<Category, number>;
-  enabled: Set<Category>;
   searchRef: Ref<SearchHandle>;
-  onToggle(c: Category): void;
-  onReset(): void;
+  layers: Layers;
+  counts: Partial<Record<Layer, number | null>>;
+  onToggleLayer(l: Layer): void;
   onPick(s: Stream): void;
   onRandom(): void;
   snapshots: boolean;
@@ -19,44 +27,37 @@ interface Props {
   onToggleSnapshots(): void;
 }
 
+const CHIP = 'flex h-6 shrink-0 items-center gap-1.5 rounded-[2px] border px-2 font-mono text-[10px] uppercase tracking-[0.08em] transition-colors duration-200 ease-atlas';
+const chipState = (on: boolean) => (on ? 'border-strong bg-raised text-primary hover:border-accent-muted' : 'border-subtle text-tertiary hover:text-secondary');
+
 export default function Header(p: Props) {
-  const filtered = p.enabled.size < CATEGORIES.length;
   const chips = (
-    <div className="no-scrollbar flex min-w-0 items-center gap-1 overflow-x-auto" role="group" aria-label="Categories">
-      {CATEGORIES.map((c) => {
-        const on = p.enabled.has(c);
+    <div className="no-scrollbar flex min-w-0 items-center gap-1 overflow-x-auto" role="group" aria-label="Layers">
+      {LAYERS.map(({ id, label, title }) => {
+        const on = p.layers[id];
+        const n = p.counts[id];
         return (
-          <button
-            key={c}
-            type="button"
-            aria-pressed={on}
-            onClick={() => p.onToggle(c)}
-            className={`flex h-6 shrink-0 items-center gap-1.5 rounded-[2px] border px-2 font-mono text-[10px] uppercase tracking-[0.08em] transition-colors duration-200 ease-atlas ${
-              on ? 'border-strong bg-raised text-primary hover:border-accent-muted' : 'border-subtle text-tertiary hover:text-secondary'
-            }`}
-          >
-            {c}
-            <span className={on ? 'text-tertiary' : 'text-tertiary/60'}>{p.counts[c]}</span>
+          <button key={id} type="button" aria-pressed={on} title={title} onClick={() => p.onToggleLayer(id)} className={`${CHIP} ${chipState(on)}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${on ? LAYER_DOT[id] : 'bg-strong'}`} />
+            {label}
+            {n != null && <span className="text-tertiary">{n}</span>}
           </button>
         );
       })}
-      <span className="mx-1 h-4 w-px shrink-0 bg-strong" aria-hidden />
-      <button
-        type="button"
-        aria-pressed={p.snapshots}
-        onClick={p.onToggleSnapshots}
-        title="Still images from traffic and weather cameras, refreshed every few seconds to minutes"
-        className={`flex h-6 shrink-0 items-center gap-1.5 rounded-[2px] border px-2 font-mono text-[10px] uppercase tracking-[0.08em] transition-colors duration-200 ease-atlas ${
-          p.snapshots ? 'border-strong bg-raised text-primary hover:border-accent-muted' : 'border-subtle text-tertiary hover:text-secondary'
-        }`}
-      >
-        Snapshots
-        <span className="text-tertiary">{p.snapshotCount}</span>
-      </button>
-      {filtered && (
-        <button type="button" onClick={p.onReset} className="h-6 shrink-0 px-2 font-mono text-[10px] uppercase tracking-[0.08em] text-accent hover:underline">
-          All
-        </button>
+      {p.layers.cameras && (
+        <>
+          <span className="mx-1 h-4 w-px shrink-0 bg-strong" aria-hidden />
+          <button
+            type="button"
+            aria-pressed={p.snapshots}
+            onClick={p.onToggleSnapshots}
+            title="Still images from traffic and weather cameras, refreshed every few seconds to minutes"
+            className={`${CHIP} ${chipState(p.snapshots)}`}
+          >
+            Snapshots
+            <span className="text-tertiary">{p.snapshotCount}</span>
+          </button>
+        </>
       )}
     </div>
   );
@@ -87,3 +88,5 @@ export default function Header(p: Props) {
     </header>
   );
 }
+
+const LAYER_DOT: Record<Layer, string> = { cameras: 'bg-live', flights: 'bg-flight', dossier: 'bg-accent' };

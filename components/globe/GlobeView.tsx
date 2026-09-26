@@ -9,18 +9,27 @@ import type { Stream } from '@/lib/stream';
 import { distanceKm } from '@/lib/geo';
 import { nightBands, subsolarPoint, sunAltitude } from '@/lib/solar';
 import { readout } from '@/lib/readout';
+import { formatAlt, project, type Flight } from '@/lib/flights';
 
 export interface Camera { lon: number; lat: number; zoom: number }
 export interface GlobeHandle {
   /** `travel` arcs out and back in across the planet (random, search); `near` is a short glide. */
   flyToStream(stream: Stream, mode: 'near' | 'travel'): void;
+  flyTo(lon: number, lat: number, mode: 'near' | 'travel'): void;
+  /** Centre of the view, for fetching what's around it. */
+  center(): { lat: number; lon: number } | null;
   stopRotation(): void;
 }
 
 interface Props {
   ref?: Ref<GlobeHandle>;
   streams: Stream[] | null;
-  selected: Stream | null;
+  /** Where the pulse sits: the open stream or dossier target. */
+  focus: { lat: number; lon: number } | null;
+  flights: Flight[] | null;
+  flightId: string | null;
+  /** Dossier mode: a click on empty globe opens a dossier there. */
+  dossier: boolean;
   initialCamera: Camera | null;
   reducedMotion: boolean;
   /** Auto-rotate until first touch (off for shared links and reduced motion). */
@@ -30,6 +39,8 @@ interface Props {
   /** Pixels hidden under the mobile bottom sheet, so fly-to targets stay visible. */
   bottomInset: number;
   onSelect(id: string): void;
+  onFlight(hex: string): void;
+  onDossier(lat: number, lon: number): void;
   onCamera(camera: Camera): void;
 }
 
@@ -41,8 +52,40 @@ const BASE_STYLES = [
 const C = {
   void: '#040508', ocean: '#0A1A2E', raised: '#12161E', subtle: '#181D27', strong: '#29313F',
   tertiary: '#565E70', primary: '#E6EAF2', accent: '#4DE1FF', accentMuted: '#1B5567', accentGlow: 'rgba(77,225,255,0.15)',
-  live: '#2BE88A', night: '#6C7BA8',
+  live: '#2BE88A', night: '#6C7BA8', plane: '#FFB547',
 };
+
+/** Top-down airliner silhouette, drawn white so the SDF icon can be tinted per aircraft. */
+function planeIcon(dpr: number): ImageData | null {
+  const s = 24 * dpr;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = s;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+  ctx.scale(dpr, dpr);
+  ctx.fillStyle = '#fff';
+  ctx.fill(new Path2D('M12 1.5c.9 0 1.4 1 1.4 2.2v5.6l8.1 4.6v2.2l-8.1-2.4v4.6l2.2 1.7v1.8L12 21l-3.6.8V20l2.2-1.7v-4.6l-8.1 2.4v-2.2l8.1-4.6V3.7c0-1.2.5-2.2 1.4-2.2Z'));
+  return ctx.getImageData(0, 0, s, s);
+}
+
+function planeData(flights: Flight[], now: number): GeoJSON.FeatureCollection<GeoJSON.Point> {
+  return {
+    type: 'FeatureCollection',
+    features: flights.map((f) => {
+      const p = project(f, now);
+      return {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [p.lon, p.lat] },
+        properties: { hex: f.hex, track: f.track, ground: f.ground },
+      };
+    }),
+  };
+}
+
+const planeSize = (hex: string): ExpressionSpecification =>
+  ['case', ['==', ['get', 'hex'], hex], 1.5, ['interpolate', ['linear'], ['zoom'], 2, 0.55, 8, 1]];
+const planeColor = (hex: string): ExpressionSpecification =>
+  ['case', ['==', ['get', 'hex'], hex], C.accent, ['get', 'ground'], C.tertiary, C.plane];
 
 /** cubic-bezier(0.16, 1, 0.3, 1) — the --ease token, for MapLibre camera animations. */
 function ease(t: number): number {
@@ -82,7 +125,7 @@ async function loadBase(): Promise<Base | null> {
 
 /** Our own quiet layer stack over the OpenMapTiles schema both base styles share. */
 /** Sentinel-2 cloudless 2016 by EOX (CC BY 4.0): a real, cloud-free view of the planet, no key needed. */
-const SATELLITE = 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg';
+export const SATELLITE = 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg';
 
 /** Satellite imagery, with a light OpenMapTiles overlay (borders, places) from whichever base style loaded. */
 function buildStyle(base: Base | null): StyleSpecification {
@@ -168,7 +211,7 @@ const SWEEP_LAYERS: [string, string[]][] = [
 ];
 
 export default function GlobeView(props: Props) {
-  const { ref, streams, selected, initialCamera, reducedMotion, rotate, intro, bottomInset } = props;
+  const { ref, streams, focus, flights, flightId, initialCamera, reducedMotion, rotate, intro, bottomInset } = props;
   const container = useRef<HTMLDivElement>(null);
   const hoverLabel = useRef<HTMLDivElement>(null);
   const halo = useRef<HTMLDivElement>(null);
@@ -203,18 +246,19 @@ export default function GlobeView(props: Props) {
   const markerRef = useRef<Marker | null>(null);
   const rotating = useRef(false);
   const streamsRef = useRef<Stream[]>([]);
+  const flightsRef = useRef<Flight[]>([]);
   const sweepFrom = useRef(0);
   const cb = useRef(props);
   cb.current = props;
   const [ready, setReady] = useState(false);
   /** A fly requested before the map existed (e.g. a shared link that resolves before the map loads). */
-  const pendingFly = useRef<[Stream, 'near' | 'travel'] | null>(null);
+  const pendingFly = useRef<[number, number, 'near' | 'travel'] | null>(null);
   const flyOpts = useRef({ bottomInset, reducedMotion });
   flyOpts.current = { bottomInset, reducedMotion };
 
-  const fly = (map: MLMap, s: Stream, mode: 'near' | 'travel') => {
+  const fly = (map: MLMap, lon: number, lat: number, mode: 'near' | 'travel') => {
     rotating.current = false;
-    const center: [number, number] = [s.longitude, s.latitude];
+    const center: [number, number] = [lon, lat];
     const padding = { top: 0, left: 0, right: 0, bottom: flyOpts.current.bottomInset };
     const zoom = mode === 'travel' ? 5 : Math.max(map.getZoom(), 3.5);
     if (flyOpts.current.reducedMotion) map.jumpTo({ center, zoom, padding });
@@ -228,6 +272,7 @@ export default function GlobeView(props: Props) {
     let cancelled = false;
     let raf = 0;
     let minuteTimer = 0;
+    let planeTimer = 0;
     let map: MLMap | null = null;
 
     (async () => {
@@ -326,6 +371,18 @@ export default function GlobeView(props: Props) {
             'circle-opacity': op, 'circle-stroke-opacity': op,
           },
         });
+
+        const planeImg = planeIcon(2);
+        if (planeImg) map.addImage('plane', planeImg, { pixelRatio: 2, sdf: true });
+        map.addSource('planes', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map.addLayer({
+          id: 'planes', type: 'symbol', source: 'planes',
+          layout: {
+            'icon-image': 'plane', 'icon-rotate': ['get', 'track'], 'icon-rotation-alignment': 'map',
+            'icon-allow-overlap': true, 'icon-ignore-placement': true, 'icon-size': planeSize(''),
+          },
+          paint: { 'icon-color': planeColor(''), 'icon-halo-color': C.void, 'icon-halo-width': 1 },
+        });
         setReady(true);
       });
 
@@ -335,6 +392,11 @@ export default function GlobeView(props: Props) {
         map.getSource<GeoJSONSource>('night')?.setData(nightBands(new Date()));
         map.getSource<GeoJSONSource>('streams')?.setData(pinData(streamsRef.current, sweepFrom.current));
       }, 60_000);
+
+      // Aircraft glide between 10 s polls: dead-reckoned once a second.
+      planeTimer = window.setInterval(() => {
+        if (flightsRef.current.length) map?.getSource<GeoJSONSource>('planes')?.setData(planeData(flightsRef.current, Date.now()));
+      }, 1000);
 
       // ── interaction ──
       let hoverCluster: number | string | undefined;
@@ -348,15 +410,17 @@ export default function GlobeView(props: Props) {
       map.on('mousemove', (e) => {
         if (!map) return;
         readout.set({ cursor: { lat: e.lngLat.lat, lon: e.lngLat.lng } });
-        const hit = map.getLayer('pins') ? map.queryRenderedFeatures(e.point, { layers: ['pins', 'clusters'] })[0] : undefined;
-        map.getCanvas().style.cursor = hit ? 'pointer' : '';
+        const hit = map.getLayer('planes') ? map.queryRenderedFeatures(e.point, { layers: ['planes', 'pins', 'clusters'] })[0] : undefined;
+        map.getCanvas().style.cursor = hit ? 'pointer' : cb.current.dossier ? 'crosshair' : '';
         setClusterHover(hit?.layer.id === 'clusters' ? hit.id : undefined);
         const label = hoverLabel.current;
         if (!label) return;
         const s = hit?.layer.id === 'pins' ? streamsRef.current.find((x) => x.id === hit.properties.id) : undefined;
-        if (s) {
-          label.firstElementChild!.textContent = s.name;
-          label.lastElementChild!.textContent = `${s.place} · ${s.country}`;
+        const f = hit?.layer.id === 'planes' ? flightsRef.current.find((x) => x.hex === hit.properties.hex) : undefined;
+        const text = s ? [s.name, `${s.place} · ${s.country}`] : f ? [f.callsign, `${f.type ?? '—'} · ${formatAlt(f)} · ${Math.round(f.gs)} kt`] : null;
+        if (text) {
+          label.firstElementChild!.textContent = text[0];
+          label.lastElementChild!.textContent = text[1];
           label.style.transform = `translate(${e.point.x + 12}px, ${e.point.y - 10}px)`;
           label.style.opacity = '1';
         } else {
@@ -372,6 +436,15 @@ export default function GlobeView(props: Props) {
       map.on('click', 'pins', (e) => {
         const id = e.features?.[0]?.properties.id;
         if (typeof id === 'string') cb.current.onSelect(id);
+      });
+      map.on('click', 'planes', (e) => {
+        const hex = e.features?.[0]?.properties.hex;
+        if (typeof hex === 'string') cb.current.onFlight(hex);
+      });
+      map.on('click', (e) => {
+        if (!map || !cb.current.dossier) return;
+        if (map.queryRenderedFeatures(e.point, { layers: ['planes', 'pins', 'clusters'] }).length) return;
+        cb.current.onDossier(e.lngLat.lat, e.lngLat.lng);
       });
       map.on('click', 'clusters', async (e) => {
         const f = e.features?.[0];
@@ -424,13 +497,14 @@ export default function GlobeView(props: Props) {
       });
       map.once('idle', countInView);
       map.once('style.load', countInView);
-      if (pendingFly.current) { const [s, m] = pendingFly.current; pendingFly.current = null; fly(map, s, m); }
+      if (pendingFly.current) { const [lon, lat, m] = pendingFly.current; pendingFly.current = null; fly(map, lon, lat, m); }
     })();
 
     return () => {
       cancelled = true;
       cancelAnimationFrame(raf);
       clearInterval(minuteTimer);
+      clearInterval(planeTimer);
       markerRef.current?.remove();
       map?.remove();
       mapRef.current = null;
@@ -446,6 +520,20 @@ export default function GlobeView(props: Props) {
     map.getSource<GeoJSONSource>('streams')?.setData(pinData(streams, sweepFrom.current));
     map.once('idle', () => map.fire('move'));
   }, [ready, streams]);
+
+  // ── aircraft ───────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    flightsRef.current = flights ?? [];
+    map.getSource<GeoJSONSource>('planes')?.setData(planeData(flightsRef.current, Date.now()));
+  }, [ready, flights]);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    map.setLayoutProperty('planes', 'icon-size', planeSize(flightId ?? ''));
+    map.setPaintProperty('planes', 'icon-color', planeColor(flightId ?? ''));
+  }, [ready, flightId]);
 
   // ── first-load sweep: pins come online around the globe over ~900ms ──────
   const swept = useRef(false);
@@ -471,27 +559,34 @@ export default function GlobeView(props: Props) {
     return () => { clearTimeout(delay); cancelAnimationFrame(raf); set(1); };
   }, [ready, streams, intro]);
 
-  // ── the one pulse, on the selected stream ────────────────────────────────
+  // ── the one pulse, on the open stream or dossier ─────────────────────────
+  const focusLat = focus?.lat;
+  const focusLon = focus?.lon;
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mlLib) return;
-    if (!selected) { markerRef.current?.remove(); markerRef.current = null; return; }
+    if (focusLat === undefined || focusLon === undefined) { markerRef.current?.remove(); markerRef.current = null; return; }
     if (!markerRef.current) {
       const el = document.createElement('div');
       el.className = 'pulse';
-      markerRef.current = new mlLib.Marker({ element: el }).setLngLat([selected.longitude, selected.latitude]).addTo(map);
+      markerRef.current = new mlLib.Marker({ element: el }).setLngLat([focusLon, focusLat]).addTo(map);
     } else {
-      markerRef.current.setLngLat([selected.longitude, selected.latitude]);
+      markerRef.current.setLngLat([focusLon, focusLat]);
     }
-  }, [selected, mlLib]);
+  }, [focusLat, focusLon, mlLib]);
 
   // ── imperative camera ──────────────────────────────────────────────────────
   useImperativeHandle(ref, () => ({
     stopRotation() { rotating.current = false; },
-    flyToStream(s, mode) {
+    flyToStream(s, mode) { this.flyTo(s.longitude, s.latitude, mode); },
+    flyTo(lon, lat, mode) {
       const map = mapRef.current;
-      if (map) fly(map, s, mode);
-      else pendingFly.current = [s, mode];
+      if (map) fly(map, lon, lat, mode);
+      else pendingFly.current = [lon, lat, mode];
+    },
+    center() {
+      const c = mapRef.current?.getCenter();
+      return c ? { lat: c.lat, lon: c.lng } : null;
     },
   }), []);
 

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { geocode, loadGazetteer, nearestPlace } from './geocode';
 import { nightBands, subsolarPoint, sunAltitude } from '../lib/solar';
 import { zonedClock } from '../lib/time';
+import { parseFlights, project } from '../lib/flights';
 
 const g = loadGazetteer();
 const place = (title: string, country?: string) => {
@@ -45,5 +46,13 @@ assert.ok(bands.features.every((f) => f.geometry.coordinates[0].length > 100));
 
 // Clocks: Tokyo has no DST.
 assert.deepEqual(zonedClock(new Date('2026-01-01T00:00:00Z'), 'Asia/Tokyo'), { time: '09:00:00', offset: 'UTC+9' });
+
+// Flights: 60 kt due east on the equator covers 1 arcminute of longitude in a minute; ground → alt 0.
+const [f] = parseFlights([{ hex: 'abc', lat: 0, lon: 0, gs: 60, track: 90, alt_baro: 'ground', seen_pos: 0 }], 0);
+assert.equal(f.ground, true);
+assert.equal(f.alt, 0);
+const p = project(f, 60_000);
+assert.ok(Math.abs(p.lon - 1 / 60) < 1e-9 && Math.abs(p.lat) < 1e-9, `project ${JSON.stringify(p)}`);
+assert.deepEqual(project(f, 10 * 60_000), project(f, 60_000)); // capped at 60 s
 
 console.log('✔ selftest passed');

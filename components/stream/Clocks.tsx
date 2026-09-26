@@ -7,7 +7,7 @@ import { subsolarPoint, sunAltitude } from '@/lib/solar';
 import { IconMoon, IconSun } from '@/components/chrome/icons';
 
 /** LOCAL (at the stream) and YOU, ticking every second. */
-export default function Clocks({ stream }: { stream: Stream }) {
+export default function Clocks({ stream }: { stream: Pick<Stream, 'timezone' | 'latitude' | 'longitude'> }) {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const t = window.setInterval(() => setNow(new Date()), 1000);
