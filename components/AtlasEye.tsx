@@ -103,7 +103,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   // ── flights: around the view, or around the tracked aircraft so it never leaves coverage ──
   const tracked = other?.kind === 'flight' ? other.flight : null;
   const { flights, error: flightError } = useFlights(layers.flights || !!tracked, () =>
-    tracked ? project(tracked, Date.now()) : globe.current?.center() ?? null, 250, true);
+    tracked ? project(tracked, Date.now()) : liveCentre(globe.current?.center() ?? null), 250, true);
   const liveTracked = tracked ? flights?.find((f) => f.hex === tracked.hex) : undefined;
   // Remember the latest fix, so the panel keeps the aircraft if it drops out of a poll.
   useEffect(() => {
@@ -346,12 +346,19 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   );
 }
 
+/**
+ * The live all-aircraft feed covers a 250 nm circle; zoomed out it would show as one dense disc
+ * among worldwide airliners, so it only runs once the view roughly fits inside that circle.
+ */
+const LIVE_ZOOM = 6;
+const liveCentre = (c: { lat: number; lon: number; zoom: number } | null) => (c && c.zoom >= LIVE_ZOOM ? c : null);
+
 /** Data freshness: live (10 s) near the view centre, a cached worldwide snapshot elsewhere. */
 function FlightNotice({ error, count }: { error: boolean; count: number | null }) {
   const { zoom } = useReadout();
   const text = error ? 'FLIGHT FEED BUSY — RETRYING'
     : count === 0 ? 'NO AIRCRAFT REPORTED'
-    : zoom < 4.5 ? 'ALL AIRCRAFT LIVE NEAR VIEW CENTRE · ELSEWHERE AIRLINERS, UPDATED EACH MINUTE'
+    : zoom < LIVE_ZOOM ? 'AIRLINERS WORLDWIDE, UPDATED EACH MINUTE · ZOOM IN FOR ALL AIRCRAFT, LIVE'
     : null;
   if (!text) return null;
   return (

@@ -17,7 +17,7 @@ export interface GlobeHandle {
   flyToStream(stream: Stream, mode: 'near' | 'travel'): void;
   flyTo(lon: number, lat: number, mode: 'near' | 'travel'): void;
   /** Centre of the view, for fetching what's around it. */
-  center(): { lat: number; lon: number } | null;
+  center(): { lat: number; lon: number; zoom: number } | null;
   stopRotation(): void;
 }
 
@@ -604,7 +604,7 @@ export default function GlobeView(props: Props) {
     },
     center() {
       const c = mapRef.current?.getCenter();
-      return c ? { lat: c.lat, lon: c.lng } : null;
+      return c ? { lat: c.lat, lon: c.lng, zoom: mapRef.current!.getZoom() } : null;
     },
   }), []);
 

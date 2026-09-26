@@ -107,6 +107,9 @@ export function useFlights(on: boolean, center: () => { lat: number; lon: number
           if (ctrl.signal.aborted) return;
           setError(true);
         }
+      } else {
+        setLocal(null); // no centre = live feed paused (e.g. zoomed out): drop its stale circle
+        setError(false);
       }
       if (!ctrl.signal.aborted) timer = window.setTimeout(tick, c ? 10_000 : 500);
     };
