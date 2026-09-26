@@ -63,6 +63,8 @@ export default function Cockpit({ flight, ref }: { flight: Flight; ref?: Ref<Coc
         },
         interactive: false,
         attributionControl: false,
+        // Keep the computed camera altitude: clamping the look-at point to terrain drags the eye into the hills.
+        centerClampedToGround: false,
         maxPitch: 95,
         fadeDuration: 0,
       });
@@ -77,7 +79,7 @@ export default function Cockpit({ flight, ref }: { flight: Flight; ref?: Ref<Coc
         const alt = Math.max(ground, f.alt * 0.3048);
         try {
           map.jumpTo(map.calculateCameraOptionsFromCameraLngLatAltRotation(
-            [p.lon, p.lat], alt, f.track, f.ground ? 90 : 90 - LOOK_DOWN, f.roll * ROLL_SIGN,
+            [p.lon, p.lat], alt, f.track, f.ground ? 88 : 90 - LOOK_DOWN, f.roll * ROLL_SIGN,
           ));
         } catch { /* degenerate camera for one frame; try again next */ }
         raf = requestAnimationFrame(frame);
