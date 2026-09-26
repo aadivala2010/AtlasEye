@@ -82,8 +82,11 @@ function planeData(flights: Flight[], now: number): GeoJSON.FeatureCollection<Ge
   };
 }
 
-const planeSize = (hex: string): ExpressionSpecification =>
-  ['case', ['==', ['get', 'hex'], hex], 1.5, ['interpolate', ['linear'], ['zoom'], 2, 0.55, 8, 1]];
+// A zoom curve must be the top-level expression, so the selected-aircraft case goes inside each stop.
+const planeSize = (hex: string): ExpressionSpecification => {
+  const picked: ExpressionSpecification = ['==', ['get', 'hex'], hex];
+  return ['interpolate', ['linear'], ['zoom'], 2, ['case', picked, 1.1, 0.55], 8, ['case', picked, 1.5, 1]];
+};
 const planeColor = (hex: string): ExpressionSpecification =>
   ['case', ['==', ['get', 'hex'], hex], C.accent, ['get', 'ground'], C.tertiary, C.plane];
 
