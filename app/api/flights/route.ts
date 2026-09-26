@@ -18,7 +18,11 @@ export async function GET(req: Request) {
 
   for (let attempt = 0; attempt < 4; attempt++) {
     if (attempt) await new Promise((r) => setTimeout(r, 600 * attempt));
-    const r = await fetch(`https://api.adsb.lol/v2/point/${lat}/${lon}/${nm}`, { cache: 'no-store' }).catch(() => null);
+    // adsb.lol 403s Node's default user agent; identify ourselves instead.
+    const r = await fetch(`https://api.adsb.lol/v2/point/${lat}/${lon}/${nm}`, {
+      cache: 'no-store',
+      headers: { 'user-agent': 'AtlasEye/1.0 (+https://atlas-eye-globe.vercel.app)' },
+    }).catch(() => null);
     if (r?.ok) {
       return new Response(r.body, {
         headers: { 'content-type': 'application/json', 'cache-control': 'public, s-maxage=8, stale-while-revalidate=30' },
