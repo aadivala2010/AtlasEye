@@ -103,7 +103,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   // ── flights: around the view, or around the tracked aircraft so it never leaves coverage ──
   const tracked = other?.kind === 'flight' ? other.flight : null;
   const { flights, error: flightError } = useFlights(layers.flights || !!tracked, () =>
-    tracked ? project(tracked, Date.now()) : globe.current?.center() ?? null);
+    tracked ? project(tracked, Date.now()) : globe.current?.center() ?? null, 250, true);
   const liveTracked = tracked ? flights?.find((f) => f.hex === tracked.hex) : undefined;
   // Remember the latest fix, so the panel keeps the aircraft if it drops out of a poll.
   useEffect(() => {
@@ -346,12 +346,12 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   );
 }
 
-/** Why the sky might look empty: adsb.lol only answers for a 250 nm circle around the view centre. */
+/** Data freshness: live (10 s) near the view centre, a cached worldwide snapshot elsewhere. */
 function FlightNotice({ error, count }: { error: boolean; count: number | null }) {
   const { zoom } = useReadout();
   const text = error ? 'FLIGHT FEED BUSY — RETRYING'
-    : count === 0 ? 'NO AIRCRAFT REPORTED WITHIN 460 KM OF VIEW CENTRE'
-    : zoom < 4.5 ? 'FLIGHTS SHOWN WITHIN 460 KM OF VIEW CENTRE — ZOOM IN'
+    : count === 0 ? 'NO AIRCRAFT REPORTED'
+    : zoom < 4.5 ? 'LIVE WITHIN 460 KM OF VIEW CENTRE · ELSEWHERE UP TO 15 MIN OLD'
     : null;
   if (!text) return null;
   return (

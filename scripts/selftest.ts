@@ -53,6 +53,6 @@ assert.equal(f.ground, true);
 assert.equal(f.alt, 0);
 const p = project(f, 60_000);
 assert.ok(Math.abs(p.lon - 1 / 60) < 1e-9 && Math.abs(p.lat) < 1e-9, `project ${JSON.stringify(p)}`);
-assert.deepEqual(project(f, 10 * 60_000), project(f, 60_000)); // capped at 60 s
+assert.deepEqual(project(f, 60 * 60_000), project(f, 15 * 60_000)); // capped at 15 min
 
 console.log('✔ selftest passed');
