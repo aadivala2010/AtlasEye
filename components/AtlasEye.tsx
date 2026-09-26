@@ -100,10 +100,11 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   );
   const selected = useMemo(() => catalog?.streams.find((s) => s.id === selectedId) ?? null, [catalog, selectedId]);
 
-  // ── flights: around the view, or around the tracked aircraft so it never leaves coverage ──
+  // ── flights: airliners worldwide; plus a 5 nm live poll around the aircraft in the cockpit, so it
+  // updates every 10 s. (A wide live circle around the view would draw a visible disc of extra aircraft.)
   const tracked = other?.kind === 'flight' ? other.flight : null;
   const { flights, error: flightError } = useFlights(layers.flights || !!tracked, () =>
-    tracked ? project(tracked, Date.now()) : liveCentre(globe.current?.center() ?? null), 250, true);
+    tracked ? project(tracked, Date.now()) : null, 5, true);
   const liveTracked = tracked ? flights?.find((f) => f.hex === tracked.hex) : undefined;
   // Remember the latest fix, so the panel keeps the aircraft if it drops out of a poll.
   useEffect(() => {
@@ -346,19 +347,12 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   );
 }
 
-/**
- * The live all-aircraft feed covers a 250 nm circle; zoomed out it would show as one dense disc
- * among worldwide airliners, so it only runs once the view roughly fits inside that circle.
- */
-const LIVE_ZOOM = 6;
-const liveCentre = (c: { lat: number; lon: number; zoom: number } | null) => (c && c.zoom >= LIVE_ZOOM ? c : null);
-
-/** Data freshness: live (10 s) near the view centre, a cached worldwide snapshot elsewhere. */
+/** What the flights layer is showing, and when it's failing. */
 function FlightNotice({ error, count }: { error: boolean; count: number | null }) {
   const { zoom } = useReadout();
   const text = error ? 'FLIGHT FEED BUSY — RETRYING'
     : count === 0 ? 'NO AIRCRAFT REPORTED'
-    : zoom < LIVE_ZOOM ? 'AIRLINERS WORLDWIDE, UPDATED EACH MINUTE · ZOOM IN FOR ALL AIRCRAFT, LIVE'
+    : zoom < 4.5 ? 'AIRLINERS WORLDWIDE · UPDATED EACH MINUTE'
     : null;
   if (!text) return null;
   return (
