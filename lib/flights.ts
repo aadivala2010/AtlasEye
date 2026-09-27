@@ -20,6 +20,10 @@ export interface Flight {
   /** Vertical rate, ft/min. */
   vs: number;
   squawk?: string;
+  /** Military, per readsb's database flags — travels with the aircraft, so it survives feed merges. */
+  mil: boolean;
+  /** Declared emergency, or an emergency squawk: 7500 unlawful interference, 7600 radio failure, 7700 general. */
+  emergency: boolean;
   /** Epoch ms of the position fix. */
   at: number;
 }
@@ -28,7 +32,12 @@ interface Raw {
   hex: string; flight?: string; r?: string; t?: string; lat?: number; lon?: number;
   alt_baro?: number | 'ground'; alt_geom?: number; gs?: number; track?: number; true_heading?: number;
   roll?: number; baro_rate?: number; geom_rate?: number; squawk?: string; seen_pos?: number;
+  dbFlags?: number; emergency?: string;
 }
+
+/** readsb dbFlags is a bitfield: 1 military, 2 interesting, 4 PIA, 8 LADD. */
+const MIL_FLAG = 1;
+const EMERGENCY_SQUAWKS = new Set(['7500', '7600', '7700']);
 
 export function parseFlights(ac: Raw[], now: number): Flight[] {
   const out: Flight[] = [];
@@ -49,6 +58,8 @@ export function parseFlights(ac: Raw[], now: number): Flight[] {
       roll: a.roll ?? 0,
       vs: a.geom_rate ?? a.baro_rate ?? 0,
       squawk: a.squawk,
+      mil: ((a.dbFlags ?? 0) & MIL_FLAG) !== 0,
+      emergency: EMERGENCY_SQUAWKS.has(a.squawk ?? '') || (!!a.emergency && a.emergency !== 'none'),
       at: now - (a.seen_pos ?? 0) * 1000,
     });
   }
@@ -62,6 +73,13 @@ async function getFlights(url: string, signal?: AbortSignal): Promise<Flight[]> 
   const j = (await r.json()) as { ac?: Raw[]; now?: number };
   return parseFlights(j.ac ?? [], j.now ?? Date.now());
 }
+
+/**
+ * The worldwide rotation: every airliner type, plus military and anyone squawking 7700. The two
+ * extra feeds are global single endpoints like a type sweep, so they ride the same pacing — and
+ * they carry aircraft no airliner sweep would ever show (helicopters, transports, fighters).
+ */
+const WORLD_FEEDS = [...AIRLINER_TYPES.map((t) => `type=${t}`), 'feed=mil', 'feed=7700'];
 
 /** Aircraft within `nm` nautical miles (adsb.lol caps it at 250) of a point, live. */
 export const fetchFlights = (lat: number, lon: number, nm: number, signal?: AbortSignal) =>
@@ -120,16 +138,16 @@ export function useFlights(on: boolean, center: () => { lat: number; lon: number
   useEffect(() => {
     if (!on || !worldwide) { setWorld(null); return; }
     const ctrl = new AbortController();
-    const byType = new Map<string, Flight[]>();
+    const byFeed = new Map<string, Flight[]>();
     let i = 0;
     let timer = 0;
-    // One type every 2.5 s: a full worldwide refresh a minute, mostly served from the CDN.
+    // One feed every 2.5 s: a full worldwide refresh a minute, mostly served from the CDN.
     const tick = async () => {
-      const type = AIRLINER_TYPES[i++ % AIRLINER_TYPES.length];
+      const feed = WORLD_FEEDS[i++ % WORLD_FEEDS.length];
       try {
-        byType.set(type, await getFlights(`/api/flights/global?type=${type}`, ctrl.signal));
-        setWorld([...byType.values()].flat());
-      } catch { /* busy or aborted: keep what we have, try the next type */ }
+        byFeed.set(feed, await getFlights(`/api/flights/global?${feed}`, ctrl.signal));
+        setWorld([...byFeed.values()].flat());
+      } catch { /* busy or aborted: keep what we have, try the next feed */ }
       if (!ctrl.signal.aborted) timer = window.setTimeout(tick, 2500);
     };
     tick();

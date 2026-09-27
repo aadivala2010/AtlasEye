@@ -20,6 +20,8 @@
   --status-night:   #6C7BA8;
   --status-dead:    #FF5A5A;
   --flight:         #FFB547;
+  --flight-mil:     #7CFC4B;
+  --flight-emer:    #FF3B4E;
 
   --radius:         4px;
   --ease:           cubic-bezier(0.16, 1, 0.3, 1);
@@ -44,6 +46,8 @@
   --color-night: var(--status-night);
   --color-dead: var(--status-dead);
   --color-flight: var(--flight);
+  --color-mil: var(--flight-mil);
+  --color-emergency: var(--flight-emer);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --ease-atlas: var(--ease);

@@ -7,6 +7,13 @@ import { IconButton, Row } from '@/components/stream/StreamPanel';
 import { IconClose, IconExternal, IconFullscreen, IconLocate } from '@/components/chrome/icons';
 import Cockpit, { type CockpitHandle } from './Cockpit';
 
+/** The three worldwide emergency codes. Every other squawk is routine and gets no gloss. */
+const SQUAWK_MEANING: Record<string, string> = {
+  '7500': 'unlawful interference',
+  '7600': 'radio failure',
+  '7700': 'general emergency',
+};
+
 interface Props {
   flight: Flight;
   /** False once the aircraft has dropped out of the latest poll: we show its last fix. */
@@ -36,6 +43,12 @@ export default function FlightPanel({ flight: f, live, onClose, onLocate }: Prop
           <div className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-tertiary">
             {[f.reg, f.type, f.hex].filter(Boolean).join(' · ')}
           </div>
+          {(f.emergency || f.mil) && (
+            <div className={`mt-1.5 inline-block border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] ${
+              f.emergency ? 'border-emergency/40 bg-emergency/10 text-emergency' : 'border-mil/40 bg-mil/10 text-mil'}`}>
+              {f.emergency ? 'Emergency' : 'Military'}
+            </div>
+          )}
         </div>
 
         <dl className="mx-4 mt-4 grid grid-cols-[88px_1fr] gap-x-3 gap-y-1.5 border-t border-subtle pt-3">
@@ -43,7 +56,10 @@ export default function FlightPanel({ flight: f, live, onClose, onLocate }: Prop
           <Row label="Speed">{Math.round(f.gs)} kt</Row>
           <Row label="Track">{Math.round(f.track)}°</Row>
           <Row label="Vert. rate">{f.vs > 0 ? '+' : ''}{Math.round(f.vs)} ft/min</Row>
-          <Row label="Squawk">{f.squawk ?? '—'}</Row>
+          <Row label="Squawk">
+            {f.squawk ?? '—'}
+            {SQUAWK_MEANING[f.squawk ?? ''] && <span className="text-emergency"> · {SQUAWK_MEANING[f.squawk!]}</span>}
+          </Row>
           <Row label="Coords">{formatCoord(f.lat, f.lon)}</Row>
           <Row label="Source">
             <a href="https://adsb.lol" target="_blank" rel="noopener noreferrer" className="hover:text-accent">adsb.lol (ODbL)</a>

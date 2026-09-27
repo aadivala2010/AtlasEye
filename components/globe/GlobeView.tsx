@@ -55,6 +55,8 @@ const C = {
   void: '#040508', ocean: '#0A1A2E', raised: '#12161E', subtle: '#181D27', strong: '#29313F',
   tertiary: '#565E70', primary: '#E6EAF2', accent: '#4DE1FF', accentMuted: '#1B5567', accentGlow: 'rgba(77,225,255,0.15)',
   live: '#2BE88A', night: '#6C7BA8', plane: '#FFB547',
+  // Kept in step with --flight-mil / --flight-emer in globals.css (MapLibre can't read CSS vars).
+  mil: '#7CFC4B', emergency: '#FF3B4E',
 };
 
 /** Top-down airliner silhouette, drawn white so the SDF icon can be tinted per aircraft. */
@@ -78,19 +80,27 @@ function planeData(flights: Flight[], now: number): GeoJSON.FeatureCollection<Ge
       return {
         type: 'Feature',
         geometry: { type: 'Point', coordinates: [p.lon, p.lat] },
-        properties: { hex: f.hex, track: f.track, ground: f.ground },
+        properties: { hex: f.hex, track: f.track, ground: f.ground, mil: f.mil, emergency: f.emergency },
       };
     }),
   };
 }
 
 // A zoom curve must be the top-level expression, so the selected-aircraft case goes inside each stop.
+// An emergency is drawn selected-size at every zoom: it should be findable on a globe full of traffic.
 const planeSize = (hex: string): ExpressionSpecification => {
-  const picked: ExpressionSpecification = ['==', ['get', 'hex'], hex];
-  return ['interpolate', ['linear'], ['zoom'], 2, ['case', picked, 1.1, 0.55], 8, ['case', picked, 1.5, 1]];
+  const big: ExpressionSpecification = ['any', ['==', ['get', 'hex'], hex], ['get', 'emergency']];
+  return ['interpolate', ['linear'], ['zoom'], 2, ['case', big, 1.1, 0.55], 8, ['case', big, 1.5, 1]];
 };
-const planeColor = (hex: string): ExpressionSpecification =>
-  ['case', ['==', ['get', 'hex'], hex], C.accent, ['get', 'ground'], C.tertiary, C.plane];
+/** Emergency outranks selection — losing the red would hide the one aircraft that matters. */
+const planeColor = (hex: string): ExpressionSpecification => [
+  'case',
+  ['get', 'emergency'], C.emergency,
+  ['==', ['get', 'hex'], hex], C.accent,
+  ['get', 'mil'], C.mil,
+  ['get', 'ground'], C.tertiary,
+  C.plane,
+];
 
 /** cubic-bezier(0.16, 1, 0.3, 1) — the --ease token, for MapLibre camera animations. */
 function ease(t: number): number {

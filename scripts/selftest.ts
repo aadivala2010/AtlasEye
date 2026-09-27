@@ -55,6 +55,22 @@ assert.equal(f.alt, 0);
 const p = project(f, 60_000);
 assert.ok(Math.abs(p.lon - 1 / 60) < 1e-9 && Math.abs(p.lat) < 1e-9, `project ${JSON.stringify(p)}`);
 assert.deepEqual(project(f, 60 * 60_000), project(f, 15 * 60_000)); // capped at 15 min
+assert.equal(f.mil, false);
+assert.equal(f.emergency, false);
+
+// Military rides on readsb's dbFlags bit 1 (bit 8 is LADD, not military); emergencies on squawk or the declared field.
+const flags = (dbFlags: number) => parseFlights([{ hex: 'a', lat: 0, lon: 0, dbFlags }], 0)[0].mil;
+assert.equal(flags(1), true);
+assert.equal(flags(9), true); // military and LADD
+assert.equal(flags(8), false);
+const emer = (r: Partial<Parameters<typeof parseFlights>[0][0]>) =>
+  parseFlights([{ hex: 'a', lat: 0, lon: 0, ...r }], 0)[0].emergency;
+assert.equal(emer({ squawk: '7700' }), true);
+assert.equal(emer({ squawk: '7600' }), true);
+assert.equal(emer({ squawk: '1200' }), false);
+assert.equal(emer({ squawk: '7000' }), false); // European VFR conspicuity, not an emergency
+assert.equal(emer({ emergency: 'none' }), false);
+assert.equal(emer({ emergency: 'downed' }), true);
 
 // Camera names: operator codes become road + direction + place words; shouted names are tamed.
 assert.equal(cameraName('1068N_75_N/O_GoldenGate_M107', 'I-75', 'Northbound'), 'I-75 Northbound · Golden Gate');
