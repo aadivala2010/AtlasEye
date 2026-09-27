@@ -48,7 +48,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const [layers, setLayers] = useState<Layers>({ cameras: true, flights: false, dossier: false });
+  const [layers, setLayers] = useState<Layers>({ cameras: true, flights: false, dossier: false, clouds: false });
   const [other, setOther] = useState<Focus | null>(null);
   const [snapshots, setSnapshots] = useState(true);
   const [terminator, setTerminator] = useState(true);
@@ -276,6 +276,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
               intro={boot.intro}
               bottomInset={bottomInset}
               terminator={terminator}
+              clouds={layers.clouds}
               onSelect={(id) => {
                 const s = catalog?.streams.find((x) => x.id === id);
                 if (s) select(s, 'near');

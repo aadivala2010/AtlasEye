@@ -84,6 +84,10 @@ export default function About() {
               <a className="text-accent hover:underline" href="https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9">Esri World Imagery</a>:
               Esri, Maxar, Earthstar Geographics, and the GIS User Community.
             </Credit>
+            <Credit k="Clouds">
+              Today&apos;s VIIRS (NOAA-20) true-colour imagery from{' '}
+              <a className="text-accent hover:underline" href="https://worldview.earthdata.nasa.gov">NASA EOSDIS GIBS</a>.
+            </Credit>
             <Credit k="Map tiles">
               © <a className="text-accent hover:underline" href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>,
               served by <a className="text-accent hover:underline" href="https://openfreemap.org/">OpenFreeMap</a>

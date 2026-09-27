@@ -5,13 +5,14 @@ import type { Stream } from '@/lib/stream';
 import Search, { type SearchHandle } from './Search';
 import { IconEye, IconMoon, IconRandom } from './icons';
 
-export type Layer = 'cameras' | 'flights' | 'dossier';
+export type Layer = 'cameras' | 'flights' | 'dossier' | 'clouds';
 export type Layers = Record<Layer, boolean>;
 
 const LAYERS: { id: Layer; label: string; title: string }[] = [
   { id: 'cameras', label: 'Cameras', title: 'Public live cameras' },
   { id: 'flights', label: 'Flights', title: 'Live aircraft (ADS-B) around the view; click one for the cockpit view' },
   { id: 'dossier', label: 'Dossier', title: 'Click anywhere on the globe for a dossier of that spot' },
+  { id: 'clouds', label: 'Clouds', title: "Today's cloud cover, from NASA's VIIRS true-colour imagery (a few hours behind)" },
 ];
 
 interface Props {
@@ -101,4 +102,4 @@ export default function Header(p: Props) {
   );
 }
 
-const LAYER_DOT: Record<Layer, string> = { cameras: 'bg-live', flights: 'bg-flight', dossier: 'bg-accent' };
+const LAYER_DOT: Record<Layer, string> = { cameras: 'bg-live', flights: 'bg-flight', dossier: 'bg-accent', clouds: 'bg-primary' };

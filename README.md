@@ -17,7 +17,7 @@ On Windows you can double-click **`start.bat`** instead: it installs dependencie
 first run, starts the dev server and opens the browser.
 
 Deploy: import the repo into Vercel — zero configuration, no environment variables.
-The page is static (the catalog is a file in `public/data/`) apart from `app/api/flights` (caching proxy to adsb.lol, live near the view) and `app/api/flights/global` (worldwide airliners from adsb.lol, one aircraft type per CDN-cached request).
+The page is static (the catalog is a file in `public/data/`) apart from `app/api/flights` (caching proxy to adsb.lol, live near the view) and `app/api/flights/global` (worldwide airliners, military and 7700 squawks from adsb.lol, one feed per CDN-cached request).
 
 | Script | What it does |
 |---|---|
@@ -212,6 +212,19 @@ fixed with a rule, a stopword or an override — but automatic matching is not p
 - **Satellite imagery:** the globe shows Esri World Imagery (keyless) at every zoom, with
   OpenStreetMap borders and place names from OpenFreeMap (CARTO fallback) drawn on top. EOX
   Sentinel-2 cloudless 2016 was dropped: its orbit-swath seams showed as stripes across continents.
+- **Clouds are today's real imagery,** not a model: NASA GIBS VIIRS (NOAA-20) corrected-reflectance
+  true colour, keyless, at GIBS's own `default` time (latest available, a few hours behind the
+  satellite). Laid over Esri at ~0.6 opacity — clouds are the brightest thing in frame, so they read
+  as clouds — and faded out by z7.5, where GIBS runs out of levels and Esri is sharper. Its tiles are
+  only requested once the **CLOUDS** chip is first switched on. Ceiling: polar winter is genuinely
+  unlit, so those tiles are black and dim the winter pole.
+- **Military and emergency aircraft** come from two more global adsb.lol endpoints (`/v2/mil`,
+  `/v2/squawk/7700`) folded into the same worldwide rotation as the type sweeps, so the request rate
+  is unchanged. `/v2/mil` also brings the helicopters, transports and fighters that no airliner-type
+  sweep would ever show. Both flags ride on the aircraft, not on the feed it arrived on — military
+  from readsb's `dbFlags` bit 1, emergency from squawk 7500/7600/7700 or the declared `emergency`
+  field — so they survive the merge with the live local feed. Emergency outranks selection for
+  colour and is drawn selected-size at every zoom.
 - **Rim light is CSS, not MapLibre's atmosphere,** which can't be tinted. The limb is found by
   projecting points outward from the view centre each frame.
 - **Cluster counts are drawn in Geist Mono via canvas** (`styleimagemissing`), because map glyph

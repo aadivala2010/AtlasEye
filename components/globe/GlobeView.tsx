@@ -40,6 +40,8 @@ interface Props {
   bottomInset: number;
   /** Show the day/night shading. */
   terminator: boolean;
+  /** Show today's cloud cover from NASA GIBS. */
+  clouds: boolean;
   onSelect(id: string): void;
   onFlight(hex: string): void;
   onDossier(lat: number, lon: number): void;
@@ -144,6 +146,19 @@ async function loadBase(): Promise<Base | null> {
  */
 export const SATELLITE = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 
+/**
+ * Today's clouds: NASA GIBS VIIRS (NOAA-20) corrected-reflectance true colour, no key. `default` in
+ * the time slot is GIBS's own "latest available" — a global daylit composite, a few hours behind the
+ * satellite. Laid over the Esri mosaic at partial opacity: clouds are the brightest thing in the
+ * frame, so they read as clouds while the imagery beneath shows through.
+ * ponytail: polar winter is genuinely unlit, so those tiles come back black and dim the winter pole.
+ * If that matters, mask it with the terminator's own sun altitude instead.
+ */
+const CLOUDS = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor'
+  + '/default/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg';
+/** GoogleMapsCompatible_Level9 is z0–8; past that MapLibre overzooms the last level rather than 404ing. */
+const CLOUDS_MAXZOOM = 8;
+
 /** Satellite imagery, with a light OpenMapTiles overlay (borders, places) from whichever base style loaded. */
 function buildStyle(base: Base | null): StyleSpecification {
   const layers: LayerSpecification[] = [
@@ -151,6 +166,14 @@ function buildStyle(base: Base | null): StyleSpecification {
     {
       id: 'satellite', type: 'raster', source: 'satellite',
       paint: { 'raster-fade-duration': 200, 'raster-contrast': 0.08, 'raster-saturation': 0.05 },
+    },
+    {
+      // Faded out by the zoom GIBS runs out of detail at, so close-in views keep Esri's sharpness.
+      id: 'clouds', type: 'raster', source: 'clouds', layout: { visibility: 'none' },
+      paint: {
+        'raster-opacity': ['interpolate', ['linear'], ['zoom'], 2, 0.62, 5, 0.5, 7.5, 0],
+        'raster-fade-duration': 300,
+      },
     },
   ];
   if (base) {
@@ -188,6 +211,10 @@ function buildStyle(base: Base | null): StyleSpecification {
       satellite: {
         type: 'raster', tiles: [SATELLITE], tileSize: 256, maxzoom: 19,
         attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+      },
+      clouds: {
+        type: 'raster', tiles: [CLOUDS], tileSize: 256, maxzoom: CLOUDS_MAXZOOM,
+        attribution: '<a href="https://worldview.earthdata.nasa.gov" target="_blank" rel="noopener noreferrer">NASA EOSDIS GIBS</a>',
       },
       ...(base ? { omt: base.source } : {}),
     },
@@ -228,7 +255,7 @@ const SWEEP_LAYERS: [string, string[]][] = [
 ];
 
 export default function GlobeView(props: Props) {
-  const { ref, streams, focus, flights, flightId, initialCamera, reducedMotion, rotate, intro, bottomInset, terminator } = props;
+  const { ref, streams, focus, flights, flightId, initialCamera, reducedMotion, rotate, intro, bottomInset, terminator, clouds } = props;
   const container = useRef<HTMLDivElement>(null);
   const hoverLabel = useRef<HTMLDivElement>(null);
   const halo = useRef<HTMLDivElement>(null);
@@ -319,7 +346,7 @@ export default function GlobeView(props: Props) {
       // Imagery tiles over open ocean or outside coverage fail to decode; that's expected, not an error.
       map.on('error', (e) => {
         const id = (e as { sourceId?: string }).sourceId;
-        if (id === 'satellite') return;
+        if (id === 'satellite' || id === 'clouds') return;
         console.error(e.error);
       });
       mapRef.current = map;
@@ -544,6 +571,11 @@ export default function GlobeView(props: Props) {
   useEffect(() => {
     if (ready) mapRef.current?.setLayoutProperty('night', 'visibility', terminator ? 'visible' : 'none');
   }, [ready, terminator]);
+
+  // ── today's clouds: tiles are only fetched once the layer is first shown ───
+  useEffect(() => {
+    if (ready) mapRef.current?.setLayoutProperty('clouds', 'visibility', clouds ? 'visible' : 'none');
+  }, [ready, clouds]);
 
   // ── aircraft ───────────────────────────────────────────────────────────────
   useEffect(() => {
