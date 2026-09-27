@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { distanceKm, geocode, loadGazetteer, nearestPlace } from './geocode';
 import { blockedSources, cameraName, titleCase, tmInverse } from './agencies';
 import { nightBands, subsolarPoint, sunAltitude } from '../lib/solar';
-import { zonedClock } from '../lib/time';
+import { cloudsDate, zonedClock } from '../lib/time';
 import { parseFlights, project } from '../lib/flights';
 
 const g = loadGazetteer();
@@ -71,6 +71,15 @@ assert.equal(emer({ squawk: '1200' }), false);
 assert.equal(emer({ squawk: '7000' }), false); // European VFR conspicuity, not an emergency
 assert.equal(emer({ emergency: 'none' }), false);
 assert.equal(emer({ emergency: 'downed' }), true);
+
+// Clouds: GIBS's own "latest" is the day still being flown, whose unflown half reads as a seam down
+// the globe, so we ask for the last complete composite — and hold a day further back until the
+// previous day's westernmost swaths have cleared NRT processing.
+assert.equal(cloudsDate(Date.UTC(2026, 8, 27, 12, 0)), '2026-09-26');
+assert.equal(cloudsDate(Date.UTC(2026, 8, 27, 4, 0)), '2026-09-26');
+assert.equal(cloudsDate(Date.UTC(2026, 8, 27, 3, 59)), '2026-09-25');
+assert.equal(cloudsDate(Date.UTC(2026, 8, 27, 0, 5)), '2026-09-25');
+assert.equal(cloudsDate(Date.UTC(2026, 0, 1, 12, 0)), '2025-12-31'); // across a year boundary
 
 // Camera names: operator codes become road + direction + place words; shouted names are tamed.
 assert.equal(cameraName('1068N_75_N/O_GoldenGate_M107', 'I-75', 'Northbound'), 'I-75 Northbound · Golden Gate');

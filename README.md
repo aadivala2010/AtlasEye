@@ -212,9 +212,13 @@ fixed with a rule, a stopword or an override — but automatic matching is not p
 - **Satellite imagery:** the globe shows Esri World Imagery (keyless) at every zoom, with
   OpenStreetMap borders and place names from OpenFreeMap (CARTO fallback) drawn on top. EOX
   Sentinel-2 cloudless 2016 was dropped: its orbit-swath seams showed as stripes across continents.
-- **Clouds are today's real imagery,** not a model: NASA GIBS VIIRS (NOAA-20) corrected-reflectance
-  true colour, keyless, at GIBS's own `default` time (latest available, a few hours behind the
-  satellite). Laid over Esri at ~0.6 opacity — clouds are the brightest thing in frame, so they read
+- **Clouds are real imagery,** not a model: NASA GIBS VIIRS (NOAA-20) corrected-reflectance true
+  colour, keyless, for **yesterday UTC** — the most recent *complete* global composite, and what NASA
+  Worldview itself opens on. GIBS's `default` (latest date that exists) is the day still being flown:
+  a polar orbiter has only swathed part of the globe so far, the rest of that day's tiles come back
+  empty, and the boundary lands as a hard seam down the middle of the planet. Just after UTC midnight
+  the previous day's own westernmost swaths can still be in NRT processing, so before 04:00 UTC the
+  date holds a further day back. Laid over Esri at ~0.6 opacity — clouds are the brightest thing in frame, so they read
   as clouds — and faded out by z7.5, where GIBS runs out of levels and Esri is sharper. Its tiles are
   only requested once the **CLOUDS** chip is first switched on. Ceiling: polar winter is genuinely
   unlit, so those tiles are black and dim the winter pole.

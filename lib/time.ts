@@ -22,3 +22,17 @@ export function zonedClock(date: Date, timeZone: string): { time: string; offset
 export const localZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 export const utcClock = (date: Date) => date.toISOString().slice(11, 19);
+
+/**
+ * The GIBS date to ask for today's clouds: yesterday, UTC — the most recent *complete* global
+ * composite, and what NASA Worldview itself opens on. GIBS's `default` means "latest date that
+ * exists", which is the day currently being flown: a polar orbiter has only swathed part of the
+ * globe so far, the rest of that day's tiles come back empty, and the boundary lands as a hard
+ * seam down the middle of the planet.
+ */
+export const cloudsDate = (now = Date.now()) => {
+  // Just after UTC midnight the previous day's own last (westernmost) swaths can still be in NRT
+  // processing, which would put the same seam a day back; hold on the day before until they land.
+  const back = new Date(now).getUTCHours() < 4 ? 48 : 24;
+  return new Date(now - back * 3600_000).toISOString().slice(0, 10);
+};

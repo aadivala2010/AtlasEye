@@ -8,6 +8,7 @@ import type {
 import type { Stream } from '@/lib/stream';
 import { distanceKm } from '@/lib/geo';
 import { nightBands, subsolarPoint, sunAltitude } from '@/lib/solar';
+import { cloudsDate } from '@/lib/time';
 import { readout } from '@/lib/readout';
 import { formatAlt, project, type Flight } from '@/lib/flights';
 
@@ -147,15 +148,16 @@ async function loadBase(): Promise<Base | null> {
 export const SATELLITE = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 
 /**
- * Today's clouds: NASA GIBS VIIRS (NOAA-20) corrected-reflectance true colour, no key. `default` in
- * the time slot is GIBS's own "latest available" — a global daylit composite, a few hours behind the
- * satellite. Laid over the Esri mosaic at partial opacity: clouds are the brightest thing in the
- * frame, so they read as clouds while the imagery beneath shows through.
+ * Cloud cover: NASA GIBS VIIRS (NOAA-20) corrected-reflectance true colour, no key. Laid over the
+ * Esri mosaic at partial opacity: clouds are the brightest thing in the frame, so they read as
+ * clouds while the imagery beneath shows through.
  * ponytail: polar winter is genuinely unlit, so those tiles come back black and dim the winter pole.
  * If that matters, mask it with the terminator's own sun altitude instead.
  */
-const CLOUDS = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor'
-  + '/default/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg';
+const CLOUDS_LAYER = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor';
+
+
+const CLOUDS = `${CLOUDS_LAYER}/default/${cloudsDate()}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`;
 /** GoogleMapsCompatible_Level9 is z0–8; past that MapLibre overzooms the last level rather than 404ing. */
 const CLOUDS_MAXZOOM = 8;
 
