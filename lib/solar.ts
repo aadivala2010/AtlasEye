@@ -7,12 +7,22 @@ export interface SunPoint { lat: number; lon: number }
 const wrapLon = (lon: number) => ((((lon + 180) % 360) + 360) % 360) - 180;
 
 /**
- * Web Mercator — which the globe projection still works in — stops at ±85.0511°. A polygon vertex
- * beyond that has no projected position, and the degenerate geometry renders as a wedge radiating
- * from the pole. There is no imagery up there either, so nothing is lost by stopping at the limit.
+ * A pole itself has no Mercator position — y runs to infinity there — and a polygon vertex at ±90
+ * renders as a wedge radiating from the pole. Everything short of it projects finitely, so stop
+ * just shy: near enough that the gap is far inside one pixel, far enough to stay finite.
+ * (Web Mercator's better-known ±85.0511° limit is where the *tile grid* stops, not the geometry.
+ * Clamping polygons to it leaves the cap above unshaded — a bright disc centred on the pole.)
  */
-export const MERCATOR_MAX_LAT = 85.0511;
-const clampLat = (lat: number) => Math.max(-MERCATOR_MAX_LAT, Math.min(MERCATOR_MAX_LAT, lat));
+export const POLE_LIMIT_LAT = 89.99;
+const clampLat = (lat: number) => Math.max(-POLE_LIMIT_LAT, Math.min(POLE_LIMIT_LAT, lat));
+
+/**
+ * Bearing step round each cap. A boundary that passes close to a pole sweeps ~180° of longitude in
+ * a fraction of a degree of arc, so a coarse step turns it into a few long chords: at 2° the bands
+ * near the pole scallop and bulge visibly. 0.5° traces it as a curve, and is indistinguishable from
+ * evaluating sun altitude per pixel.
+ */
+const BEARING_STEP = 0.5;
 
 /** The point on Earth where the sun is directly overhead. */
 export function subsolarPoint(date: Date): SunPoint {
@@ -43,14 +53,14 @@ function nightCap(sun: SunPoint, depression: number): GeoJSON.Position[] {
   const cLon = wrapLon(sun.lon + 180) * RAD;
   const r = (90 - depression) * RAD;
   const ring: GeoJSON.Position[] = [];
-  for (let b = 0; b < 360; b += 2) {
+  for (let b = 0; b < 360; b += BEARING_STEP) {
     const t = b * RAD;
     const lat = Math.asin(Math.sin(cLat) * Math.cos(r) + Math.cos(cLat) * Math.sin(r) * Math.cos(t));
     const lon = cLon + Math.atan2(Math.sin(t) * Math.sin(r) * Math.cos(cLat), Math.cos(r) - Math.sin(cLat) * Math.sin(lat));
     ring.push([lon / RAD, lat / RAD]);
   }
 
-  const poleLat = sun.lat > 0 ? -MERCATOR_MAX_LAT : MERCATOR_MAX_LAT; // the pole in darkness
+  const poleLat = sun.lat > 0 ? -POLE_LIMIT_LAT : POLE_LIMIT_LAT; // the pole in darkness
   const containsPole = 90 - Math.abs(sun.lat) < 90 - depression;
   if (containsPole) {
     // The cap wraps all the way around: sort by longitude and close it over the dark pole.

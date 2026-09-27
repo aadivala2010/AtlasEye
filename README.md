@@ -229,13 +229,16 @@ fixed with a rule, a stopword or an override — but automatic matching is not p
   from readsb's `dbFlags` bit 1, emergency from squawk 7500/7600/7700 or the declared `emergency`
   field — so they survive the merge with the live local feed. Emergency outranks selection for
   colour and is drawn selected-size at every zoom.
-- **The terminator stops at Web Mercator's ±85.0511°.** The globe projection still works in
-  Mercator, so a polygon vertex past that limit has no projected position and the degenerate
-  geometry draws as a wedge radiating from the pole. It showed for weeks around each equinox, when
-  the shallowest night cap contains a pole (and so takes `nightCap`'s pole-wrapping branch, which
-  closed over lat ±90) while the deeper bands don't. Nothing is lost by clamping: there is no
-  imagery above 85.05° either, in any Mercator source. `npm test` sweeps a year of dates asserting
-  every vertex stays inside the limit.
+- **The terminator's polygons are checked against the sun, not eyeballed.** They approximate a
+  spherical cap as a lon/lat ring, and every way that goes wrong shows up at a pole: a vertex at
+  ±90 has no finite Mercator y and draws as a wedge radiating from the pole; clamping instead to
+  Web Mercator's ±85.0511° (which is where the *tile grid* stops, not the geometry) leaves the cap
+  above it unshaded, a bright disc centred on the pole; and a bearing step that samples the ring
+  coarsely turns a boundary passing near a pole — where longitude moves fastest — into a few long
+  chords, so the bands scallop and bulge. `npm test` therefore asserts the thing that actually
+  matters: at points around both poles, on the equinoxes and solstices, the number of band polygons
+  covering a point equals the number the sun's altitude there says should. Equinox is the hard
+  case, with the poles sitting right on the terminator and the caps crowded together.
 - **Rim light is CSS, not MapLibre's atmosphere,** which can't be tinted. The limb is found by
   projecting points outward from the view centre each frame.
 - **Cluster counts are drawn in Geist Mono via canvas** (`styleimagemissing`), because map glyph
