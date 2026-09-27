@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { distanceKm, geocode, loadGazetteer, nearestPlace } from './geocode';
 import { blockedSources, cameraName, titleCase, tmInverse } from './agencies';
-import { nightBands, subsolarPoint, sunAltitude } from '../lib/solar';
+import { MERCATOR_MAX_LAT, nightBands, subsolarPoint, sunAltitude } from '../lib/solar';
 import { cloudsDate, zonedClock } from '../lib/time';
 import { parseFlights, project } from '../lib/flights';
 
@@ -44,6 +44,25 @@ assert.ok(sunAltitude(0, 180, solstice) < -60);
 const bands = nightBands(new Date('2026-06-21T12:00:00Z'));
 assert.equal(bands.features.length, 10);
 assert.ok(bands.features.every((f) => f.geometry.coordinates[0].length > 100));
+
+// Every terminator vertex must stay inside Web Mercator's ±85.0511°: a vertex past it has no
+// projected position, and the degenerate polygon draws as a wedge radiating from the pole. The cap
+// that contains a pole is built by a different branch, which is the one that used to run to lat 90,
+// so sweep a year — around each equinox the shallowest band contains a pole and the rest don't.
+for (let day = 0; day < 365; day += 1) {
+  const date = new Date(Date.UTC(2026, 0, 1 + day, 12));
+  for (const f of nightBands(date).features) {
+    for (const [lon, lat] of f.geometry.coordinates[0]) {
+      assert.ok(Math.abs(lat) <= MERCATOR_MAX_LAT, `${date.toISOString()} d=${f.properties?.depression} lat ${lat}`);
+      assert.ok(Number.isFinite(lon) && Number.isFinite(lat), `${date.toISOString()} non-finite vertex`);
+    }
+  }
+}
+// The equinox week is the regression: a pole sits just inside the 0° cap and just outside the 2° one.
+const equinox = subsolarPoint(new Date('2026-09-27T12:00:00Z'));
+assert.ok(Math.abs(equinox.lat) < 3, `equinox dec ${equinox.lat}`);
+const eqBands = nightBands(new Date('2026-09-27T12:00:00Z'));
+assert.ok(eqBands.features[0].geometry.coordinates[0].some(([, lat]) => Math.abs(lat) === MERCATOR_MAX_LAT));
 
 // Clocks: Tokyo has no DST.
 assert.deepEqual(zonedClock(new Date('2026-01-01T00:00:00Z'), 'Asia/Tokyo'), { time: '09:00:00', offset: 'UTC+9' });

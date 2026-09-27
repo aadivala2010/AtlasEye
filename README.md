@@ -229,6 +229,13 @@ fixed with a rule, a stopword or an override — but automatic matching is not p
   from readsb's `dbFlags` bit 1, emergency from squawk 7500/7600/7700 or the declared `emergency`
   field — so they survive the merge with the live local feed. Emergency outranks selection for
   colour and is drawn selected-size at every zoom.
+- **The terminator stops at Web Mercator's ±85.0511°.** The globe projection still works in
+  Mercator, so a polygon vertex past that limit has no projected position and the degenerate
+  geometry draws as a wedge radiating from the pole. It showed for weeks around each equinox, when
+  the shallowest night cap contains a pole (and so takes `nightCap`'s pole-wrapping branch, which
+  closed over lat ±90) while the deeper bands don't. Nothing is lost by clamping: there is no
+  imagery above 85.05° either, in any Mercator source. `npm test` sweeps a year of dates asserting
+  every vertex stays inside the limit.
 - **Rim light is CSS, not MapLibre's atmosphere,** which can't be tinted. The limb is found by
   projecting points outward from the view centre each frame.
 - **Cluster counts are drawn in Geist Mono via canvas** (`styleimagemissing`), because map glyph

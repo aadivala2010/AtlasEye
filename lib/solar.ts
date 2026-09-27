@@ -6,6 +6,14 @@ export interface SunPoint { lat: number; lon: number }
 
 const wrapLon = (lon: number) => ((((lon + 180) % 360) + 360) % 360) - 180;
 
+/**
+ * Web Mercator — which the globe projection still works in — stops at ±85.0511°. A polygon vertex
+ * beyond that has no projected position, and the degenerate geometry renders as a wedge radiating
+ * from the pole. There is no imagery up there either, so nothing is lost by stopping at the limit.
+ */
+export const MERCATOR_MAX_LAT = 85.0511;
+const clampLat = (lat: number) => Math.max(-MERCATOR_MAX_LAT, Math.min(MERCATOR_MAX_LAT, lat));
+
 /** The point on Earth where the sun is directly overhead. */
 export function subsolarPoint(date: Date): SunPoint {
   const d = date.getTime() / 86400000 - 10957.5; // days since J2000.0
@@ -42,21 +50,23 @@ function nightCap(sun: SunPoint, depression: number): GeoJSON.Position[] {
     ring.push([lon / RAD, lat / RAD]);
   }
 
-  const poleLat = sun.lat > 0 ? -90 : 90; // the pole in darkness
+  const poleLat = sun.lat > 0 ? -MERCATOR_MAX_LAT : MERCATOR_MAX_LAT; // the pole in darkness
   const containsPole = 90 - Math.abs(sun.lat) < 90 - depression;
   if (containsPole) {
     // The cap wraps all the way around: sort by longitude and close it over the dark pole.
-    const pts = ring.map(([lon, lat]) => [wrapLon(lon), lat]).sort((a, b) => a[0] - b[0]);
+    const pts = ring.map(([lon, lat]) => [wrapLon(lon), clampLat(lat)]).sort((a, b) => a[0] - b[0]);
     const [first, last] = [pts[0], pts[pts.length - 1]];
     const span = first[0] + 360 - last[0];
-    const seamLat = last[1] + ((first[1] - last[1]) * (180 - last[0])) / span;
+    const seamLat = clampLat(last[1] + ((first[1] - last[1]) * (180 - last[0])) / span);
     return [[-180, seamLat], ...pts, [180, seamLat], [180, poleLat], [-180, poleLat], [-180, seamLat]];
   }
   // Otherwise keep longitudes continuous (may exceed ±180; the renderer wraps them).
   for (let i = 1; i < ring.length; i++) {
     while (ring[i][0] - ring[i - 1][0] > 180) ring[i][0] -= 360;
     while (ring[i][0] - ring[i - 1][0] < -180) ring[i][0] += 360;
+    ring[i][1] = clampLat(ring[i][1]);
   }
+  ring[0][1] = clampLat(ring[0][1]);
   return [...ring, ring[0]];
 }
 
