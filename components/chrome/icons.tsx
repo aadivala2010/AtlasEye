@@ -36,6 +36,9 @@ export const IconSun = (p: P) => (
   <Svg {...p}><circle cx="8" cy="8" r="2.75" /><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1" /></Svg>
 );
 export const IconMoon = (p: P) => <Svg {...p}><path d="M13 9.6A5.5 5.5 0 1 1 6.4 3a4.4 4.4 0 0 0 6.6 6.6Z" /></Svg>;
+export const IconCloud = (p: P) => (
+  <Svg {...p}><path d="M4.75 12.25h6.5a2.6 2.6 0 0 0 .3-5.18 3.6 3.6 0 0 0-6.85-1.02A3 3 0 0 0 4.75 12.25Z" /></Svg>
+);
 export const IconLocate = (p: P) => (
   <Svg {...p}><circle cx="8" cy="8" r="4.5" /><circle cx="8" cy="8" r="1" /><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2" /></Svg>
 );

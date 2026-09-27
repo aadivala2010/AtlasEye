@@ -220,7 +220,7 @@ fixed with a rule, a stopword or an override — but automatic matching is not p
   the previous day's own westernmost swaths can still be in NRT processing, so before 04:00 UTC the
   date holds a further day back. Laid over Esri at ~0.6 opacity — clouds are the brightest thing in frame, so they read
   as clouds — and faded out by z7.5, where GIBS runs out of levels and Esri is sharper. Its tiles are
-  only requested once the **CLOUDS** chip is first switched on. Ceiling: polar winter is genuinely
+  only requested once the cloud toggle (beside the day/night one) is first switched on. Ceiling: polar winter is genuinely
   unlit, so those tiles are black and dim the winter pole.
 - **Military and emergency aircraft** come from two more global adsb.lol endpoints (`/v2/mil`,
   `/v2/squawk/7700`) folded into the same worldwide rotation as the type sweeps, so the request rate

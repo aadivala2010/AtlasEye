@@ -48,10 +48,11 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const [layers, setLayers] = useState<Layers>({ cameras: true, flights: false, dossier: false, clouds: false });
+  const [layers, setLayers] = useState<Layers>({ cameras: true, flights: false, dossier: false });
   const [other, setOther] = useState<Focus | null>(null);
   const [snapshots, setSnapshots] = useState(true);
   const [terminator, setTerminator] = useState(true);
+  const [clouds, setClouds] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [muted, setMuted] = useState(true);
   const [userPos, setUserPos] = useState<{ lat: number; lon: number } | null>(null);
@@ -255,6 +256,8 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
         onToggleSnapshots={() => setSnapshots((v) => !v)}
         terminator={terminator}
         onToggleTerminator={() => setTerminator((v) => !v)}
+        clouds={clouds}
+        onToggleClouds={() => setClouds((v) => !v)}
         onPick={(s) => select(s, 'travel')}
         onRandom={random}
       />
@@ -276,7 +279,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
               intro={boot.intro}
               bottomInset={bottomInset}
               terminator={terminator}
-              clouds={layers.clouds}
+              clouds={clouds}
               onSelect={(id) => {
                 const s = catalog?.streams.find((x) => x.id === id);
                 if (s) select(s, 'near');
