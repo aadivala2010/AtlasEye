@@ -175,9 +175,9 @@ fixed with a rule, a stopword or an override — but automatic matching is not p
   Keyed agency APIs (most US 511 systems, WSDOT, Ontario, Alberta) are skipped — no keys is a
   project rule. [Ora](https://github.com/warner-wvez/Ora) has ~46k US cameras but is licensed
   PolyForm Noncommercial, so none of its data is used.
-- **Satellite imagery:** the globe shows EOX *Sentinel-2 cloudless 2016* (CC BY 4.0, keyless),
-  with OpenStreetMap borders and place names from OpenFreeMap (CARTO fallback) drawn on top. The
-  2016 layer is used deliberately: EOX's later years are CC BY-NC-SA, which would forbid commercial use.
+- **Satellite imagery:** the globe shows Esri World Imagery (keyless) at every zoom, with
+  OpenStreetMap borders and place names from OpenFreeMap (CARTO fallback) drawn on top. EOX
+  Sentinel-2 cloudless 2016 was dropped: its orbit-swath seams showed as stripes across continents.
 - **Rim light is CSS, not MapLibre's atmosphere,** which can't be tinted. The limb is found by
   projecting points outward from the view centre each frame.
 - **Cluster counts are drawn in Geist Mono via canvas** (`styleimagemissing`), because map glyph

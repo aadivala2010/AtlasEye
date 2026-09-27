@@ -74,9 +74,8 @@ export default function About() {
               <a className="text-accent hover:underline" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
             </Credit>
             <Credit k="Imagery">
-              <a className="text-accent hover:underline" href="https://s2maps.eu">Sentinel-2 cloudless 2016</a> by EOX IT Services
-              GmbH (contains modified Copernicus Sentinel data 2016), licensed under{' '}
-              <a className="text-accent hover:underline" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
+              <a className="text-accent hover:underline" href="https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9">Esri World Imagery</a>:
+              Esri, Maxar, Earthstar Geographics, and the GIS User Community.
             </Credit>
             <Credit k="Map tiles">
               © <a className="text-accent hover:underline" href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>,

@@ -3,7 +3,7 @@
 import type { Ref } from 'react';
 import type { Stream } from '@/lib/stream';
 import Search, { type SearchHandle } from './Search';
-import { IconEye, IconRandom } from './icons';
+import { IconEye, IconMoon, IconRandom } from './icons';
 
 export type Layer = 'cameras' | 'flights' | 'dossier';
 export type Layers = Record<Layer, boolean>;
@@ -25,6 +25,8 @@ interface Props {
   snapshots: boolean;
   snapshotCount: number;
   onToggleSnapshots(): void;
+  terminator: boolean;
+  onToggleTerminator(): void;
 }
 
 const CHIP = 'flex h-6 shrink-0 items-center gap-1.5 rounded-[2px] border px-2 font-mono text-[10px] uppercase tracking-[0.08em] transition-colors duration-200 ease-atlas';
@@ -71,6 +73,16 @@ export default function Header(p: Props) {
         </a>
         <div className="hidden min-w-0 flex-1 md:block">{chips}</div>
         <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 md:flex-none">
+          <button
+            type="button"
+            aria-pressed={p.terminator}
+            aria-label="Day/night shading"
+            onClick={p.onToggleTerminator}
+            title="Day/night shading"
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[2px] border transition-colors duration-200 ease-atlas ${chipState(p.terminator)}`}
+          >
+            <IconMoon width={14} height={14} />
+          </button>
           <Search ref={p.searchRef} streams={p.streams} onPick={p.onPick} />
           <button
             type="button"

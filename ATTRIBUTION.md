@@ -8,7 +8,7 @@ texts are reproduced in full here and in `licenses/`.
 | [Famelack](https://github.com/famelack/famelack-data) | webcam catalog (`webcams/raw/categories/*.json`) | MIT, © 2026 Famelack | `data/upstream/famelack.json`, derived `public/data/streams.json` |
 | [camlisted](https://github.com/tantran21501/camlisted) | `data/streams.json` | MIT, © 2026 zenith605 | `data/upstream/camlisted.json`, derived `public/data/streams.json` |
 | [GeoNames](https://www.geonames.org/) | `cities1000`, `alternateNamesV2`, `admin1CodesASCII` | CC BY 4.0 | `data/gazetteer/cities.tsv` (pruned; see below) |
-| [Sentinel-2 cloudless 2016](https://s2maps.eu) by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2016) | satellite imagery of the globe | CC BY 4.0 (text below) | not stored; tiles are fetched from tiles.maps.eox.at at runtime |
+| [Esri World Imagery](https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9): Esri, Maxar, Earthstar Geographics, and the GIS User Community | satellite imagery of the globe and cockpit view | Esri terms of use, attribution required | not stored; tiles are fetched from server.arcgisonline.com at runtime |
 | [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors | map data in the basemap tiles | ODbL 1.0 | not stored; tiles are fetched from OpenFreeMap / CARTO at runtime |
 | [Caltrans](https://cwwp2.dot.ca.gov/) CCTV status feeds | camera list, coordinates, live video / still URLs | public California state data | `data/upstream/agencies.json` (normalised); video and images are not stored |
 | [Delaware DOT](https://tmc.deldot.gov/json/videocamera.json) | camera list, coordinates, live video URLs | public state data | as above |
@@ -106,7 +106,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-## GeoNames and EOX Sentinel-2 cloudless 2016 — Creative Commons Attribution 4.0 International
+## GeoNames — Creative Commons Attribution 4.0 International
 
 ```
 Attribution 4.0 International

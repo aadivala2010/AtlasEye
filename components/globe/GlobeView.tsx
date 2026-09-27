@@ -38,6 +38,8 @@ interface Props {
   intro: boolean;
   /** Pixels hidden under the mobile bottom sheet, so fly-to targets stay visible. */
   bottomInset: number;
+  /** Show the day/night shading. */
+  terminator: boolean;
   onSelect(id: string): void;
   onFlight(hex: string): void;
   onDossier(lat: number, lon: number): void;
@@ -126,15 +128,11 @@ async function loadBase(): Promise<Base | null> {
   return null;
 }
 
-/** Our own quiet layer stack over the OpenMapTiles schema both base styles share. */
-/** Sentinel-2 cloudless 2016 by EOX (CC BY 4.0): a real, cloud-free view of the planet, no key needed. */
-export const SATELLITE = 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg';
-
 /**
- * Sentinel-2 is 10 m/pixel and stops at z14, so close in it turns to mush. Esri World Imagery
- * (sub-metre, no key) fades in over it from z10.5.
+ * Esri World Imagery (no key) at every zoom: seamless mosaic far out, sub-metre close in.
+ * (Sentinel-2 cloudless 2016 showed its orbit-swath seams as stripes across the continents.)
  */
-const HIRES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+export const SATELLITE = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 
 /** Satellite imagery, with a light OpenMapTiles overlay (borders, places) from whichever base style loaded. */
 function buildStyle(base: Base | null): StyleSpecification {
@@ -143,10 +141,6 @@ function buildStyle(base: Base | null): StyleSpecification {
     {
       id: 'satellite', type: 'raster', source: 'satellite',
       paint: { 'raster-fade-duration': 200, 'raster-contrast': 0.08, 'raster-saturation': 0.05 },
-    },
-    {
-      id: 'hires', type: 'raster', source: 'hires', minzoom: 10.5,
-      paint: { 'raster-fade-duration': 200, 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 10.5, 0, 12, 1] },
     },
   ];
   if (base) {
@@ -182,11 +176,7 @@ function buildStyle(base: Base | null): StyleSpecification {
     projection: { type: 'globe' },
     sources: {
       satellite: {
-        type: 'raster', tiles: [SATELLITE], tileSize: 256, maxzoom: 14,
-        attribution: 'Sentinel-2 cloudless 2016 by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2016)',
-      },
-      hires: {
-        type: 'raster', tiles: [HIRES], tileSize: 256, maxzoom: 19,
+        type: 'raster', tiles: [SATELLITE], tileSize: 256, maxzoom: 19,
         attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community',
       },
       ...(base ? { omt: base.source } : {}),
@@ -228,7 +218,7 @@ const SWEEP_LAYERS: [string, string[]][] = [
 ];
 
 export default function GlobeView(props: Props) {
-  const { ref, streams, focus, flights, flightId, initialCamera, reducedMotion, rotate, intro, bottomInset } = props;
+  const { ref, streams, focus, flights, flightId, initialCamera, reducedMotion, rotate, intro, bottomInset, terminator } = props;
   const container = useRef<HTMLDivElement>(null);
   const hoverLabel = useRef<HTMLDivElement>(null);
   const halo = useRef<HTMLDivElement>(null);
@@ -319,7 +309,7 @@ export default function GlobeView(props: Props) {
       // Imagery tiles over open ocean or outside coverage fail to decode; that's expected, not an error.
       map.on('error', (e) => {
         const id = (e as { sourceId?: string }).sourceId;
-        if (id === 'satellite' || id === 'hires') return;
+        if (id === 'satellite') return;
         console.error(e.error);
       });
       mapRef.current = map;
@@ -538,6 +528,11 @@ export default function GlobeView(props: Props) {
     map.getSource<GeoJSONSource>('streams')?.setData(pinData(streams, sweepFrom.current));
     map.once('idle', () => map.fire('move'));
   }, [ready, streams]);
+
+  // ── day/night shading ─────────────────────────────────────────────────────
+  useEffect(() => {
+    if (ready) mapRef.current?.setLayoutProperty('night', 'visibility', terminator ? 'visible' : 'none');
+  }, [ready, terminator]);
 
   // ── aircraft ───────────────────────────────────────────────────────────────
   useEffect(() => {
