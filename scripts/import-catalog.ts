@@ -1,11 +1,11 @@
 /**
- * Build public/data/streams.json from Famelack + camlisted.
+ * Build public/data/streams.json from Famelack + camlisted (YouTube) and the camera operators in agencies.ts.
  *
  *   npm run import              fetch upstream, validate, snapshot, geocode, write
  *   npm run import -- --offline re-run from the committed snapshots in data/upstream/
  *   npm run import -- --force   allow the catalog to shrink by more than half
  *
- * Fails (exit 1) without touching the existing catalog on any schema mismatch.
+ * Fails (exit 1) without touching the existing catalog on any YouTube catalog schema mismatch.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { z } from 'zod';
@@ -13,7 +13,7 @@ import type { Catalog, Category, Stream } from '../lib/stream';
 import {
   distanceKm, geocode, loadGazetteer, nearestPlace, normalize, placeLabel, CONFIDENCE_THRESHOLD, type GeocodeHit,
 } from './geocode';
-import { AGENCIES, SchemaError, verifyHls, type AgencyCam } from './agencies';
+import { AGENCIES, SchemaError, blockedSources, verifyImages, verifyLive, type AgencyCam, type ProbeTally } from './agencies';
 
 const OFFLINE = process.argv.includes('--offline');
 const FORCE = process.argv.includes('--force');
@@ -214,30 +214,86 @@ async function loadCamlistedLocations(): Promise<Map<string, HintLoc>> {
 }
 
 /**
- * Agency cameras. A schema change aborts the import; an agency that is merely unreachable keeps
- * its cameras from the previous catalog, so one flaky server doesn't blank a whole region.
+ * Operators overlap: WSDOT relays Oregon's border cameras, and OpenStreetMap mirrors many cameras an
+ * operator already publishes. The first operator to list a stream keeps it; an OSM camera is also dropped
+ * when it sits within 150 m of an operator camera (same view, different URL).
  */
-async function loadAgencies(previous: Catalog | null): Promise<{ cams: AgencyCam[]; carried: Stream[]; dead: number }> {
+function dropDuplicates(cams: AgencyCam[]): AgencyCam[] {
+  // Same stream: ignore scheme, "www." and a trailing cache-buster ("?1790523360000").
+  const same = (u: string) => u.toLowerCase().replace(/^https?:\/\/(www\.)?/, '').replace(/\?\d{6,}$/, '');
+  const seen = new Set<string>();
+  cams = cams.filter((c) => {
+    const k = same(c.url);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+  // OSM links often omit the operator's query string, so compare without it.
+  const key = (u: string) => u.toLowerCase().replace(/^https?:\/\/(www\.)?/, '').replace(/[?#].*$/, '');
+  const cell = (lat: number, lon: number) => `${Math.floor(lat * 100)},${Math.floor(lon * 100)}`;
+  const urls = new Set<string>();
+  const grid = new Map<string, AgencyCam[]>();
+  for (const c of cams) {
+    if (c.source === 'osm') continue;
+    urls.add(key(c.url));
+    if (c.fallback) urls.add(key(c.fallback));
+    const k = cell(c.latitude, c.longitude);
+    grid.set(k, [...(grid.get(k) ?? []), c]);
+  }
+  const nearOperator = (c: AgencyCam) => [-1, 0, 1].some((dy) => [-1, 0, 1].some((dx) =>
+    (grid.get(cell(c.latitude + dy / 100, c.longitude + dx / 100)) ?? [])
+      .some((o) => distanceKm(c.latitude, c.longitude, o.latitude, o.longitude) < 0.15)));
+  return cams.filter((c) => c.source !== 'osm' || (!urls.has(key(c.url)) && !nearOperator(c)));
+}
+
+/**
+ * Camera operators, all fetched at once (different servers; the paged 511 sites and Overpass take minutes).
+ * One that is unreachable or has changed its format keeps its cameras from the previous catalog, with a
+ * warning: one of 60-odd operators shouldn't blank its region or block everyone else's refresh.
+ */
+async function loadAgencies(previous: Catalog | null): Promise<{ cams: AgencyCam[]; carried: Stream[]; dead: number; dropped: number }> {
   const snapshot = 'data/upstream/agencies.json';
-  if (OFFLINE) return { cams: JSON.parse(readFileSync(snapshot, 'utf8')) as AgencyCam[], carried: [], dead: 0 };
+  if (OFFLINE) return { cams: JSON.parse(readFileSync(snapshot, 'utf8')) as AgencyCam[], carried: [], dead: 0, dropped: 0 };
+  const entries = Object.entries(AGENCIES);
+  const results = await Promise.allSettled(entries.map(async ([name, load]) => {
+    // A server that answers every page slowly would otherwise hold the whole weekly refresh hostage.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const tooSlow = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('no complete answer in 15 min')), 15 * 60_000); });
+    try {
+      const got = await Promise.race([load!(), tooSlow]);
+      console.log(`  ${name.padEnd(11)} ${got.length} cameras`);
+      return got;
+    } finally { clearTimeout(timer); }
+  }));
   const cams: AgencyCam[] = [];
   const carried: Stream[] = [];
-  for (const [name, load] of Object.entries(AGENCIES)) {
-    try {
-      const got = await load();
-      console.log(`  ${name.padEnd(11)} ${got.length} cameras`);
-      cams.push(...got);
-    } catch (e) {
-      if (e instanceof SchemaError) fail(e.message);
-      const keep = previous?.streams.filter((s) => s.source === name) ?? [];
-      console.warn(`  ⚠ ${name} unreachable (${e instanceof Error ? e.message : String(e)}); keeping ${keep.length} from the previous catalog`);
-      carried.push(...keep);
-    }
+  results.forEach((r, i) => {
+    const name = entries[i][0];
+    if (r.status === 'fulfilled') { cams.push(...r.value); return; }
+    const e: unknown = r.reason;
+    const keep = previous?.streams.filter((s) => s.source === name) ?? [];
+    const why = e instanceof SchemaError ? e.message : `unreachable (${e instanceof Error ? e.message : String(e)})`;
+    console.warn(`  ⚠ ${name} ${why}; keeping ${keep.length} from the previous catalog`);
+    carried.push(...keep);
+  });
+  const unique = dropDuplicates(cams);
+  console.log(`  ${cams.length - unique.length} duplicates dropped (same stream from two operators, or OSM mirroring an operator)`);
+  console.log(`  probing ${unique.filter((c) => c.kind !== 'snapshot').length} live video streams…`);
+  const tally: ProbeTally = new Map();
+  const video = await verifyLive(unique, tally);
+  console.log(`  fetching ${video.cams.filter((c) => c.probe).length} unvetted images…`);
+  const images = await verifyImages(video.cams, tally);
+  // An operator refusing this machine keeps its previous cameras instead of vanishing from the globe.
+  const blocked = blockedSources(tally);
+  for (const name of blocked) {
+    const keep = previous?.streams.filter((s) => s.source === name) ?? [];
+    const t = tally.get(name)!;
+    console.warn(`  ⚠ ${name}: ${t.failed} of ${t.probed} probes failed — blocked from here? keeping ${keep.length} from the previous catalog`);
+    carried.push(...keep);
   }
-  console.log(`  probing ${cams.filter((c) => c.kind === 'hls').length} live video streams…`);
-  const verified = await verifyHls(cams);
-  writeFileSync(snapshot, JSON.stringify(verified.cams));
-  return { ...verified, carried };
+  const kept = images.cams.filter((c) => !blocked.has(c.source));
+  writeFileSync(snapshot, JSON.stringify(kept));
+  return { cams: kept, carried, dead: video.dead, dropped: images.dropped };
 }
 
 // ── main ─────────────────────────────────────────────────────────────────────
@@ -325,12 +381,15 @@ for (const s of streams) if (s.title === s.name) delete s.title;
 
 // ── agency cameras ───────────────────────────────────────────────────────────
 const agencyStreams: Stream[] = [...agencies.carried];
+const agencyIds = new Set(agencyStreams.map((s) => s.id));
 for (const cam of agencies.cams) {
+  if (agencyIds.has(cam.id)) continue;
+  agencyIds.add(cam.id);
   const near = nearestPlace(gazetteer, cam.latitude, cam.longitude);
   agencyStreams.push({
     id: cam.id, kind: cam.kind, url: cam.url, ...(cam.refresh ? { refresh: cam.refresh } : {}),
     name: cam.name, latitude: round(cam.latitude), longitude: round(cam.longitude),
-    place: cam.place ?? placeLabel(near.place), country: cam.country, timezone: near.place.timezone,
+    place: cam.place ?? placeLabel(near.place), country: cam.country ?? near.place.country, timezone: cam.timezone ?? near.place.timezone,
     category: cam.category, source: cam.source, geocode: 'operator', confidence: 1,
     addedAt: previousAdded.get(cam.id) ?? now,
   });
@@ -359,7 +418,7 @@ console.log(`
   dropped    ${rejected.length}  (${((rejected.length / total) * 100).toFixed(1)}%)
 ${[...reasons].sort((a, b) => b[1] - a[1]).map(([k, v]) => `    ${String(v).padStart(5)}  ${k}`).join('\n')}
 
-  agency cameras  ${agencyStreams.length}  (${agencies.dead} dead video streams dropped or downgraded to snapshots)
+  agency cameras  ${agencyStreams.length}  (${agencies.dead} dead video streams dropped or downgraded to snapshots, ${agencies.dropped} dead or placeholder images dropped)
 ${tally(agencyStreams, (s) => `${s.source} ${s.kind}`)}
 
   TOTAL ON GLOBE  ${streams.length}

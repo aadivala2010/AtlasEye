@@ -490,9 +490,10 @@ export default function GlobeView(props: Props) {
         const zoom = map.getZoom();
         let n = 0;
         for (const s of streamsRef.current) {
-          // On a globe, "in view" = on the visible hemisphere and inside the viewport bounds.
-          if (distanceKm(c.lat, c.lng, s.latitude, s.longitude) > 9000) continue;
+          // On a globe, "in view" = on the visible hemisphere and inside the viewport bounds
+          // (bounds first: it's the cheap test, and rejects almost everything once zoomed in).
           if (zoom > 3 && !bounds.contains([s.longitude, s.latitude])) continue;
+          if (distanceKm(c.lat, c.lng, s.latitude, s.longitude) > 9000) continue;
           n++;
         }
         readout.set({ inView: n, zoom });

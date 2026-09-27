@@ -15,7 +15,7 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -26,8 +26,9 @@ jobs:
 
       - run: npm ci
 
-      # Exits non-zero, leaving the committed catalog untouched, if either upstream
-      # changed its schema or the catalog would shrink by more than half.
+      # Exits non-zero, leaving the committed catalog untouched, if either YouTube catalog
+      # changed its schema or the catalog would shrink by more than half. A camera operator
+      # that fails keeps its previous cameras, with a warning in this step's log.
       - name: Import and geocode
         run: npm run import
 

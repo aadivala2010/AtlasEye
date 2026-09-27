@@ -17,9 +17,11 @@ export default function Search({ ref, streams, onPick }: { ref?: Ref<SearchHandl
 
   useImperativeHandle(ref, () => ({ focus: () => input.current?.focus() }), []);
 
+  // Built on first keystroke, not on load: folding ~60,000 names is too much work for page start.
+  const searching = q.trim() !== '';
   const index = useMemo(
-    () => streams.map((s) => ({ s, name: fold(s.name), hay: fold(`${s.name} ${s.place} ${countryName(s.country)} ${s.country}`) })),
-    [streams],
+    () => (searching ? streams.map((s) => ({ s, name: fold(s.name), hay: fold(`${s.name} ${s.place} ${countryName(s.country)} ${s.country}`) })) : []),
+    [streams, searching],
   );
 
   const results = useMemo(() => {

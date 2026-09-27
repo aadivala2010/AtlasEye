@@ -52,7 +52,7 @@ export default function StreamPanel(p: Props) {
             ? <span className="h-1.5 w-1.5 rounded-full border border-night" />
             : <span className="live-dot h-1.5 w-1.5 rounded-full bg-live" />}
           {s.kind === 'snapshot' ? 'Snapshot' : 'Live'}
-          <span className="text-tertiary">/ {s.kind === 'hls' ? 'video' : s.kind === 'youtube' ? 'youtube' : 'still'} / {s.category}</span>
+          <span className="text-tertiary">/ {s.kind === 'youtube' ? 'youtube' : s.kind === 'snapshot' ? 'still' : 'video'} / {s.category}</span>
         </div>
         <IconButton label="Close panel (Esc)" onClick={p.onClose}><IconClose /></IconButton>
       </div>
@@ -101,7 +101,7 @@ export default function StreamPanel(p: Props) {
           <IconButton label="Previous nearest (←)" onClick={p.onPrev}><IconPrev /></IconButton>
           <IconButton label="Next nearest (→)" onClick={p.onNext}><IconNext /></IconButton>
           <IconButton label="Random stream (R)" onClick={p.onRandom}><IconRandom /></IconButton>
-          {s.kind !== 'snapshot' && (
+          {(s.kind === 'youtube' || s.kind === 'hls') && (
             <IconButton label={p.muted ? 'Unmute (M)' : 'Mute (M)'} onClick={p.onToggleMute} active={!p.muted}>
               {p.muted ? <IconMuted /> : <IconSound />}
             </IconButton>

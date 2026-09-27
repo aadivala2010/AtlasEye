@@ -34,6 +34,7 @@ export default function Player({ ref, stream, muted, builtAt }: Props) {
     <div ref={box} className="relative aspect-video w-full overflow-hidden rounded-[2px] border border-strong bg-void">
       {status !== 'unavailable' && (
         stream.kind === 'hls' ? <HlsVideo stream={stream} muted={muted} status={status} setStatus={setStatus} />
+        : stream.kind === 'mjpeg' ? <Mjpeg stream={stream} status={status} setStatus={setStatus} />
         : stream.kind === 'snapshot' ? <Snapshot stream={stream} status={status} setStatus={setStatus} />
         : <YouTube stream={stream} muted={muted} status={status} setStatus={setStatus} />
       )}
@@ -154,6 +155,38 @@ function HlsVideo({ stream, muted, status, setStatus }: PartProps & { muted: boo
   useEffect(() => { if (video.current) video.current.muted = muted; }, [muted]);
 
   return <video ref={video} muted autoPlay playsInline className={`${fade(status)} object-contain`} />;
+}
+
+/** An operator's MJPEG stream: live video that an <img> plays natively, no player library. */
+function Mjpeg({ stream, status, setStatus }: PartProps) {
+  const img = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const el = img.current;
+    if (!el || !stream.url) { setStatus('unavailable'); return; }
+    // Set here, not in JSX, so the cleanup's removal (which closes the never-ending response) is undone on remount.
+    el.src = stream.url;
+    // Browsers disagree on whether a multipart image fires `load`; a decoded first frame is the real signal.
+    const poll = window.setInterval(() => { if (el.naturalWidth) setStatus((s) => (s === 'loading' ? 'ready' : s)); }, 250);
+    const timer = window.setTimeout(() => setStatus((s) => (s === 'loading' ? 'unavailable' : s)), 20_000);
+    return () => {
+      clearInterval(poll);
+      clearTimeout(timer);
+      el.removeAttribute('src');
+    };
+  }, [stream.url, setStatus]);
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- a live multipart stream, not an optimisable image
+    <img
+      ref={img}
+      alt={`Live camera: ${stream.name}`}
+      onLoad={() => setStatus('ready')}
+      onError={() => setStatus((s) => (s === 'loading' ? 'unavailable' : s))}
+      referrerPolicy="no-referrer"
+      className={`${fade(status)} object-contain`}
+    />
+  );
 }
 
 /** A still from the operator, re-fetched on its published cadence. Labelled SNAPSHOT in the panel. */

@@ -1,7 +1,8 @@
 # Atlas Eye
 
-A live window onto anywhere on Earth. A 3D satellite globe scattered with ~10,000 public live
-cameras — spin it, click a point, and watch what is happening there right now.
+A live window onto anywhere on Earth. A 3D satellite globe scattered with ~60,000 public live
+cameras in 89 countries and on every continent — spin it, click a point, and watch what is happening
+there right now.
 
 No accounts. No API keys. No tracking. One tiny server route: a caching proxy for live flights.
 
@@ -21,10 +22,10 @@ The page is static (the catalog is a file in `public/data/`) apart from `app/api
 | Script | What it does |
 |---|---|
 | `npm run dev` / `build` / `start` | Next.js |
-| `npm run import` | Re-pull every source, validate, geocode, probe live video, write `public/data/streams.json` + `rejected.json` (~4 min) |
+| `npm run import` | Re-pull every source, validate, geocode, probe every live stream and unvetted image, write `public/data/streams.json` + `rejected.json` (~30 min) |
 | `npm run import -- --offline` | Same, from the committed snapshots in `data/upstream/` (for tuning the geocoder) |
 | `npm run gazetteer` | Rebuild `data/gazetteer/cities.tsv` from GeoNames (~210 MB download; rarely needed) |
-| `npm test` | Assert-based self-test of the geocoder, solar math and clocks |
+| `npm test` | Assert-based self-test of the geocoder, solar math, clocks and camera-feed parsing |
 | `npm run typecheck` | `tsc --noEmit` |
 
 ## How the data gets here
@@ -33,51 +34,79 @@ The page is static (the catalog is a file in `public/data/`) apart from `app/api
 Famelack webcams ──┐                                             ┌─ public/data/streams.json  (the globe)
 camlisted ─────────┼─ Zod ─ dedupe ─ overrides ─ geocode / GPS ──┤
                    │                                             └─ public/data/rejected.json (every YouTube drop + reason)
-Caltrans, DelDOT, ─┴─ Zod ─ probe live video ─ nearest place/timezone ─┘
-NYC DOT, DriveBC,
-Digitraffic, HK TD
+60+ camera ────────┴─ Zod ─ dedupe ─ probe streams + unvetted images ─ nearest place/timezone ─┘
+operators + OSM       (scripts/agencies.ts)
 ```
 
 `scripts/import-catalog.ts` runs offline (by you, or weekly by
 `.github/workflows/refresh-catalog.yml`) and commits its output. The app never calls it.
 
-### Three kinds of stream
+### Four kinds of stream
 
 | Kind | Where from | Plays as | Coordinates |
 |---|---|---|---|
 | **YouTube** | [Famelack](https://github.com/famelack/famelack-data), [camlisted](https://github.com/tantran21501/camlisted) (both MIT) | youtube-nocookie iframe | geocoded from the title (below), or the broadcaster's own YouTube GPS |
-| **Live video** | Caltrans, Delaware DOT road cameras | HLS via hls.js (loaded only when opened) | published by the operator |
-| **Snapshot** | Caltrans, NYC DOT, DriveBC, Digitraffic (Finland), Hong Kong TD | a still the operator refreshes every 5 s – 5 min, re-fetched on that cadence and labelled **SNAPSHOT** | published by the operator |
+| **Live video (HLS)** | US state DOTs (511 sites, Caltrans, VDOT, MoDOT, CHART, COtrip…) | hls.js (loaded only when opened) | published by the operator |
+| **Live video (MJPEG)** | Taiwan's Freeway and Highway Bureaus | a plain `<img>` — browsers play multipart JPEG natively | published by the operator |
+| **Snapshot** | every other operator, plus OpenStreetMap-mapped webcams | a still the operator refreshes every 5 s – 10 min, re-fetched on that cadence and labelled **SNAPSHOT** | published by the operator (or the OSM mapper) |
 
 Snapshots can be hidden with the **SNAPSHOTS** chip in the header; their pins are drawn smaller,
 and Random picks them rarely.
+
+**Camera operators** (all keyless, all in `scripts/agencies.ts`, credited on every stream and on /about):
+
+- **North America** — the IBI "511" platform (one list endpoint behind 22 sites: NY, GA, AZ, WI, LA, ID,
+  UT, NV, PA, CT, FL, New England, NC, AK, and Ontario, Alberta, Saskatchewan, Manitoba, New Brunswick,
+  Nova Scotia, Newfoundland, Yukon), Castle Rock's CARS platform (MN, IA, IN, KS, NE, MA — and Ireland),
+  COtrip (CO), VDOT (VA), MoDOT (MO), CHART (MD), TripCheck (OR), WSDOT (WA, via ArcGIS), Caltrans,
+  DelDOT, NYC DOT, Austin, DriveBC, York Region, ALERTCalifornia wildfire cameras, USGS river cameras,
+  NOAA buoys.
+- **Europe** — DGT (all of Spain, DATEX II), Madrid, Catalonia, TfL JamCams (London), TII (Ireland),
+  Vegagerðin (Iceland), eismoinfo (Lithuania), Digitraffic (Finland), foto-webcam.eu (the Alps).
+- **Asia & Oceania** — Taiwan Freeway and Highway Bureaus, Japan's MLIT regional bureaus (via Esri
+  Japan's index), Hong Kong TD, NZTA (New Zealand), Live Traffic NSW (Australia).
+- **Africa & Antarctica** — SANRAL i-traffic (South Africa), Australian Antarctic Division stations,
+  NOAA's South Pole observatory.
+- **Everywhere else** — OpenStreetMap: every node mapped with `contact:webcam` / `webcam` pointing at a
+  direct image, fetched through Overpass.
 
 - **Vendored.** Validated snapshots of every source live in `data/upstream/`
   (`agencies.json` is the normalised, probed camera list).
 - **Only live, embeddable YouTube streams.** From camlisted we keep `status: live`,
   `content_type: live` (not ended VOD archives), `embeddable`, approved and not hidden.
   Famelack already verifies embed + live status.
-- **Live video is verified at import.** Every HLS playlist is fetched; one that doesn't answer
-  with `#EXTM3U` within 8 s is dropped (Caltrans cameras fall back to their still image).
-- **Fails loudly.** Every source is parsed with Zod. On any schema mismatch the script prints the
-  first issues, exits 1 and **leaves the existing catalog untouched**. It also refuses to write if
-  the catalog would shrink by more than half (override with `--force`) or would be empty. An agency
-  that is merely *unreachable* keeps its cameras from the previous catalog (with a warning), so one
-  flaky server doesn't blank a region.
-- **Dedupe** on YouTube video ID; Famelack wins (cleaner names, hand-assigned categories).
+- **Live video is verified at import.** Every HLS playlist is fetched with an `Origin` header; one that
+  doesn't answer `#EXTM3U` with CORS headers within 8 s (hls.js can't play it) falls back to the camera's
+  still image, or is dropped if it has none. Every MJPEG stream must start a multipart response.
+  Tokenised or login-only video (Mass511, Georgia, Florida…) is shown as the operator's still.
+- **Unvetted images are fetched at import** (OpenStreetMap links, Japan's index, South Africa): dropped
+  if the URL doesn't return a real image, if its `Last-Modified` is over 30 days old (a stopped camera),
+  or if the same bytes come back from three or more cameras — that's an operator's "camera offline" card.
+- **Fails loudly, per source.** Every source is parsed with Zod. A schema mismatch in a YouTube catalog
+  prints the first issues, exits 1 and **leaves the existing catalog untouched**; the script also refuses
+  to write if the catalog would shrink by more than half (override with `--force`) or would be empty.
+  A camera operator that is unreachable *or* has changed its format keeps its cameras from the previous
+  catalog, with the Zod issues printed as a warning: one of 60-odd operators shouldn't blank its region or
+  hold up everyone else's weekly refresh. So does an operator whose probes nearly all fail (90%+ of at
+  least 20): every camera dying at once doesn't happen, a CI runner abroad being refused does.
+- **Dedupe** on YouTube video ID (Famelack wins: cleaner names, hand-assigned categories); on stream URL
+  across operators (the first listed keeps it); and an OSM camera within 150 m of an operator's camera is
+  dropped as a mirror of it.
 - **Timezones and place names** come from coordinates at build time: a gazetteer match carries its
   GeoNames timezone; everything else takes the nearest GeoNames place (a 1° grid index keeps
-  that fast for ~10,000 cameras).
+  that fast for ~60,000 cameras). Antarctic stations, far from any GeoNames place, carry their own.
 
-### Current numbers (catalog built 2026-09-25)
+### Current numbers (catalog built 2026-09-27)
 
 | | |
 |---|---|
-| **On the globe** | **9,963** |
-| YouTube live streams placed | 2,386 of 4,726 upstream (146 hand-placed, 152 by broadcaster GPS) |
-| Live road-camera video | 1,868 (playlist verified live at import) |
-| Snapshot cameras | 5,709 |
-| YouTube streams dropped | 2,340 (49.5%) — every one listed in `public/data/rejected.json` |
+| **On the globe** | **60,372** in 89 countries, from 61 camera operators and 2 YouTube catalogs |
+| YouTube live streams placed | 2,397 of 4,740 upstream (142 hand-placed, 152 by broadcaster GPS) |
+| Live video | 10,235 HLS + 3,378 MJPEG (every stream probed live at import) |
+| Snapshot cameras | 44,362 |
+| By region | North America 44,583 · Asia 7,361 · Europe 7,046 · Africa & Middle East 700 · Oceania 561 · Latin America 115 · Antarctica 4 |
+| Dropped at import | 2,262 dead or CORS-less video streams (downgraded to stills where possible), 2,183 dead, stale or placeholder images |
+| YouTube streams dropped | 2,343 (49.4%) — every one listed in `public/data/rejected.json` |
 
 The YouTube drop rate is deliberate. Most drops are streams whose title names no findable place
 ("Bridge Cam", "Osprey Nest 2") — those need an override, not a guess.
@@ -168,13 +197,18 @@ fixed with a rule, a stopword or an override — but automatic matching is not p
 - **camlisted `parking` category is excluded** (parking-lot security cameras read as
   surveillance). Moving streams (walking tours, dashcams) are pinned at the city they're in.
 - **Streams with no place on Earth** (ISS feeds) are excluded — there is no honest pin for them.
-- **Road cameras and snapshots (added on request for many more streams).** The prompt's catalog is
-  YouTube-only; transport agencies publish thousands of public cameras with exact coordinates, which
-  need no geocoding at all. Live video is verified at import. Still-image cameras are included but
-  never passed off as video: labelled SNAPSHOT, drawn smaller, hideable, and rarely picked by Random.
-  Keyed agency APIs (most US 511 systems, WSDOT, Ontario, Alberta) are skipped — no keys is a
-  project rule. [Ora](https://github.com/warner-wvez/Ora) has ~46k US cameras but is licensed
-  PolyForm Noncommercial, so none of its data is used.
+- **Road cameras and snapshots (added on request for many more streams, then for the whole world).**
+  The prompt's catalog is YouTube-only; transport agencies publish tens of thousands of public cameras
+  with exact coordinates, which need no geocoding at all. Live video is verified at import. Still-image
+  cameras are included but never passed off as video: labelled SNAPSHOT, drawn smaller, hideable, and
+  rarely picked by Random. **No keys is a project rule:** the 511 sites' keyed developer APIs are not
+  used; their public maps' own list endpoints (the data every visitor's browser loads, no key or login)
+  are. Skipped because they need a key or registration: Trafikverket (Sweden), QLDTraffic, Taiwan's TDX
+  (city cameras), Korea's ITS, Norway's DATEX, FAA WeatherCams, NPS, Windy. Skipped for lack of
+  structured data: most of Latin America, Africa and South Asia publish cameras only as web pages, and
+  Germany's Autobahn API no longer lists webcams. Unsecured private cameras (Insecam-style lists) are
+  never used. [Ora](https://github.com/warner-wvez/Ora) has ~46k US cameras but is licensed PolyForm
+  Noncommercial, so none of its data is used.
 - **Satellite imagery:** the globe shows Esri World Imagery (keyless) at every zoom, with
   OpenStreetMap borders and place names from OpenFreeMap (CARTO fallback) drawn on top. EOX
   Sentinel-2 cloudless 2016 was dropped: its orbit-swath seams showed as stripes across continents.
@@ -195,7 +229,7 @@ components/globe/   GlobeView (map, pins, clusters, terminator, rim light), Star
 components/stream/  StreamPanel, Player (+ unavailable state), Clocks
 components/chrome/  Header (categories, random), Search, StatusBar, icons
 lib/                stream types, geo, solar (terminator), time, readout store
-scripts/            import-catalog, geocode, stopwords, build-gazetteer, selftest
+scripts/            import-catalog, agencies (every camera operator), geocode, stopwords, build-gazetteer, selftest
 data/               overrides.json, excluded.json, gazetteer/, upstream/ snapshots
 public/data/        streams.json, rejected.json
 ```

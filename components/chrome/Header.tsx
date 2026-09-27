@@ -42,7 +42,7 @@ export default function Header(p: Props) {
           <button key={id} type="button" aria-pressed={on} title={title} onClick={() => p.onToggleLayer(id)} className={`${CHIP} ${chipState(on)}`}>
             <span className={`h-1.5 w-1.5 rounded-full ${on ? LAYER_DOT[id] : 'bg-strong'}`} />
             {label}
-            {n != null && <span className="text-tertiary">{n}</span>}
+            {n != null && <span className="text-tertiary">{n.toLocaleString('en-US')}</span>}
           </button>
         );
       })}
@@ -57,7 +57,7 @@ export default function Header(p: Props) {
             className={`${CHIP} ${chipState(p.snapshots)}`}
           >
             Snapshots
-            <span className="text-tertiary">{p.snapshotCount}</span>
+            <span className="text-tertiary">{p.snapshotCount.toLocaleString('en-US')}</span>
           </button>
         </>
       )}

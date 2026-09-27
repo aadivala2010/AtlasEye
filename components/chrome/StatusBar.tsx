@@ -32,15 +32,15 @@ export default function StatusBar({ total, builtAt, loading }: Props) {
         <span className="ellipsis text-accent">LOADING<span className="max-sm:hidden"> CATALOG</span></span>
       ) : (
         <>
-          <F k="IN VIEW" className="max-sm:hidden">{inView ?? '—'}</F>
-          <F k="CATALOG" className="max-sm:hidden">{total ?? '—'}</F>
+          <F k="IN VIEW" className="max-sm:hidden">{inView?.toLocaleString('en-US') ?? '—'}</F>
+          <F k="CATALOG" className="max-sm:hidden">{total?.toLocaleString('en-US') ?? '—'}</F>
         </>
       )}
       <F k="UTC" className="max-sm:hidden">{now ? utcClock(now) : '--:--:--'}</F>
       {builtAt && <F k="BUILT" className="max-xl:hidden">{builtAt.slice(0, 10)}</F>}
       </div>
       <a href="/about" className="shrink-0 text-tertiary transition-colors duration-200 ease-atlas hover:text-secondary">
-        <span className="max-md:hidden">Imagery © Esri, Maxar, Earthstar Geographics · © OpenStreetMap · GeoNames CC BY 4.0 · Famelack · camlisted · Road cams: public agencies · via YouTube · Flights: adsb.lol (ODbL) · Weather: Open-Meteo · Terrain: Mapzen</span>
+        <span className="max-md:hidden">Imagery © Esri, Maxar, Earthstar Geographics · © OpenStreetMap · GeoNames CC BY 4.0 · Famelack · camlisted · Cameras: public operators & OSM · via YouTube · Flights: adsb.lol (ODbL) · Weather: Open-Meteo · Terrain: Mapzen</span>
         <span className="md:hidden">©Esri·OSM·GeoNames·Famelack·camlisted·YouTube·adsb.lol·Open-Meteo</span>
       </a>
     </footer>

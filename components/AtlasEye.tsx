@@ -123,9 +123,10 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   const random = useCallback(() => {
     if (!streams?.length) return;
     // Weighted toward hand-placed and confidently placed YouTube streams (the most interesting and
-    // best named), then live agency video; snapshots only occasionally.
+    // best named), then live agency video; snapshots only occasionally. With ~60k cameras this lands
+    // roughly 2/3 YouTube, 1/4 live road video, <1/10 stills.
     const pool = streams.filter((s) => s.id !== selectedId);
-    const kindWeight = { youtube: 1, hls: 0.12, snapshot: 0.02 } as const;
+    const kindWeight = { youtube: 1, hls: 0.05, mjpeg: 0.05, snapshot: 0.006 } as const;
     const weights = pool.map((s) => kindWeight[s.kind] * s.confidence ** 2 * (s.geocode === 'override' ? 3 : 1));
     let r = Math.random() * weights.reduce((a, b) => a + b, 0);
     const pick = pool.find((_, i) => (r -= weights[i]) <= 0) ?? pool[pool.length - 1];

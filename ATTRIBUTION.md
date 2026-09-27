@@ -16,6 +16,16 @@ texts are reproduced in full here and in `licenses/`.
 | [DriveBC](https://www.drivebc.ca/) | webcam list, coordinates, still-image URLs | [Open Government Licence – British Columbia](https://www2.gov.bc.ca/gov/content/data/open-data/open-government-licence-bc) | as above |
 | [Fintraffic / Digitraffic](https://www.digitraffic.fi/en/) | road weather camera stations and image URLs | CC BY 4.0 | as above |
 | Transport Department, HKSAR via [DATA.GOV.HK](https://data.gov.hk/) | traffic snapshot camera locations and image URLs | [DATA.GOV.HK terms of use](https://data.gov.hk/en/terms-and-conditions) | as above |
+| US state and Canadian provincial 511 traveller-information sites: [511NY](https://511ny.org/), [511GA](https://511ga.org/), [AZ511](https://az511.gov/), [511WI](https://511wi.gov/), [511LA](https://511la.org/), [Idaho 511](https://511.idaho.gov/), [UDOT Traffic](https://udottraffic.utah.gov/), [NVRoads](https://www.nvroads.com/), [511PA](https://www.511pa.com/), [CTroads](https://ctroads.org/), [FL511](https://fl511.com/), [New England 511](https://newengland511.org/), [DriveNC](https://www.drivenc.gov/), [Alaska 511](https://511.alaska.gov/), [511MN](https://511mn.org/), [511IA](https://511ia.org/), [511IN](https://511in.org/), [KanDrive](https://kandrive.gov/), [Nebraska 511](https://511.nebraska.gov/), [Mass511](https://mass511.com/), [511 Virginia](https://511.vdot.virginia.gov/), [MoDOT](https://traveler.modot.org/), [CHART Maryland](https://chart.maryland.gov/), [TripCheck Oregon](https://tripcheck.com/), [Ontario 511](https://511on.ca/), [511 Alberta](https://511.alberta.ca/), [Saskatchewan Highway Hotline](https://hotline.gov.sk.ca/), [Manitoba 511](https://www.manitoba511.ca/), [New Brunswick 511](https://511.gnb.ca/), [Nova Scotia 511](https://511.novascotia.ca/), [Newfoundland and Labrador 511](https://511nl.ca/), [Yukon 511](https://511yukon.ca/) | camera list, coordinates, live video / still URLs, as each site publishes them to its public map (no key) | public traveller information, credited to each operator on every stream | as above |
+| [DGT](https://nap.dgt.es/) (Spain, DATEX II), [Ayuntamiento de Madrid](https://informo.madrid.es/), [Servei Català de Trànsit](https://transit.gencat.cat/) | traffic camera locations and image URLs | Spanish public-sector information, reuse with attribution | as above |
+| [Transport for London](https://tfl.gov.uk/info-for/open-data-users/) JamCams | camera locations and image URLs | TfL open data terms: Powered by TfL Open Data; contains OS data © Crown copyright and database rights | as above |
+| [Vegagerðin](https://www.vegagerdin.is/) (Iceland), [eismoinfo.lt](https://eismoinfo.lt/) (Lithuania) | road weather / traffic camera locations and image URLs | public traveller information, attribution | as above |
+| [foto-webcam.eu](https://www.foto-webcam.eu/) | webcam list, coordinates, image URLs | images © their webcam operators; shown from foto-webcam.eu with credit, not stored | as above |
+| [NZ Transport Agency Waka Kotahi](https://www.journeys.nzta.govt.nz/traffic-cameras), [Live Traffic NSW](https://www.livetraffic.com/traffic-cameras) (Transport for NSW) | traffic camera locations and image URLs | NZ Government / Transport for NSW open data, attribution | as above |
+| [i-traffic](https://www.i-traffic.co.za/) (SANRAL, South Africa) | camera locations, names and image URLs | public traveller information, attribution | as above |
+| Taiwan [Freeway Bureau](https://www.freeway.gov.tw/) and [Highway Bureau](https://www.thb.gov.tw/), MOTC | CCTV locations and live MJPEG stream URLs | Open Government Data License, version 1.0 (Taiwan), attribution | as above |
+| [NOAA National Data Buoy Center](https://www.ndbc.noaa.gov/buoycams.shtml) | buoy camera locations and image URLs | US government work, public domain | as above |
+| [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors | locations, names and image links of mapped webcams (`source: "osm"` records) | ODbL 1.0: those records in `public/data/streams.json` and `data/upstream/agencies.json` remain available under the ODbL; each image belongs to the camera's operator | as above |
 | [Wikimedia Commons](https://commons.wikimedia.org/) photographers (list below) | cockpit photos | CC BY / CC BY-SA / GFDL / CC0, per photo | `public/cockpits/*.webp` (modified, see below) |
 | YouTube | stream playback | YouTube Terms of Service | not stored; streams embedded via the public player |
 
@@ -29,7 +39,9 @@ marked historic or colloquial. All other columns and records are dropped.
 
 **Required notices.** Contains information licensed under the Open Government Licence – British Columbia.
 Source: Fintraffic / digitraffic.fi, licence CC 4.0 BY. Traffic snapshot data: Transport Department,
-The Government of the Hong Kong SAR, via DATA.GOV.HK.
+The Government of the Hong Kong SAR, via DATA.GOV.HK. Powered by TfL Open Data; contains OS data ©
+Crown copyright and database rights. Camera data © OpenStreetMap contributors, available under the
+Open Database License.
 
 
 **Cockpit photos.** Each is cropped, resized, re-encoded as WebP, and has its windscreen made

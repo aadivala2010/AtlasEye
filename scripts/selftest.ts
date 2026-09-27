@@ -1,6 +1,7 @@
 /** `npm test` — assert-based checks for the parts that are easy to break silently. */
 import assert from 'node:assert/strict';
-import { geocode, loadGazetteer, nearestPlace } from './geocode';
+import { distanceKm, geocode, loadGazetteer, nearestPlace } from './geocode';
+import { blockedSources, cameraName, titleCase, tmInverse } from './agencies';
 import { nightBands, subsolarPoint, sunAltitude } from '../lib/solar';
 import { zonedClock } from '../lib/time';
 import { parseFlights, project } from '../lib/flights';
@@ -54,5 +55,26 @@ assert.equal(f.alt, 0);
 const p = project(f, 60_000);
 assert.ok(Math.abs(p.lon - 1 / 60) < 1e-9 && Math.abs(p.lat) < 1e-9, `project ${JSON.stringify(p)}`);
 assert.deepEqual(project(f, 60 * 60_000), project(f, 15 * 60_000)); // capped at 15 min
+
+// Camera names: operator codes become road + direction + place words; shouted names are tamed.
+assert.equal(cameraName('1068N_75_N/O_GoldenGate_M107', 'I-75', 'Northbound'), 'I-75 Northbound · Golden Gate');
+assert.equal(cameraName('CCTV10-US74-271.3E_ANSONVILLE', 'US-74', 'Eastbound'), 'US-74 Eastbound · Ansonville');
+assert.equal(cameraName('CHAT-0019: SR 25 at SR 307 PORTS (CHATHAM)'), 'SR 25 at SR 307 Ports (Chatham)');
+assert.equal(cameraName('N/A', 'West 4th St @ Woodland Roundabout'), 'West 4th St @ Woodland Roundabout');
+assert.equal(cameraName('US 41 · -rwis SULLIVAN'), 'US 41 · Sullivan');
+assert.equal(titleCase('PLAZA DE CASTILLA (NORTE)'), 'Plaza de Castilla (Norte)');
+
+// Transverse Mercator: on the central meridian, northing / k0 is the meridian arc (45° N on GRS80: 4 984 944.378 m).
+const [lat45, lon45] = tmInverse(500_000, 0.9996 * 4_984_944.378, 9, 0.9996, 500_000);
+assert.ok(Math.abs(lat45 - 45) < 1e-6 && lon45 === 9, `tm ${lat45} ${lon45}`);
+// Lithuania's "Vilnius A1 10,04" camera (LKS-94) lands 10 km out of Vilnius, not somewhere else.
+const [ltLat, ltLon] = tmInverse(576_154, 6_056_867, 24, 0.9998, 500_000);
+assert.equal(nearestPlace(g, ltLat, ltLon).place.country, 'LT');
+assert.ok(distanceKm(ltLat, ltLon, 54.6872, 25.2797) < 15, `LKS-94 ${ltLat} ${ltLon}`);
+
+// An operator whose probes (nearly) all fail is refused, not dead; a few dead cameras or a tiny sample isn't.
+assert.deepEqual([...blockedSources(new Map([
+  ['refused', { probed: 40, failed: 38 }], ['some-dead', { probed: 40, failed: 12 }], ['tiny', { probed: 5, failed: 5 }],
+]))], ['refused']);
 
 console.log('✔ selftest passed');
