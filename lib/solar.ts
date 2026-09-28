@@ -23,6 +23,8 @@ const clampLat = (lat: number) => Math.max(-POLE_LIMIT_LAT, Math.min(POLE_LIMIT_
  * evaluating sun altitude per pixel.
  */
 const BEARING_STEP = 0.5;
+/** Points along the pole's parallel when closing a wrapping cap — one lap, kept short-chorded. */
+const POLE_SEAM_STEPS = 64;
 
 /** The point on Earth where the sun is directly overhead. */
 export function subsolarPoint(date: Date): SunPoint {
@@ -53,31 +55,46 @@ function nightCap(sun: SunPoint, depression: number): GeoJSON.Position[] {
   const cLon = wrapLon(sun.lon + 180) * RAD;
   const r = (90 - depression) * RAD;
   const ring: GeoJSON.Position[] = [];
-  for (let b = 0; b < 360; b += BEARING_STEP) {
+  // Inclusive of 360: that repeat of the first point is what carries a cap circling a pole through
+  // its last arc, so its longitude drift comes out as exactly one turn rather than falling short.
+  for (let b = 0; b <= 360; b += BEARING_STEP) {
     const t = b * RAD;
     const lat = Math.asin(Math.sin(cLat) * Math.cos(r) + Math.cos(cLat) * Math.sin(r) * Math.cos(t));
     const lon = cLon + Math.atan2(Math.sin(t) * Math.sin(r) * Math.cos(cLat), Math.cos(r) - Math.sin(cLat) * Math.sin(lat));
     ring.push([lon / RAD, lat / RAD]);
   }
 
-  const poleLat = sun.lat > 0 ? -POLE_LIMIT_LAT : POLE_LIMIT_LAT; // the pole in darkness
-  const containsPole = 90 - Math.abs(sun.lat) < 90 - depression;
-  if (containsPole) {
-    // The cap wraps all the way around: sort by longitude and close it over the dark pole.
-    const pts = ring.map(([lon, lat]) => [wrapLon(lon), clampLat(lat)]).sort((a, b) => a[0] - b[0]);
-    const [first, last] = [pts[0], pts[pts.length - 1]];
-    const span = first[0] + 360 - last[0];
-    const seamLat = clampLat(last[1] + ((first[1] - last[1]) * (180 - last[0])) / span);
-    return [[-180, seamLat], ...pts, [180, seamLat], [180, poleLat], [-180, poleLat], [-180, seamLat]];
-  }
-  // Otherwise keep longitudes continuous (may exceed ±180; the renderer wraps them).
+  // Keep longitudes continuous, so the ring reads as one curve rather than jumping ±360 at the
+  // antimeridian. They may end up outside ±180; the renderer wraps them.
   for (let i = 1; i < ring.length; i++) {
     while (ring[i][0] - ring[i - 1][0] > 180) ring[i][0] -= 360;
     while (ring[i][0] - ring[i - 1][0] < -180) ring[i][0] += 360;
-    ring[i][1] = clampLat(ring[i][1]);
   }
-  ring[0][1] = clampLat(ring[0][1]);
-  return [...ring, ring[0]];
+  for (const p of ring) p[1] = clampLat(p[1]);
+
+  const containsPole = 90 - Math.abs(sun.lat) < 90 - depression;
+  if (!containsPole) return ring; // already closed: the b=360 sample repeats the b=0 one
+
+  /*
+   * The cap wraps all the way around, so the ring circles the pole once and its longitude has
+   * drifted a full turn. Close it over the dark pole by walking along the pole's parallel from
+   * where the ring ended back to where it started.
+   *
+   * Emphatically not by sorting the ring by longitude, which is what used to happen: that assumes
+   * longitude increases along the ring, and near an equinox it does not. The shallowest cap is
+   * then a hemisphere whose boundary is a great circle passing within a degree or two of the pole
+   * — nearly a pair of meridians — so hundreds of points share a longitude and the sort orders
+   * them arbitrarily in latitude. The result is a zigzag that renders as a wedge radiating from
+   * the pole, for the few weeks either side of each equinox.
+   */
+  const poleLat = sun.lat > 0 ? -POLE_LIMIT_LAT : POLE_LIMIT_LAT; // the pole in darkness
+  // The ring's ends are the same place a turn apart, so walking between their longitudes along the
+  // pole's parallel is exactly one lap, and encloses the cap.
+  const from = ring[ring.length - 1][0];
+  const to = ring[0][0];
+  const seam: GeoJSON.Position[] = [];
+  for (let i = 0; i <= POLE_SEAM_STEPS; i++) seam.push([from + ((to - from) * i) / POLE_SEAM_STEPS, poleLat]);
+  return [...ring, ...seam, ring[0]];
 }
 
 /** Stacked twilight bands every 2° from 0° to 18° — overlapping low-opacity fills read as a soft shadow. */
