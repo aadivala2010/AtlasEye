@@ -52,7 +52,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "Sgv_vU-jXyU",
+  "id": "JL7xxYEKe64",
   "title": "Aðaldalshraun Aurora & Heath Sky",
   "source": "famelack",
   "country": "IS",
@@ -2418,13 +2418,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "vr3CfI4HW10",
-  "title": "Castro Street",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "M1hMK6H9F98",
   "title": "Castro Street Cam 1",
   "source": "famelack",
@@ -3245,6 +3238,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "iPVZxyhR5o4",
+  "title": "De Mortel Tawny Owl Nest Boxes",
+  "source": "famelack",
+  "country": "NL",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
   "id": "WmST7O6CJ1U",
   "title": "De Mortel Tawny Owl Outdoor Nest Box",
   "source": "famelack",
@@ -3356,18 +3356,6 @@
   "source": "famelack",
   "country": "TW",
   "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "I29srHZAwK0",
-  "title": "Disney California Adventure",
-  "source": "famelack",
-  "country": "US",
-  "reason": "ambiguous-name:california",
-  "best": {
-   "matched": "california",
-   "place": "California, Maryland, US",
-   "confidence": 0
-  }
  },
  {
   "id": "iUdDKf9aDUU",
@@ -3745,6 +3733,18 @@
   "source": "famelack",
   "country": "ID",
   "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "LkitaunIuXs",
+  "title": "Drniš Panorama",
+  "source": "famelack",
+  "country": "HR",
+  "reason": "below-threshold",
+  "best": {
+   "matched": "drnis",
+   "place": "Drniš, Šibenik-Knin, HR",
+   "confidence": 0.603
+  }
  },
  {
   "id": "d3QkaaLkUHg",
@@ -4516,7 +4516,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "MRdoZXJ37dg",
+  "id": "hi9pFPEwCOk",
   "title": "Galeão International Airport",
   "source": "famelack",
   "country": "BR",
@@ -4671,7 +4671,7 @@
   }
  },
  {
-  "id": "IAemapCLb8E",
+  "id": "V6Fn5deRPeM",
   "title": "Georgica Jetty",
   "source": "famelack",
   "country": "US",
@@ -5467,7 +5467,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "d1FQ3842sSM",
+  "id": "E2JvPKohPEM",
   "title": "Higgins Beach",
   "source": "famelack",
   "country": "US",
@@ -5645,13 +5645,6 @@
   "title": "Hotel Kohlerhof South View",
   "source": "famelack",
   "country": "AT",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "jDvC528evIQ",
-  "title": "Hotel Margaret Porat",
-  "source": "famelack",
-  "country": "HR",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -6065,13 +6058,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "kLLb-fPOPuk",
-  "title": "JFK ATC Feed",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "XEbo8NzMTbQ",
   "title": "Jiaobanshan Eco Pond",
   "source": "famelack",
@@ -6416,13 +6402,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "mnxV4iit7S4",
-  "title": "Kijkduin Boulevard",
-  "source": "famelack",
-  "country": "NL",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "ccTVAhJU5lg",
   "title": "Kilpisjärvi Fell Valley View",
   "source": "famelack",
@@ -6627,6 +6606,13 @@
   "title": "Kodim Gunungkidul Traffic",
   "source": "famelack",
   "country": "ID",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "cgO4gWvgx8g",
+  "title": "Kohoku Parking Area on the Tomei Expressway",
+  "source": "famelack",
+  "country": "JP",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -7060,7 +7046,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "eabpfojvLOY",
+  "id": "xx_phz4U_Xo",
   "title": "LAX Airport Arrivals",
   "source": "famelack",
   "country": "US",
@@ -7107,7 +7093,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "sVEv0c1pZdY",
+  "id": "taPUv8ooVCA",
   "title": "Le Morne",
   "source": "famelack",
   "country": "MU",
@@ -7481,6 +7467,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "3lGDD0Ji7LI",
+  "title": "Long Wharf",
+  "source": "famelack",
+  "country": "US",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
   "id": "t2TdOxloIvo",
   "title": "Longview UPRR East",
   "source": "famelack",
@@ -7613,18 +7606,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "6f4cCh3E_Js",
-  "title": "Lužná u Rakovníka Railway Station",
-  "source": "famelack",
-  "country": "CZ",
-  "reason": "below-threshold",
-  "best": {
-   "matched": "luzna",
-   "place": "Lužná, Central Bohemia, CZ",
-   "confidence": 0.593
-  }
- },
- {
   "id": "6kX0K9u3NTQ",
   "title": "Lyn's Food Haus, Bankerohan",
   "source": "famelack",
@@ -7690,13 +7671,6 @@
   "title": "Maasai Mara Safari",
   "source": "famelack",
   "country": "KE",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "Ud7I4jprFN0",
-  "title": "Maasvlakte Beach",
-  "source": "famelack",
-  "country": "NL",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -7818,7 +7792,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "AD4pypW0SUs",
+  "id": "hlJ6o2SRtjY",
   "title": "Maho Beach Plane Spotting",
   "source": "famelack",
   "country": "SX",
@@ -7917,13 +7891,6 @@
    "place": "Måløy, Vestland, NO",
    "confidence": 0.609
   }
- },
- {
-  "id": "vsjE5ERdZzM",
-  "title": "Mamaia Hotel Malibu Beach",
-  "source": "famelack",
-  "country": "RO",
-  "reason": "no-gazetteer-match-in-country"
  },
  {
   "id": "loHbMM9JfCs",
@@ -9194,13 +9161,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "LJrl_QQGn2Y",
-  "title": "Napili Bay Beach",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "KSxc-N67TU4",
   "title": "National Aquarium Reef Cam",
   "source": "famelack",
@@ -9493,20 +9453,6 @@
   }
  },
  {
-  "id": "L76VKII_Z7k",
-  "title": "Noordwijk Boulevard",
-  "source": "famelack",
-  "country": "NL",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "dtFG_mcfWjQ",
-  "title": "Noordwijk Boulevard",
-  "source": "famelack",
-  "country": "NL",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "0fTmFyQCxqc",
   "title": "Nordfjordhjort Deer Farm & Navevatnet",
   "source": "famelack",
@@ -9669,7 +9615,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "XWmGxo24R7E",
+  "id": "rOtdFWnxmto",
   "title": "Obor Square",
   "source": "famelack",
   "country": "RO",
@@ -11020,13 +10966,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "u-5VPZMs66w",
-  "title": "Port St Laurent du Var",
-  "source": "famelack",
-  "country": "FR",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "m1R-LmvVt30",
   "title": "PortMiami Cruise Ships & Skyline",
   "source": "famelack",
@@ -11751,13 +11690,6 @@
  {
   "id": "w-ewRv3SZMo",
   "title": "Riet Vell Bird Reserve",
-  "source": "famelack",
-  "country": "ES",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "pbv7ZyVGg24",
-  "title": "Riet Vell Nature Reserve Barn Owl Nest",
   "source": "famelack",
   "country": "ES",
   "reason": "no-gazetteer-match-in-country"
@@ -13413,7 +13345,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "eF5Utg6Rx6s",
+  "id": "tTcaAGn1jyM",
   "title": "Soi Buakhao Bar Strip",
   "source": "famelack",
   "country": "TH",
@@ -13770,7 +13702,7 @@
   }
  },
  {
-  "id": "iovJifLzn1E",
+  "id": "b983minxX5Q",
   "title": "Squirrel and Wildlife Feeder",
   "source": "famelack",
   "country": "US",
@@ -14398,13 +14330,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "5vR4vg91sGY",
-  "title": "Tamsui Ferry Pier",
-  "source": "famelack",
-  "country": "TW",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "xwAWSh35uuw",
   "title": "Tamsui Fisherman's Wharf & Lover's Bridge",
   "source": "famelack",
@@ -14749,7 +14674,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "mSUrb7oh13A",
+  "id": "c3UWX9HNoOA",
   "title": "Tinos Ferry Port and Harbor",
   "source": "famelack",
   "country": "GR",
@@ -15664,7 +15589,7 @@
   }
  },
  {
-  "id": "zerB2HWPBbo",
+  "id": "qN7Ch3_aFL0",
   "title": "Viracopos International Airport",
   "source": "famelack",
   "country": "BR",
@@ -16306,7 +16231,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "dtS8cqhl6qE",
+  "id": "W24eYydw9Qw",
   "title": "Wissant Beach",
   "source": "famelack",
   "country": "FR",
@@ -16597,13 +16522,6 @@
   "title": "Zambezi River",
   "source": "famelack",
   "country": "NA",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "q0-DDh1zdY4",
-  "title": "Zandvoort Boulevard",
-  "source": "famelack",
-  "country": "NL",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -18665,13 +18583,6 @@
   "title": "Madeira, Portugal 🇵🇹 in 4K UHD - Portugal's Paradise | Cinematic Drone Footage",
   "source": "camlisted",
   "country": "PT",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "XRTYNkGl4e8",
-  "title": "岩田住宅のライブ配信２",
-  "source": "camlisted",
-  "country": "JP",
   "reason": "no-gazetteer-match-in-country"
  },
  {
