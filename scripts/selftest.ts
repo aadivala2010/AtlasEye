@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { distanceKm, geocode, loadGazetteer, nearestPlace } from './geocode';
 import { blockedSources, cameraName, titleCase, tmInverse } from './agencies';
-import { POLE_LIMIT_LAT, nightBands, subsolarPoint, sunAltitude } from '../lib/solar';
+import { subsolarPoint, sunAltitude } from '../lib/solar';
 import { cloudsDate, zonedClock } from '../lib/time';
 import { parseFlights, project } from '../lib/flights';
 
@@ -41,58 +41,6 @@ assert.ok(Math.abs(solstice.lat - 23.44) < 0.2, `solstice lat ${solstice.lat}`);
 assert.ok(Math.abs(solstice.lon) < 2.5, `solstice lon ${solstice.lon}`);
 assert.ok(sunAltitude(0, 0, solstice) > 60);
 assert.ok(sunAltitude(0, 180, solstice) < -60);
-const bands = nightBands(new Date('2026-06-21T12:00:00Z'));
-assert.equal(bands.features.length, 10);
-assert.ok(bands.features.every((f) => f.geometry.coordinates[0].length > 100));
-
-// The terminator's real invariant: what the band polygons cover must match what the sun actually
-// does. Evaluating sun altitude per point is the truth; the polygons are an approximation of it,
-// and every way they have gone wrong shows up as a disagreement near a pole — a vertex at lat ±90
-// projecting to infinity (a wedge), over-clamping to the tile grid's 85.0511° (an unshaded disc),
-// or too coarse a bearing step (scalloped, bulging edges). Equinox is the hard case: the poles sit
-// right on the terminator, where the caps crowd together and longitude moves fastest.
-const inRing = (ring: GeoJSON.Position[], lat: number, lon: number) => {
-  for (const shift of [0, 360, -360]) {
-    const x = lon + shift;
-    let inside = false;
-    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-      const [xi, yi] = ring[i];
-      const [xj, yj] = ring[j];
-      if ((yi > lat) !== (yj > lat) && x < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside;
-    }
-    if (inside) return true;
-  }
-  return false;
-};
-const DEPRESSIONS = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18];
-for (const iso of ['2026-09-27T12:00:00Z', '2026-03-20T09:00:00Z', '2026-06-21T12:00:00Z', '2026-12-21T03:00:00Z']) {
-  const date = new Date(iso);
-  const sun = subsolarPoint(date);
-  const polys = nightBands(date).features.map((f) => f.geometry.coordinates[0]);
-  // Strictly inside the clamp and off the ±180 seam: a sample exactly on a polygon edge has no
-  // defined answer under an even-odd test.
-  // Only inside MapLibre's world (±85.0511°). The cap above it holds no geometry at all — see
-  // POLE_LIMIT_LAT — so there is nothing there to agree or disagree with the sun about.
-  for (const lat of [85, 84, 83, 80, 75, -75, -80, -83, -84, -85]) {
-    for (let lon = -176; lon < 180; lon += 7) {
-      const alt = sunAltitude(lat, lon, sun);
-      // Skip points sitting on a band edge, where either side is a fair answer.
-      if (DEPRESSIONS.some((d) => Math.abs(alt + d) < 0.05)) continue;
-      const truth = DEPRESSIONS.filter((d) => alt < -d).length;
-      const drawn = polys.filter((ring) => inRing(ring, lat, lon)).length;
-      assert.equal(drawn, truth, `${iso} lat ${lat} lon ${lon}: ${drawn} bands drawn, sun ${alt.toFixed(2)}° wants ${truth}`);
-    }
-  }
-}
-// Nothing may leave MapLibre's world, which a vertex can do while remaining a perfectly valid
-// lat/lon, so the coverage check above cannot see it. Bound it against a literal rather than
-// POLE_LIMIT_LAT, which would just be comparing the constant with itself.
-assert.ok(POLE_LIMIT_LAT <= 85.0511);
-for (let day = 0; day < 365; day += 1) {
-  for (const f of nightBands(new Date(Date.UTC(2026, 0, 1 + day, 12))).features) {
-    for (const [, lat] of f.geometry.coordinates[0]) assert.ok(Math.abs(lat) <= 85.0511, `vertex at lat ${lat}`);
-  }
-}
 
 // Clocks: Tokyo has no DST.
 assert.deepEqual(zonedClock(new Date('2026-01-01T00:00:00Z'), 'Asia/Tokyo'), { time: '09:00:00', offset: 'UTC+9' });

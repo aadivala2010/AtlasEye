@@ -7,7 +7,7 @@ import type {
 } from 'maplibre-gl';
 import type { Stream } from '@/lib/stream';
 import { distanceKm } from '@/lib/geo';
-import { nightBands, subsolarPoint, sunAltitude } from '@/lib/solar';
+import { subsolarPoint, sunAltitude } from '@/lib/solar';
 import { cloudsDate } from '@/lib/time';
 import { readout } from '@/lib/readout';
 import { formatAlt, project, type Flight } from '@/lib/flights';
@@ -39,8 +39,6 @@ interface Props {
   intro: boolean;
   /** Pixels hidden under the mobile bottom sheet, so fly-to targets stay visible. */
   bottomInset: number;
-  /** Show the day/night shading. */
-  terminator: boolean;
   /** Show today's cloud cover from NASA GIBS. */
   clouds: boolean;
   onSelect(id: string): void;
@@ -152,7 +150,7 @@ export const SATELLITE = 'https://server.arcgisonline.com/ArcGIS/rest/services/W
  * Esri mosaic at partial opacity: clouds are the brightest thing in the frame, so they read as
  * clouds while the imagery beneath shows through.
  * ponytail: polar winter is genuinely unlit, so those tiles come back black and dim the winter pole.
- * If that matters, mask it with the terminator's own sun altitude instead.
+ * If that matters, mask it by sun altitude.
  */
 const CLOUDS_LAYER = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor';
 
@@ -257,7 +255,7 @@ const SWEEP_LAYERS: [string, string[]][] = [
 ];
 
 export default function GlobeView(props: Props) {
-  const { ref, streams, focus, flights, flightId, initialCamera, reducedMotion, rotate, intro, bottomInset, terminator, clouds } = props;
+  const { ref, streams, focus, flights, flightId, initialCamera, reducedMotion, rotate, intro, bottomInset, clouds } = props;
   const container = useRef<HTMLDivElement>(null);
   const hoverLabel = useRef<HTMLDivElement>(null);
   const halo = useRef<HTMLDivElement>(null);
@@ -374,12 +372,9 @@ export default function GlobeView(props: Props) {
       });
 
       // 'style.load', not 'load': 'load' waits for every initial satellite tile, which can keep pins
-      // and the terminator off the globe for seconds on a slow connection.
+      // off the globe for seconds on a slow connection.
       map.once('style.load', () => {
         if (!map) return;
-        map.addSource('night', { type: 'geojson', data: nightBands(new Date()) });
-        map.addLayer({ id: 'night', type: 'fill', source: 'night', paint: { 'fill-color': '#01020A', 'fill-opacity': 0.13, 'fill-antialias': false } });
-
         map.addSource('streams', {
           type: 'geojson',
           data: { type: 'FeatureCollection', features: [] },
@@ -433,10 +428,9 @@ export default function GlobeView(props: Props) {
         setReady(true);
       });
 
-      // Terminator and night-side pins follow the sun, once a minute.
+      // Night-side pins follow the sun, once a minute.
       minuteTimer = window.setInterval(() => {
-        if (!map?.getSource('night')) return;
-        map.getSource<GeoJSONSource>('night')?.setData(nightBands(new Date()));
+        if (!map?.getSource('streams')) return;
         map.getSource<GeoJSONSource>('streams')?.setData(pinData(streamsRef.current, sweepFrom.current));
       }, 60_000);
 
@@ -568,11 +562,6 @@ export default function GlobeView(props: Props) {
     map.getSource<GeoJSONSource>('streams')?.setData(pinData(streams, sweepFrom.current));
     map.once('idle', () => map.fire('move'));
   }, [ready, streams]);
-
-  // ── day/night shading ─────────────────────────────────────────────────────
-  useEffect(() => {
-    if (ready) mapRef.current?.setLayoutProperty('night', 'visibility', terminator ? 'visible' : 'none');
-  }, [ready, terminator]);
 
   // ── today's clouds: tiles are only fetched once the layer is first shown ───
   useEffect(() => {

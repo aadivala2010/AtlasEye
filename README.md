@@ -220,7 +220,7 @@ fixed with a rule, a stopword or an override — but automatic matching is not p
   the previous day's own westernmost swaths can still be in NRT processing, so before 04:00 UTC the
   date holds a further day back. Laid over Esri at ~0.6 opacity — clouds are the brightest thing in frame, so they read
   as clouds — and faded out by z7.5, where GIBS runs out of levels and Esri is sharper. Its tiles are
-  only requested once the cloud toggle (beside the day/night one) is first switched on. Ceiling: polar winter is genuinely
+  only requested once the cloud toggle is first switched on. Ceiling: polar winter is genuinely
   unlit, so those tiles are black and dim the winter pole.
 - **Military and emergency aircraft** come from two more global adsb.lol endpoints (`/v2/mil`,
   `/v2/squawk/7700`) folded into the same worldwide rotation as the type sweeps, so the request rate
@@ -229,16 +229,6 @@ fixed with a rule, a stopword or an override — but automatic matching is not p
   from readsb's `dbFlags` bit 1, emergency from squawk 7500/7600/7700 or the declared `emergency`
   field — so they survive the merge with the live local feed. Emergency outranks selection for
   colour and is drawn selected-size at every zoom.
-- **The terminator's polygons are checked against the sun, not eyeballed.** They approximate a
-  spherical cap as a lon/lat ring, and every way that goes wrong shows up at a pole: a vertex at
-  ±90 has no finite Mercator y and draws as a wedge radiating from the pole; clamping instead to
-  Web Mercator's ±85.0511° (which is where the *tile grid* stops, not the geometry) leaves the cap
-  above it unshaded, a bright disc centred on the pole; and a bearing step that samples the ring
-  coarsely turns a boundary passing near a pole — where longitude moves fastest — into a few long
-  chords, so the bands scallop and bulge. `npm test` therefore asserts the thing that actually
-  matters: at points around both poles, on the equinoxes and solstices, the number of band polygons
-  covering a point equals the number the sun's altitude there says should. Equinox is the hard
-  case, with the poles sitting right on the terminator and the caps crowded together.
 - **Rim light is CSS, not MapLibre's atmosphere,** which can't be tinted. The limb is found by
   projecting points outward from the view centre each frame.
 - **Cluster counts are drawn in Geist Mono via canvas** (`styleimagemissing`), because map glyph
@@ -252,10 +242,10 @@ fixed with a rule, a stopword or an override — but automatic matching is not p
 
 ```
 app/                page, /about, error + 404 screens
-components/globe/   GlobeView (map, pins, clusters, terminator, rim light), Starfield
+components/globe/   GlobeView (map, pins, clusters, rim light), Starfield
 components/stream/  StreamPanel, Player (+ unavailable state), Clocks
 components/chrome/  Header (categories, random), Search, StatusBar, icons
-lib/                stream types, geo, solar (terminator), time, readout store
+lib/                stream types, geo, solar (sun position), time, readout store
 scripts/            import-catalog, agencies (every camera operator), geocode, stopwords, build-gazetteer, selftest
 data/               overrides.json, excluded.json, gazetteer/, upstream/ snapshots
 public/data/        streams.json, rejected.json

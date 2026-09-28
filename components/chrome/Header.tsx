@@ -3,7 +3,7 @@
 import type { Ref } from 'react';
 import type { Stream } from '@/lib/stream';
 import Search, { type SearchHandle } from './Search';
-import { IconCloud, IconEye, IconMoon, IconRandom } from './icons';
+import { IconCloud, IconEye, IconRandom } from './icons';
 
 export type Layer = 'cameras' | 'flights' | 'dossier';
 export type Layers = Record<Layer, boolean>;
@@ -25,8 +25,6 @@ interface Props {
   snapshots: boolean;
   snapshotCount: number;
   onToggleSnapshots(): void;
-  terminator: boolean;
-  onToggleTerminator(): void;
   clouds: boolean;
   onToggleClouds(): void;
 }
@@ -93,9 +91,6 @@ export default function Header(p: Props) {
         </a>
         <div className="hidden min-w-0 flex-1 md:block">{chips}</div>
         <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 md:flex-none">
-          <GlobeToggle on={p.terminator} onClick={p.onToggleTerminator} label="Day/night shading">
-            <IconMoon width={14} height={14} />
-          </GlobeToggle>
           <GlobeToggle
             on={p.clouds}
             onClick={p.onToggleClouds}
