@@ -3,7 +3,7 @@
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
 import type {
   ExpressionSpecification, GeoJSONSource, LayerSpecification, Map as MLMap, Marker,
-  StyleSpecification, VectorSourceSpecification,
+  RasterTileSource, StyleSpecification, VectorSourceSpecification,
 } from 'maplibre-gl';
 import type { Stream } from '@/lib/stream';
 import { distanceKm } from '@/lib/geo';
@@ -259,6 +259,24 @@ export default function GlobeView(props: Props) {
   const container = useRef<HTMLDivElement>(null);
   const hoverLabel = useRef<HTMLDivElement>(null);
   const halo = useRef<HTMLDivElement>(null);
+
+  /**
+   * MapLibre scales the globe up by 1/cos(centre latitude) but leaves `zoom` — and so the tile
+   * level — where it was, which is why a pole-centred view comes back several levels coarser than
+   * the same globe seen from the equator. Shrinking the declared tile size buys those levels back;
+   * `tileSize` is re-read on every tile-cover pass, so it lands on the next frame.
+   * ponytail: capped at 2 levels. The full deficit (~3.5 at 85°) would multiply the tile count by 16.
+   */
+  const sharpenPoles = (map: MLMap) => {
+    const src = map.getSource<RasterTileSource>('satellite');
+    if (!src) return;
+    const deficit = -Math.log2(Math.cos((map.getCenter().lat * Math.PI) / 180));
+    // Only near-whole-globe views span enough latitude to suffer; zoomed in, the centre is the view.
+    const size = 256 >> (map.getZoom() + deficit < 5 ? Math.min(2, Math.round(deficit)) : 0);
+    if (src.tileSize === size) return;
+    src.tileSize = size;
+    map.triggerRepaint();
+  };
 
   /**
    * Rim light at the limb. MapLibre's built-in atmosphere can't be tinted, so we find the
@@ -518,6 +536,7 @@ export default function GlobeView(props: Props) {
         pending = 0;
         if (!map) return;
         placeHalo(map);
+        sharpenPoles(map);
         const c = map.getCenter();
         const bounds = map.getBounds();
         const zoom = map.getZoom();
