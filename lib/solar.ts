@@ -7,13 +7,16 @@ export interface SunPoint { lat: number; lon: number }
 const wrapLon = (lon: number) => ((((lon + 180) % 360) + 360) % 360) - 180;
 
 /**
- * A pole itself has no Mercator position — y runs to infinity there — and a polygon vertex at ±90
- * renders as a wedge radiating from the pole. Everything short of it projects finitely, so stop
- * just shy: near enough that the gap is far inside one pixel, far enough to stay finite.
- * (Web Mercator's better-known ±85.0511° limit is where the *tile grid* stops, not the geometry.
- * Clamping polygons to it leaves the cap above unshaded — a bright disc centred on the pole.)
+ * MapLibre's world is y 0..1, which is latitude ±85.0511° — the globe projection is a re-drawing of
+ * Mercator, not an escape from it. A vertex past this is outside the world (89.99° lands at
+ * y ≈ -0.99) and is not placed in any tile, which near a pole comes out as triangles fanning from
+ * the pole: a wedge. Twilight there is really parallel bands across the pole, never a fan.
+ *
+ * The cost is that the cap above 85.05° cannot be shaded by anything. Nothing else can be drawn up
+ * there either — no Mercator tile source covers it, and MapLibre fills it by smearing the topmost
+ * row of texels round the pole — so it is a small unshaded disc rather than a missing feature.
  */
-export const POLE_LIMIT_LAT = 89.99;
+export const POLE_LIMIT_LAT = 85.0511;
 const clampLat = (lat: number) => Math.max(-POLE_LIMIT_LAT, Math.min(POLE_LIMIT_LAT, lat));
 
 /**
