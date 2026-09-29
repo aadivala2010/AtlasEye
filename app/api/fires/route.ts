@@ -1,4 +1,4 @@
-import { binFires } from '@/lib/events';
+import { binFires } from '@/lib/fires';
 
 /**
  * Every fire NOAA-20's VIIRS saw in the last 24 hours, worldwide (NASA FIRMS). The CSV is public and

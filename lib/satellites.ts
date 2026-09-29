@@ -20,7 +20,6 @@ export interface SatPos { lat: number; lon: number; alt: number; speed: number }
 export const ISS = 25544;
 export const EARTH_KM = 6371;
 const RAD = Math.PI / 180;
-const DECAY = { communityDecayCheckEnabled: true };
 
 export const GROUP_LABEL: Record<SatGroup, string> = {
   station: 'Space station', starlink: 'Starlink', gnss: 'Navigation', geo: 'Geostationary', other: 'Satellite',
@@ -55,7 +54,8 @@ export function parseTle(text: string): Sat[] {
 
 /** Where one satellite is at `date` (sub-satellite point, km above the ellipsoid, km/s); null if SGP4 gives up. */
 export function subpoint(sat: Sat, date: Date, gmst = gstime(date)): SatPos | null {
-  const pv = propagate(sat.rec, date, DECAY);
+  // Typed as always an answer, but SGP4 gives null for an orbit it can't carry (decayed, bad elements).
+  const pv = propagate(sat.rec, date) as ReturnType<typeof propagate> | null;
   if (!pv) return null;
   const g = eciToGeodetic(pv.position, gmst);
   if (!Number.isFinite(g.latitude)) return null;
