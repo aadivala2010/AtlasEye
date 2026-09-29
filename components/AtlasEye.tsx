@@ -11,6 +11,7 @@ import { subpoint, useSatellites } from '@/lib/satellites';
 import GlobeView, { type Camera, type GlobeHandle } from './globe/GlobeView';
 import Header, { type Layer, type Layers, type Tool } from './chrome/Header';
 import StatusBar from './chrome/StatusBar';
+import TimeBar, { TIME_MIN } from './chrome/TimeBar';
 import type { SearchHandle } from './chrome/Search';
 import StreamPanel from './stream/StreamPanel';
 import type { PlayerHandle } from './stream/Player';
@@ -30,6 +31,8 @@ type Focus =
 interface Boot {
   camera: Camera | null;
   selectId: string | null;
+  /** A shared moment in the time machine. */
+  time: number | null;
   reducedMotion: boolean;
   rotate: boolean;
   intro: boolean;
@@ -41,13 +44,15 @@ function readBoot(): Boot {
   const [lon, lat, zoom] = (params.get('c') ?? '').split(',').map(Number);
   const camera = [lon, lat, zoom].every(Number.isFinite) && Math.abs(lat) <= 90 ? { lon, lat, zoom } : null;
   const selectId = params.get('s');
+  const t = Date.parse(params.get('t') ?? '');
+  const time = Number.isFinite(t) && t >= TIME_MIN && t < Date.now() ? t : null;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let intro = !reducedMotion && !selectId;
   try {
     if (sessionStorage.getItem('atlas-eye:intro')) intro = false;
     sessionStorage.setItem('atlas-eye:intro', '1');
   } catch { /* storage blocked: play it, it's harmless */ }
-  return { camera, selectId, reducedMotion, rotate: !reducedMotion && !camera && !selectId, intro };
+  return { camera, selectId, time, reducedMotion, rotate: !reducedMotion && !camera && !selectId, intro };
 }
 
 const SHEET_PEEK = 0.6;
@@ -64,6 +69,8 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   const [sky, setSky] = useState<Sky>(SKY_DEFAULT);
   const [notify, setNotify] = useState(false);
   const [follow, setFollow] = useState(false);
+  /** The time machine's moment; null = live. */
+  const [time, setTime] = useState<number | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [muted, setMuted] = useState(true);
   const [userPos, setUserPos] = useState<{ lat: number; lon: number } | null>(null);
@@ -82,6 +89,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
     const b = readBoot();
     camera.current = b.camera; // so the first URL write keeps a shared link's camera
     setBoot(b);
+    setTime(b.time);
     const mq = window.matchMedia('(max-width: 1023px)');
     const sync = () => { setIsMobile(mq.matches); setViewportH(window.innerHeight); };
     sync();
@@ -126,8 +134,8 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
 
   // ── the planet: events on the globe, and the Pulse built from them ─────────
   const pulseOpen = other?.kind === 'pulse';
-  const planet = usePlanet(layers.events || pulseOpen || notify, null);
-  const pulse = useMemo(() => pulseItems(planet, Date.now()), [planet]);
+  const planet = usePlanet(layers.events || pulseOpen || notify, time);
+  const pulse = useMemo(() => pulseItems(planet, time ?? Date.now()), [planet, time]);
   useNotify(pulse, notify);
 
   // ── orbit: loaded for the layer, an open satellite, or a dossier's "overhead now" ──
@@ -188,6 +196,10 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
     setOther({ kind: 'satellite', id });
     setFollow(true);
   }, []);
+  const toggleTime = useCallback(() => {
+    // Opening lands three hours back: press play and the weather replays up to now.
+    setTime((t) => (t === null ? Math.floor((Date.now() - 3 * 3600_000) / 600_000) * 600_000 : null));
+  }, []);
   const togglePulse = useCallback(() => {
     setSelectedId(null);
     walk.current = null;
@@ -219,11 +231,12 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   const writeUrl = useCallback(() => {
     const params = new URLSearchParams();
     if (selectedId) params.set('s', selectedId);
+    if (time !== null) params.set('t', new Date(time).toISOString().slice(0, 16) + 'Z');
     const c = camera.current;
     if (c) params.set('c', `${c.lon.toFixed(4)},${c.lat.toFixed(4)},${c.zoom.toFixed(2)}`);
     const qs = params.toString();
     window.history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname);
-  }, [selectedId]);
+  }, [selectedId, time]);
   useEffect(() => { if (restored.current) writeUrl(); }, [writeUrl]);
   const onCamera = useCallback((c: Camera) => { camera.current = c; writeUrl(); }, [writeUrl]);
 
@@ -243,6 +256,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
         f: () => player.current?.fullscreen(),
         m: () => setMuted((m) => !m),
         p: togglePulse,
+        t: toggleTime,
       };
       const action = actions[key];
       if (!action) return;
@@ -252,7 +266,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [random, step, close, togglePulse]);
+  }, [random, step, close, togglePulse, toggleTime]);
 
   const locate = () => navigator.geolocation?.getCurrentPosition(
     (p) => setUserPos({ lat: p.coords.latitude, lon: p.coords.longitude }),
@@ -285,13 +299,16 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   };
 
   const panelOpen = !!(selected && catalog) || !!other;
+  const isLoaded = useCallback(() => globe.current?.loaded() ?? true, []);
 
   const tools: Tool[] = [
     { id: 'pulse', label: 'Pulse', key: 'P', title: 'What is happening on Earth right now', on: pulseOpen, count: pulse.filter((i) => i.level > 0).length },
+    { id: 'time', label: 'Time', key: 'T', title: 'Time machine: scrub the planet back through time', on: time !== null },
   ];
   const onTool = (id: string) => {
     globe.current?.stopRotation();
     if (id === 'pulse') togglePulse();
+    if (id === 'time') toggleTime();
   };
   const bottomInset = panelOpen && isMobile ? Math.round(sheet * viewportH) : 0;
 
@@ -327,7 +344,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
               ref={globe}
               streams={streams}
               focus={selected ? { lat: selected.latitude, lon: selected.longitude } : other?.kind === 'dossier' ? other : other?.kind === 'pulse' ? other.at ?? null : null}
-              flights={layers.flights || tracked ? flights : null}
+              flights={(layers.flights || tracked) && time === null ? flights : null}
               flightId={tracked?.hex ?? null}
               dossier={layers.dossier}
               initialCamera={boot.camera}
@@ -336,7 +353,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
               intro={boot.intro}
               bottomInset={bottomInset}
               sky={sky}
-              time={null}
+              time={time}
               planet={layers.events ? planet : null}
               sats={layers.satellites || satId !== null ? sats : null}
               satId={satId}
@@ -356,7 +373,12 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
             />
           )}
           {catalog && !error && <EmptyNotice />}
-          {layers.flights && <FlightNotice error={flightError} count={flights?.length ?? null} />}
+          {layers.flights && <FlightNotice error={flightError} count={flights?.length ?? null} past={time !== null} />}
+          {time !== null && (
+            <div className="pointer-events-none absolute inset-x-3 z-20" style={{ bottom: 12 + bottomInset }}>
+              <TimeBar time={time} onChange={setTime} onLive={() => setTime(null)} isLoaded={isLoaded} />
+            </div>
+          )}
           {error && <CatalogError message={error} onRetry={() => setAttempt((a) => a + 1)} />}
         </section>
 
@@ -387,7 +409,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
                 openSat ? (
                   <SatellitePanel
                     sat={openSat}
-                    time={null}
+                    time={time}
                     follow={follow}
                     muted={muted}
                     onFollow={setFollow}
@@ -443,9 +465,10 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
 }
 
 /** What the flights layer is showing, and when it's failing. */
-function FlightNotice({ error, count }: { error: boolean; count: number | null }) {
+function FlightNotice({ error, count, past }: { error: boolean; count: number | null; past: boolean }) {
   const { zoom } = useReadout();
-  const text = error ? 'FLIGHT FEED BUSY — RETRYING'
+  const text = past ? 'FLIGHTS ARE LIVE ONLY — PRESS LIVE TO SEE THEM'
+    : error ? 'FLIGHT FEED BUSY — RETRYING'
     : count === 0 ? 'NO AIRCRAFT REPORTED'
     : zoom < 4.5 ? 'AIRLINERS WORLDWIDE · UPDATED EACH MINUTE'
     : null;

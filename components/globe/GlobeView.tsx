@@ -22,6 +22,8 @@ export interface GlobeHandle {
   /** Centre of the view, for fetching what's around it. */
   center(): { lat: number; lon: number } | null;
   stopRotation(): void;
+  /** Whether every tile in view has arrived (the time machine waits on it before stepping). */
+  loaded(): boolean;
 }
 
 interface Props {
@@ -867,6 +869,7 @@ export default function GlobeView(props: Props) {
       const c = mapRef.current?.getCenter();
       return c ? { lat: c.lat, lon: c.lng } : null;
     },
+    loaded() { return mapRef.current?.areTilesLoaded() ?? true; },
   }), []);
 
   return (
