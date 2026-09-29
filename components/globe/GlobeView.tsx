@@ -145,8 +145,8 @@ async function loadBase(): Promise<Base | null> {
  */
 export const SATELLITE = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 const SATELLITE_MAXZOOM = 19;
-/** Deepest level Esri still has real imagery for in the polar tile rows; past it the tiles are flat filler. */
-const POLAR_Z = 4;
+/** Deepest level Esri still has real imagery for in the polar tile rows; at z4 they are flat filler. */
+const POLAR_Z = 3;
 
 /**
  * Cloud cover: NASA GIBS VIIRS (NOAA-20) corrected-reflectance true colour, no key. Laid over the
@@ -271,7 +271,7 @@ export default function GlobeView(props: Props) {
    * tile-cover pass, so the change lands on the next frame.
    *
    * It is pinned to exactly POLAR_Z rather than left to run free: Esri stops carrying real imagery
-   * in the top and bottom tile rows past z4 and serves flat filler there, which paints the cap as a
+   * in the top and bottom tile rows past z3 and serves flat filler there, which paints the cap as a
    * plain disc. `maxzoom` is clamped to match so nothing can overshoot into the filler.
    */
   const sharpenPoles = (map: MLMap) => {
