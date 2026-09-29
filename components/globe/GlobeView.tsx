@@ -2,10 +2,11 @@
 
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
 import type {
-  ExpressionSpecification, GeoJSONSource, LayerSpecification, Map as MLMap, Marker,
+  AddProtocolAction, ExpressionSpecification, GeoJSONSource, LayerSpecification, Map as MLMap, Marker,
   RasterTileSource, StyleSpecification, VectorSourceSpecification,
 } from 'maplibre-gl';
 import type { Stream } from '@/lib/stream';
+import { keyNoData } from '@/lib/clouds';
 import { distanceKm } from '@/lib/geo';
 import { subsolarPoint, sunAltitude } from '@/lib/solar';
 import { cloudsDate } from '@/lib/time';
@@ -151,16 +152,27 @@ const POLAR_Z = 3;
 /**
  * Cloud cover: NASA GIBS VIIRS (NOAA-20) corrected-reflectance true colour, no key. Laid over the
  * Esri mosaic at partial opacity: clouds are the brightest thing in the frame, so they read as
- * clouds while the imagery beneath shows through.
- * ponytail: polar winter is genuinely unlit, so those tiles come back black and dim the winter pole.
- * If that matters, mask it by sun altitude.
+ * clouds while the imagery beneath shows through. Fetched through `gibs://` (loadClouds), so the
+ * black GIBS paints where VIIRS saw nothing is keyed out instead of dimming the poles.
  */
-const CLOUDS_LAYER = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor';
-
+const CLOUDS_LAYER = 'gibs://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor';
 
 const CLOUDS = `${CLOUDS_LAYER}/default/${cloudsDate()}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`;
 /** GoogleMapsCompatible_Level9 is z0–8; past that MapLibre overzooms the last level rather than 404ing. */
 const CLOUDS_MAXZOOM = 8;
+
+/** The `gibs://` scheme: the tile over https, with its no-data black keyed out (lib/clouds). */
+const loadClouds: AddProtocolAction = async ({ url }, { signal }) => {
+  const res = await fetch(url.replace('gibs://', 'https://'), { signal });
+  if (!res.ok) throw new Error(`GIBS ${res.status}`);
+  const tile = await createImageBitmap(await res.blob());
+  const ctx = Object.assign(document.createElement('canvas'), { width: tile.width, height: tile.height })
+    .getContext('2d', { willReadFrequently: true });
+  if (!ctx) return { data: tile };
+  ctx.drawImage(tile, 0, 0);
+  const img = ctx.getImageData(0, 0, tile.width, tile.height);
+  return { data: keyNoData(img.data, img.width, img.height) ? await createImageBitmap(img) : tile };
+};
 
 /** Satellite imagery, with a light OpenMapTiles overlay (borders, places) from whichever base style loaded. */
 function buildStyle(base: Base | null): StyleSpecification {
@@ -358,6 +370,7 @@ export default function GlobeView(props: Props) {
       await document.fonts.load(`500 10px ${mono}`).catch(() => undefined);
 
       const zoom = initialCamera?.zoom ?? fitZoom(el);
+      ml.addProtocol('gibs', loadClouds);
       map = new ml.Map({
         container: el,
         style: buildStyle(base),

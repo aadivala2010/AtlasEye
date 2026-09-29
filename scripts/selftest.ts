@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { distanceKm, geocode, loadGazetteer, nearestPlace } from './geocode';
 import { blockedSources, cameraName, titleCase, tmInverse } from './agencies';
 import { subsolarPoint, sunAltitude } from '../lib/solar';
+import { keyNoData } from '../lib/clouds';
 import { cloudsDate, zonedClock } from '../lib/time';
 import { parseFlights, project } from '../lib/flights';
 
@@ -77,6 +78,25 @@ assert.equal(cloudsDate(Date.UTC(2026, 8, 27, 4, 0)), '2026-09-26');
 assert.equal(cloudsDate(Date.UTC(2026, 8, 27, 3, 59)), '2026-09-25');
 assert.equal(cloudsDate(Date.UTC(2026, 8, 27, 0, 5)), '2026-09-25');
 assert.equal(cloudsDate(Date.UTC(2026, 0, 1, 12, 0)), '2025-12-31'); // across a year boundary
+
+// …and GIBS's no-data black (the unlit polar caps) is keyed out along with the JPEG blur at its
+// edge, while a speck of dark water inside the imagery stays.
+{
+  const w = 12, h = 6;
+  const px = new Uint8ClampedArray(w * h * 4).fill(255);
+  const paint = (x: number, y: number, v: number) => px.fill(v, 4 * (y * w + x), 4 * (y * w + x) + 3);
+  const alpha = (x: number, y: number) => px[4 * (y * w + x) + 3];
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < 4; x++) paint(x, y, 0); // no-data: columns 0–3
+    paint(4, y, 90); // the blur along its edge
+  }
+  paint(9, 3, 5); // dark water
+  assert.equal(keyNoData(px, w, h), true);
+  assert.deepEqual([alpha(0, 0), alpha(3, 5), alpha(4, 2)], [0, 0, 0]);
+  assert.deepEqual([alpha(5, 2), alpha(9, 3)], [255, 255]);
+  // Specks alone key nothing, so the tile goes to the map untouched.
+  assert.equal(keyNoData(new Uint8ClampedArray(9 * 4).fill(255).fill(0, 16, 19), 3, 3), false);
+}
 
 // Camera names: operator codes become road + direction + place words; shouted names are tamed.
 assert.equal(cameraName('1068N_75_N/O_GoldenGate_M107', 'I-75', 'Northbound'), 'I-75 Northbound · Golden Gate');

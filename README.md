@@ -220,8 +220,12 @@ fixed with a rule, a stopword or an override — but automatic matching is not p
   the previous day's own westernmost swaths can still be in NRT processing, so before 04:00 UTC the
   date holds a further day back. Laid over Esri at ~0.6 opacity — clouds are the brightest thing in frame, so they read
   as clouds — and faded out by z7.5, where GIBS runs out of levels and Esri is sharper. Its tiles are
-  only requested once the cloud toggle is first switched on. Ceiling: polar winter is genuinely
-  unlit, so those tiles are black and dim the winter pole.
+  only requested once the cloud toggle is first switched on. Where VIIRS saw nothing — the unlit
+  polar caps and the ragged swath edges around them — GIBS paints solid black, which at that
+  opacity dimmed the poles into a dark disc. Tiles come through a `gibs://` protocol that keys out
+  every solid block of near-black (a 3×3 core, grown two texels to take the JPEG blur at its edge),
+  so plain Esri shows there instead; dark water only comes as specks of black, so it stays.
+  Ceiling: the daily composite doesn't line up across the antimeridian, so a seam runs along 180°.
 - **Military and emergency aircraft** come from two more global adsb.lol endpoints (`/v2/mil`,
   `/v2/squawk/7700`) folded into the same worldwide rotation as the type sweeps, so the request rate
   is unchanged. `/v2/mil` also brings the helicopters, transports and fighters that no airliner-type
