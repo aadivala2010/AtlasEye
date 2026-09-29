@@ -144,6 +144,9 @@ async function loadBase(): Promise<Base | null> {
  * (Sentinel-2 cloudless 2016 showed its orbit-swath seams as stripes across the continents.)
  */
 export const SATELLITE = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+const SATELLITE_MAXZOOM = 19;
+/** Deepest level Esri still has real imagery for in the polar tile rows; past it the tiles are flat filler. */
+const POLAR_Z = 4;
 
 /**
  * Cloud cover: NASA GIBS VIIRS (NOAA-20) corrected-reflectance true colour, no key. Laid over the
@@ -209,7 +212,7 @@ function buildStyle(base: Base | null): StyleSpecification {
     projection: { type: 'globe' },
     sources: {
       satellite: {
-        type: 'raster', tiles: [SATELLITE], tileSize: 256, maxzoom: 19,
+        type: 'raster', tiles: [SATELLITE], tileSize: 256, maxzoom: SATELLITE_MAXZOOM,
         attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community',
       },
       clouds: {
@@ -262,19 +265,27 @@ export default function GlobeView(props: Props) {
 
   /**
    * MapLibre scales the globe up by 1/cos(centre latitude) but leaves `zoom` — and so the tile
-   * level — where it was, which is why a pole-centred view comes back several levels coarser than
-   * the same globe seen from the equator. Shrinking the declared tile size buys those levels back;
-   * `tileSize` is re-read on every tile-cover pass, so it lands on the next frame.
-   * ponytail: capped at 2 levels. The full deficit (~3.5 at 85°) would multiply the tile count by 16.
+   * level — where it was, so a pole-centred globe comes back several levels coarser than the same
+   * globe seen from the equator: at 85° it drops to a single z0 tile for the whole planet.
+   * Shrinking the declared tile size buys those levels back, and `tileSize` is re-read on every
+   * tile-cover pass, so the change lands on the next frame.
+   *
+   * It is pinned to exactly POLAR_Z rather than left to run free: Esri stops carrying real imagery
+   * in the top and bottom tile rows past z4 and serves flat filler there, which paints the cap as a
+   * plain disc. `maxzoom` is clamped to match so nothing can overshoot into the filler.
    */
   const sharpenPoles = (map: MLMap) => {
     const src = map.getSource<RasterTileSource>('satellite');
     if (!src) return;
-    const deficit = -Math.log2(Math.cos((map.getCenter().lat * Math.PI) / 180));
-    // Only near-whole-globe views span enough latitude to suffer; zoomed in, the centre is the view.
-    const size = 256 >> (map.getZoom() + deficit < 5 ? Math.min(2, Math.round(deficit)) : 0);
-    if (src.tileSize === size) return;
+    const zoom = map.getZoom();
+    const natural = Math.floor(zoom + 1); // the level MapLibre would pick for a 256px source
+    const polar = Math.abs(map.getCenter().lat) >= 60 && natural < POLAR_Z;
+    // floor(zoom + log2(512 / tileSize)) then lands on POLAR_Z exactly.
+    const size = polar ? 256 >> Math.min(5, POLAR_Z - natural) : 256;
+    const maxzoom = polar ? POLAR_Z : SATELLITE_MAXZOOM;
+    if (src.tileSize === size && src.maxzoom === maxzoom) return;
     src.tileSize = size;
+    src.maxzoom = maxzoom;
     map.triggerRepaint();
   };
 
