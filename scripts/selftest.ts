@@ -6,6 +6,7 @@ import { subsolarPoint, sunAltitude } from '../lib/solar';
 import { fillNoData } from '../lib/clouds';
 import { cloudsDate, zonedClock } from '../lib/time';
 import { parseFlights, project } from '../lib/flights';
+import { binFires, parseEonet, pulseItems, type Quake } from '../lib/events';
 import { GEO, SKY_DEFAULT, cloudiness, daylight, geoWeight, skyTiles, tileAxes, tileBbox } from '../lib/sky';
 
 const g = loadGazetteer();
@@ -142,6 +143,38 @@ assert.equal(cloudsDate(Date.UTC(2026, 0, 1, 12, 0)), '2025-12-31'); // across a
   assert.match(past.clouds![0], /MODIS_Terra_CorrectedReflectance_TrueColor\/default\/2005-07-01\//);
   assert.equal(past['live-goes-east']?.[0], 'live://goes-east/clouds/2005-07-01T12:00:00Z/{z}/{x}/{y}');
   assert.equal(past.night?.[0], `night://${Date.UTC(2005, 6, 1, 12)}/{z}/{x}/{y}`);
+}
+
+// Fires: FIRMS rows sharing a ~2 km cell merge (FRP summed); low-confidence detections are dropped.
+{
+  const head = 'latitude,longitude,bright_ti4,scan,track,acq_date,acq_time,satellite,confidence,version,bright_ti5,frp,daynight';
+  const fires = binFires([head,
+    '10.001,20.001,300,0.4,0.4,2026-09-27,0041,N20,nominal,2.0NRT,280,5.5,N',
+    '10.004,20.003,300,0.4,0.4,2026-09-27,0145,N20,high,2.0NRT,280,4.5,N',
+    '-5,30,300,0.4,0.4,2026-09-27,0200,N20,low,2.0NRT,280,99,N', ''].join('\n'));
+  assert.deepEqual(fires.f, [10, 20, 10]);
+  assert.equal(fires.at, Date.UTC(2026, 8, 27, 1, 45));
+}
+
+// Events: a storm's position is its latest point as of the moment asked for; its track is every point so far.
+{
+  const storm = { events: [{ id: 'E1', title: 'Storm A', categories: [{ id: 'severeStorms' }], geometry: [
+    { date: '2026-09-27T00:00:00Z', type: 'Point', coordinates: [-50, 30], magnitudeValue: 40, magnitudeUnit: 'kts' },
+    { date: '2026-09-28T00:00:00Z', type: 'Point', coordinates: [-52, 32], magnitudeValue: 50, magnitudeUnit: 'kts' },
+  ] }] };
+  const [now] = parseEonet(storm);
+  assert.deepEqual([now.lon, now.lat, now.track.length, now.magnitude], [-52, 32, 2, '50 kts']);
+  const [then] = parseEonet(storm, Date.UTC(2026, 8, 27, 12));
+  assert.deepEqual([then.lon, then.track.length], [-50, 1]);
+}
+
+// Pulse: big quakes and severe space weather outrank the rest; small quakes aren't news.
+{
+  const now = Date.UTC(2026, 8, 29, 3);
+  const q = (mag: number): Quake => ({ id: `q${mag}`, lat: 0, lon: 0, depth: 10, mag, place: 'x', at: now - 3600_000, url: '', tsunami: false });
+  const items = pulseItems({ quakes: [q(4.6), q(6.8), q(3)], events: null, fires: null, launches: null, kp: 7.3, emergencies: null }, now);
+  assert.deepEqual(items.map((i) => [i.kind, i.level]), [['aurora', 2], ['quake', 2], ['quake', 0]]);
+  assert.equal(items[0].title, 'G3 geomagnetic storm');
 }
 
 // Camera names: operator codes become road + direction + place words; shouted names are tamed.

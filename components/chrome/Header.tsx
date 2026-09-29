@@ -7,14 +7,18 @@ import Search, { type SearchHandle } from './Search';
 import SkyMenu from './SkyMenu';
 import { IconEye, IconRandom } from './icons';
 
-export type Layer = 'cameras' | 'flights' | 'dossier';
+export type Layer = 'cameras' | 'flights' | 'events' | 'dossier';
 export type Layers = Record<Layer, boolean>;
 
 const LAYERS: { id: Layer; label: string; title: string }[] = [
   { id: 'cameras', label: 'Cameras', title: 'Public live cameras' },
   { id: 'flights', label: 'Flights', title: 'Live aircraft (ADS-B) around the view; click one for the cockpit view' },
+  { id: 'events', label: 'Earth', title: 'Earthquakes, fires, storms, eruptions and ice, live; click one for a dossier' },
   { id: 'dossier', label: 'Dossier', title: 'Click anywhere on the globe for a dossier of that spot' },
 ];
+
+/** A panel or mode rather than a layer: Pulse, Time, Wall, Tour. */
+export interface Tool { id: string; label: string; title: string; on: boolean; count?: number | null; key: string }
 
 interface Props {
   streams: Stream[];
@@ -29,6 +33,8 @@ interface Props {
   onToggleSnapshots(): void;
   sky: Sky;
   onSky(next: Sky): void;
+  tools: Tool[];
+  onTool(id: string): void;
 }
 
 const CHIP = 'flex h-6 shrink-0 items-center gap-1.5 rounded-[2px] border px-2 font-mono text-[10px] uppercase tracking-[0.08em] transition-colors duration-200 ease-atlas';
@@ -63,6 +69,13 @@ export default function Header(p: Props) {
           </button>
         </>
       )}
+      <span className="mx-1 h-4 w-px shrink-0 bg-strong" aria-hidden />
+      {p.tools.map((t) => (
+        <button key={t.id} type="button" aria-pressed={t.on} title={`${t.title} (${t.key})`} onClick={() => p.onTool(t.id)} className={`${CHIP} ${chipState(t.on)}`}>
+          {t.label}
+          {!!t.count && <span className="text-emergency">{t.count}</span>}
+        </button>
+      ))}
     </div>
   );
 
@@ -94,4 +107,4 @@ export default function Header(p: Props) {
   );
 }
 
-const LAYER_DOT: Record<Layer, string> = { cameras: 'bg-live', flights: 'bg-flight', dossier: 'bg-accent' };
+const LAYER_DOT: Record<Layer, string> = { cameras: 'bg-live', flights: 'bg-flight', events: 'bg-quake', dossier: 'bg-accent' };

@@ -22,6 +22,9 @@
   --flight:         #FFB547;
   --flight-mil:     #7CFC4B;
   --flight-emer:    #FF3B4E;
+  --quake:          #FF7A45;
+  --sat:            #B48CFF;
+  --radio:          #FF5CC8;
 
   --radius:         4px;
   --ease:           cubic-bezier(0.16, 1, 0.3, 1);
@@ -48,6 +51,9 @@
   --color-flight: var(--flight);
   --color-mil: var(--flight-mil);
   --color-emergency: var(--flight-emer);
+  --color-quake: var(--quake);
+  --color-sat: var(--sat);
+  --color-radio: var(--radio);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --ease-atlas: var(--ease);
@@ -114,6 +120,20 @@ html, body {
   to   { transform: scale(2.2); opacity: 0; }
 }
 
+/* An earthquake under an hour old: rings spreading out from the epicentre. */
+.quake-ring {
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  border: 1.5px solid var(--flight-emer);
+  pointer-events: none;
+  animation: quake 1.8s var(--ease) infinite;
+}
+@keyframes quake {
+  from { transform: scale(0.6); opacity: 0.9; }
+  to   { transform: scale(3); opacity: 0; }
+}
+
 .live-dot { animation: breathe 2.4s ease-in-out infinite; }
 @keyframes breathe { 50% { opacity: 0.35; } }
 
@@ -132,7 +152,7 @@ html, body {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .pulse::after, .live-dot, .ellipsis::after { animation: none; }
+  .pulse::after, .live-dot, .ellipsis::after, .quake-ring { animation: none; }
   .ellipsis::after { content: '...'; }
   *, *::before, *::after { transition-duration: 0ms !important; }
 }

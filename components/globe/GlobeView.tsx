@@ -11,6 +11,7 @@ import { subsolarPoint, sunAltitude } from '@/lib/solar';
 import { OVERLAYS, OVERLAY_IDS, registerSky, skyTiles, useAurora, useClock, useGeoFrames, useRadar, type Sky } from '@/lib/sky';
 import { readout } from '@/lib/readout';
 import { formatAlt, project, type Flight } from '@/lib/flights';
+import { EVENT_COLORS, EVENT_LABELS, type Planet } from '@/lib/events';
 
 export interface Camera { lon: number; lat: number; zoom: number }
 export interface GlobeHandle {
@@ -43,6 +44,8 @@ interface Props {
   sky: Sky;
   /** The time machine's moment; null = now. */
   time: number | null;
+  /** Earthquakes, fires, storms, ice (null = the Earth layer is off). */
+  planet: Planet | null;
   onSelect(id: string): void;
   onFlight(hex: string): void;
   onDossier(lat: number, lon: number): void;
@@ -58,9 +61,13 @@ const C = {
   void: '#040508', ocean: '#0A1A2E', raised: '#12161E', subtle: '#181D27', strong: '#29313F',
   tertiary: '#565E70', primary: '#E6EAF2', accent: '#4DE1FF', accentMuted: '#1B5567', accentGlow: 'rgba(77,225,255,0.15)',
   live: '#2BE88A', night: '#6C7BA8', plane: '#FFB547',
-  // Kept in step with --flight-mil / --flight-emer in globals.css (MapLibre can't read CSS vars).
-  mil: '#7CFC4B', emergency: '#FF3B4E',
+  // Kept in step with --flight-mil / --flight-emer / --quake / --sat / --radio in globals.css (MapLibre can't read CSS vars).
+  mil: '#7CFC4B', emergency: '#FF3B4E', quake: '#FF7A45', sat: '#B48CFF', radio: '#FF5CC8',
+  fireLow: '#FFC23D', fire: '#FF7A1A', fireHot: '#FF3B1F',
 };
+
+/** "12 min ago" from an age in hours. */
+const ago = (hours: number) => (hours < 1 ? `${Math.max(1, Math.round(hours * 60))} min ago` : `${Math.round(hours)} h ago`);
 
 /** Top-down airliner silhouette, drawn white so the SDF icon can be tinted per aircraft. */
 function planeIcon(dpr: number): ImageData | null {
@@ -231,6 +238,41 @@ function pinData(streams: Stream[], sweepFromLon: number): GeoJSON.FeatureCollec
   };
 }
 
+const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
+const pt = (lon: number, lat: number, properties: GeoJSON.GeoJsonProperties): GeoJSON.Feature =>
+  ({ type: 'Feature', geometry: { type: 'Point', coordinates: [lon, lat] }, properties });
+
+/** The Earth layer's sources, as of `now` (quake age drives colour and fade). */
+function planetData(p: Planet | null, now: number) {
+  const fires: GeoJSON.Feature[] = [];
+  const f = p?.fires?.f ?? [];
+  for (let i = 0; i + 2 < f.length; i += 3) fires.push(pt(f[i + 1], f[i], { frp: f[i + 2] }));
+  return {
+    fires: { type: 'FeatureCollection', features: fires } as GeoJSON.FeatureCollection,
+    quakes: {
+      type: 'FeatureCollection',
+      features: (p?.quakes ?? []).filter((q) => q.at <= now).map((q) => pt(q.lon, q.lat, {
+        id: q.id, mag: q.mag, place: q.place, age: (now - q.at) / 3600_000, depth: q.depth,
+      })),
+    } as GeoJSON.FeatureCollection,
+    events: {
+      type: 'FeatureCollection',
+      features: (p?.events ?? []).map((e) => pt(e.lon, e.lat, {
+        id: e.id, title: e.title, category: EVENT_LABELS[e.category] ?? e.category, color: EVENT_COLORS[e.category] ?? C.tertiary,
+      })),
+    } as GeoJSON.FeatureCollection,
+    tracks: {
+      type: 'FeatureCollection',
+      features: (p?.events ?? []).filter((e) => e.track.length > 1).map((e) => ({
+        type: 'Feature', geometry: { type: 'LineString', coordinates: e.track }, properties: { color: EVENT_COLORS[e.category] ?? C.tertiary },
+      })),
+    } as GeoJSON.FeatureCollection,
+  };
+}
+
+/** Layers a click or hover can land on, topmost first. */
+const HIT_LAYERS = ['planes', 'pins', 'clusters', 'quakes', 'events'];
+
 /** Opacity for the sweep at progress p (0→1), using each pin's / cluster's earliest rank. */
 const reveal = (p: number): ExpressionSpecification =>
   ['min', 1, ['max', 0, ['*', 8, ['-', p, ['coalesce', ['get', 'minRank'], ['get', 'rank'], 0]]]]];
@@ -243,7 +285,7 @@ const SWEEP_LAYERS: [string, string[]][] = [
 ];
 
 export default function GlobeView(props: Props) {
-  const { ref, streams, focus, flights, flightId, initialCamera, reducedMotion, rotate, intro, bottomInset, sky, time } = props;
+  const { ref, streams, focus, flights, flightId, initialCamera, reducedMotion, rotate, intro, bottomInset, sky, time, planet } = props;
   const container = useRef<HTMLDivElement>(null);
   const hoverLabel = useRef<HTMLDivElement>(null);
   const halo = useRef<HTMLDivElement>(null);
@@ -391,6 +433,37 @@ export default function GlobeView(props: Props) {
       // off the globe for seconds on a slow connection.
       map.once('style.load', () => {
         if (!map) return;
+        // The Earth layer sits beneath every pin: fires glow, storms trail their tracks, quakes ring by age.
+        for (const id of ['fires', 'quakes', 'events', 'tracks']) map.addSource(id, { type: 'geojson', data: EMPTY });
+        map.addLayer({
+          id: 'fires', type: 'circle', source: 'fires',
+          paint: {
+            'circle-radius': ['interpolate', ['linear'], ['zoom'],
+              1, ['interpolate', ['linear'], ['get', 'frp'], 0, 0.9, 100, 2.2, 1000, 3.6],
+              9, ['interpolate', ['linear'], ['get', 'frp'], 0, 3, 100, 6, 1000, 10]],
+            'circle-color': ['interpolate', ['linear'], ['get', 'frp'], 0, C.fireLow, 30, C.fire, 300, C.fireHot],
+            'circle-blur': 0.6, 'circle-opacity': 0.85,
+          },
+        });
+        map.addLayer({
+          id: 'tracks', type: 'line', source: 'tracks',
+          paint: { 'line-color': ['get', 'color'], 'line-width': 1.5, 'line-opacity': 0.7, 'line-dasharray': [2, 2] },
+        });
+        map.addLayer({
+          id: 'quakes', type: 'circle', source: 'quakes',
+          paint: {
+            'circle-radius': ['interpolate', ['exponential', 1.6], ['get', 'mag'], 2.5, 2.5, 5, 7, 7, 16, 9, 30],
+            // Red under an hour old, orange under six, amber for the rest of the day.
+            'circle-color': ['step', ['get', 'age'], C.emergency, 1, C.quake, 6, C.plane],
+            'circle-opacity': ['interpolate', ['linear'], ['get', 'age'], 0, 0.7, 24, 0.25],
+            'circle-stroke-width': 1, 'circle-stroke-color': ['step', ['get', 'age'], C.emergency, 1, C.quake, 6, C.plane],
+          },
+        });
+        map.addLayer({
+          id: 'events', type: 'circle', source: 'events',
+          paint: { 'circle-radius': 5.5, 'circle-color': ['get', 'color'], 'circle-stroke-width': 1.5, 'circle-stroke-color': C.void },
+        });
+
         map.addSource('streams', {
           type: 'geojson',
           data: { type: 'FeatureCollection', features: [] },
@@ -467,14 +540,20 @@ export default function GlobeView(props: Props) {
       map.on('mousemove', (e) => {
         if (!map) return;
         readout.set({ cursor: { lat: e.lngLat.lat, lon: e.lngLat.lng } });
-        const hit = map.getLayer('planes') ? map.queryRenderedFeatures(e.point, { layers: ['planes', 'pins', 'clusters'] })[0] : undefined;
+        const hit = map.getLayer('planes') ? map.queryRenderedFeatures(e.point, { layers: HIT_LAYERS })[0] : undefined;
         map.getCanvas().style.cursor = hit ? 'pointer' : cb.current.dossier ? 'crosshair' : '';
         setClusterHover(hit?.layer.id === 'clusters' ? hit.id : undefined);
         const label = hoverLabel.current;
         if (!label) return;
         const s = hit?.layer.id === 'pins' ? streamsRef.current.find((x) => x.id === hit.properties.id) : undefined;
         const f = hit?.layer.id === 'planes' ? flightsRef.current.find((x) => x.hex === hit.properties.hex) : undefined;
-        const text = s ? [s.name, `${s.place} · ${s.country}`] : f ? [f.callsign, `${f.type ?? '—'} · ${formatAlt(f)} · ${Math.round(f.gs)} kt`] : null;
+        const q = hit?.layer.id === 'quakes' ? hit.properties : undefined;
+        const ev = hit?.layer.id === 'events' ? hit.properties : undefined;
+        const text = s ? [s.name, `${s.place} · ${s.country}`]
+          : f ? [f.callsign, `${f.type ?? '—'} · ${formatAlt(f)} · ${Math.round(f.gs)} kt`]
+          : q ? [`M${Number(q.mag).toFixed(1)} earthquake`, `${q.place} · ${ago(Number(q.age))}`]
+          : ev ? [String(ev.title), String(ev.category)]
+          : null;
         if (text) {
           label.firstElementChild!.textContent = text[0];
           label.lastElementChild!.textContent = text[1];
@@ -498,9 +577,18 @@ export default function GlobeView(props: Props) {
         const hex = e.features?.[0]?.properties.hex;
         if (typeof hex === 'string') cb.current.onFlight(hex);
       });
+      // A quake or event opens the dossier on the spot: weather, nearby cameras, aircraft, history.
+      for (const layer of ['quakes', 'events']) {
+        map.on('click', layer, (e) => {
+          const g = e.features?.[0]?.geometry;
+          if (g?.type === 'Point' && !map?.queryRenderedFeatures(e.point, { layers: ['planes', 'pins', 'clusters'] }).length) {
+            cb.current.onDossier(g.coordinates[1], g.coordinates[0]);
+          }
+        });
+      }
       map.on('click', (e) => {
         if (!map || !cb.current.dossier) return;
-        if (map.queryRenderedFeatures(e.point, { layers: ['planes', 'pins', 'clusters'] }).length) return;
+        if (map.queryRenderedFeatures(e.point, { layers: HIT_LAYERS }).length) return;
         cb.current.onDossier(e.lngLat.lat, e.lngLat.lng);
       });
       map.on('click', 'clusters', async (e) => {
@@ -614,6 +702,25 @@ export default function GlobeView(props: Props) {
     map.setLayoutProperty('planes', 'icon-size', planeSize(flightId ?? ''));
     map.setPaintProperty('planes', 'icon-color', planeColor(flightId ?? ''));
   }, [ready, flightId]);
+
+  // ── the Earth layer; quakes under an hour old ring like the selected pin ───
+  const quakeMarks = useRef(new Map<string, Marker>());
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map || !mlLib) return;
+    const at = time ?? Date.now();
+    const d = planetData(planet, at);
+    for (const id of ['fires', 'quakes', 'events', 'tracks'] as const) map.getSource<GeoJSONSource>(id)?.setData(d[id]);
+    const fresh = new Map((planet?.quakes ?? []).filter((q) => q.at <= at && at - q.at < 3600_000).map((q) => [q.id, q]));
+    for (const [id, m] of quakeMarks.current) if (!fresh.has(id)) { m.remove(); quakeMarks.current.delete(id); }
+    for (const [id, q] of fresh) {
+      if (quakeMarks.current.has(id)) continue;
+      const el = document.createElement('div');
+      el.className = 'quake-ring';
+      el.style.setProperty('--size', `${Math.round(6 + q.mag * 4)}px`);
+      quakeMarks.current.set(id, new mlLib.Marker({ element: el }).setLngLat([q.lon, q.lat]).addTo(map));
+    }
+  }, [ready, mlLib, planet, time]);
 
   // ── first-load sweep: pins come online around the globe over ~900ms ──────
   const swept = useRef(false);
