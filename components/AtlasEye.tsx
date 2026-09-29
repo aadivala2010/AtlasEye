@@ -462,8 +462,12 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
                   lat={other.lat}
                   lon={other.lon}
                   streams={streams ?? []}
+                  sats={sats}
+                  stations={stations}
                   onPickStream={(s) => select(s, 'near')}
                   onPickFlight={openFlight}
+                  onPickSat={openSatellite}
+                  onPlay={setStation}
                   onClose={close}
                 />
               ) : selected && catalog && (

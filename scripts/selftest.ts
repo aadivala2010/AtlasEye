@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { distanceKm, geocode, loadGazetteer, nearestPlace } from './geocode';
 import { blockedSources, cameraName, titleCase, tmInverse } from './agencies';
-import { subsolarPoint, sunAltitude } from '../lib/solar';
+import { moonPhase, subsolarPoint, sunAltitude } from '../lib/solar';
 import { fillNoData } from '../lib/clouds';
 import { cloudsDate, zonedClock } from '../lib/time';
 import { parseFlights, project } from '../lib/flights';
@@ -47,6 +47,11 @@ assert.ok(Math.abs(solstice.lat - 23.44) < 0.2, `solstice lat ${solstice.lat}`);
 assert.ok(Math.abs(solstice.lon) < 2.5, `solstice lon ${solstice.lon}`);
 assert.ok(sunAltitude(0, 0, solstice) > 60);
 assert.ok(sunAltitude(0, 180, solstice) < -60);
+
+// Moon: full on 26 Sep 2026 (16:49 UTC), new on 10 Oct.
+assert.equal(moonPhase(new Date('2026-09-26T16:49:00Z')).name, 'Full moon');
+assert.ok(moonPhase(new Date('2026-09-26T16:49:00Z')).lit > 0.99);
+assert.ok(moonPhase(new Date('2026-10-10T15:50:00Z')).lit < 0.02);
 
 // Clocks: Tokyo has no DST.
 assert.deepEqual(zonedClock(new Date('2026-01-01T00:00:00Z'), 'Asia/Tokyo'), { time: '09:00:00', offset: 'UTC+9' });

@@ -26,3 +26,18 @@ export function sunAltitude(lat: number, lon: number, sun: SunPoint): number {
   return Math.asin(Math.max(-1, Math.min(1, s))) / RAD;
 }
 
+
+const SYNODIC_DAYS = 29.530588853;
+/** A new moon to count from: 2000-01-06 18:14 UTC. */
+const NEW_MOON = Date.UTC(2000, 0, 6, 18, 14);
+const PHASES = ['New moon', 'Waxing crescent', 'First quarter', 'Waxing gibbous', 'Full moon', 'Waning gibbous', 'Last quarter', 'Waning crescent'];
+
+/**
+ * The moon's phase from the mean synodic month: 0 new → 0.5 full → 1 new, the lit fraction of its
+ * disc, and the phase's name. ponytail: mean month, so up to ~half a day off; good enough to name a phase.
+ */
+export function moonPhase(date: Date): { phase: number; lit: number; name: string } {
+  const days = (date.getTime() - NEW_MOON) / 86400000;
+  const phase = (((days % SYNODIC_DAYS) + SYNODIC_DAYS) % SYNODIC_DAYS) / SYNODIC_DAYS;
+  return { phase, lit: (1 - Math.cos(2 * Math.PI * phase)) / 2, name: PHASES[Math.round(phase * 8) % 8] };
+}
