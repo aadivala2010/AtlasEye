@@ -2,8 +2,10 @@
 
 import type { Ref } from 'react';
 import type { Stream } from '@/lib/stream';
+import type { Sky } from '@/lib/sky';
 import Search, { type SearchHandle } from './Search';
-import { IconCloud, IconEye, IconRandom } from './icons';
+import SkyMenu from './SkyMenu';
+import { IconEye, IconRandom } from './icons';
 
 export type Layer = 'cameras' | 'flights' | 'dossier';
 export type Layers = Record<Layer, boolean>;
@@ -25,30 +27,12 @@ interface Props {
   snapshots: boolean;
   snapshotCount: number;
   onToggleSnapshots(): void;
-  clouds: boolean;
-  onToggleClouds(): void;
+  sky: Sky;
+  onSky(next: Sky): void;
 }
 
 const CHIP = 'flex h-6 shrink-0 items-center gap-1.5 rounded-[2px] border px-2 font-mono text-[10px] uppercase tracking-[0.08em] transition-colors duration-200 ease-atlas';
 const chipState = (on: boolean) => (on ? 'border-strong bg-raised text-primary hover:border-accent-muted' : 'border-subtle text-tertiary hover:text-secondary');
-
-function GlobeToggle(
-  { on, onClick, label, title, children }:
-  { on: boolean; onClick(): void; label: string; title?: string; children: React.ReactNode },
-) {
-  return (
-    <button
-      type="button"
-      aria-pressed={on}
-      aria-label={label}
-      onClick={onClick}
-      title={title ?? label}
-      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[2px] border transition-colors duration-200 ease-atlas ${chipState(on)}`}
-    >
-      {children}
-    </button>
-  );
-}
 
 export default function Header(p: Props) {
   const chips = (
@@ -91,14 +75,7 @@ export default function Header(p: Props) {
         </a>
         <div className="hidden min-w-0 flex-1 md:block">{chips}</div>
         <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 md:flex-none">
-          <GlobeToggle
-            on={p.clouds}
-            onClick={p.onToggleClouds}
-            label="Cloud cover"
-            title="Cloud cover from NASA's VIIRS true-colour imagery (the last complete daily pass)"
-          >
-            <IconCloud width={14} height={14} />
-          </GlobeToggle>
+          <SkyMenu sky={p.sky} onChange={p.onSky} />
           <Search ref={p.searchRef} streams={p.streams} onPick={p.onPick} />
           <button
             type="button"

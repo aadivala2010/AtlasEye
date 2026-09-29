@@ -5,6 +5,7 @@ import type { Catalog, Stream } from '@/lib/stream';
 import { byDistanceFrom } from '@/lib/geo';
 import { project, useFlights, type Flight } from '@/lib/flights';
 import { useReadout } from '@/lib/readout';
+import { SKY_DEFAULT, type Sky } from '@/lib/sky';
 import GlobeView, { type Camera, type GlobeHandle } from './globe/GlobeView';
 import Header, { type Layer, type Layers } from './chrome/Header';
 import StatusBar from './chrome/StatusBar';
@@ -51,7 +52,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   const [layers, setLayers] = useState<Layers>({ cameras: true, flights: false, dossier: false });
   const [other, setOther] = useState<Focus | null>(null);
   const [snapshots, setSnapshots] = useState(true);
-  const [clouds, setClouds] = useState(false);
+  const [sky, setSky] = useState<Sky>(SKY_DEFAULT);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [muted, setMuted] = useState(true);
   const [userPos, setUserPos] = useState<{ lat: number; lon: number } | null>(null);
@@ -253,8 +254,8 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
         snapshots={snapshots}
         snapshotCount={catalog?.streams.filter((s) => s.kind === 'snapshot').length ?? 0}
         onToggleSnapshots={() => setSnapshots((v) => !v)}
-        clouds={clouds}
-        onToggleClouds={() => setClouds((v) => !v)}
+        sky={sky}
+        onSky={setSky}
         onPick={(s) => select(s, 'travel')}
         onRandom={random}
       />
@@ -275,7 +276,8 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
               rotate={boot.rotate}
               intro={boot.intro}
               bottomInset={bottomInset}
-              clouds={clouds}
+              sky={sky}
+              time={null}
               onSelect={(id) => {
                 const s = catalog?.streams.find((x) => x.id === id);
                 if (s) select(s, 'near');

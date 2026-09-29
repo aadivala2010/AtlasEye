@@ -6,6 +6,7 @@ import { subsolarPoint, sunAltitude } from '../lib/solar';
 import { fillNoData } from '../lib/clouds';
 import { cloudsDate, zonedClock } from '../lib/time';
 import { parseFlights, project } from '../lib/flights';
+import { GEO, SKY_DEFAULT, cloudiness, daylight, geoWeight, skyTiles, tileAxes, tileBbox } from '../lib/sky';
 
 const g = loadGazetteer();
 const place = (title: string, country?: string) => {
@@ -97,6 +98,50 @@ assert.equal(cloudsDate(Date.UTC(2026, 0, 1, 12, 0)), '2025-12-31'); // across a
   assert.deepEqual([grey(5, 2), grey(9, 3)], [255, 5]);
   // Specks alone change nothing, so the tile goes to the map untouched.
   assert.equal(fillNoData(new Uint8ClampedArray(9 * 4).fill(255).fill(0, 16, 19), 3, 3, { z: 0, x: 0, y: 0 }), false);
+}
+
+// Sky: the geostationary ring paints each point from the satellite with the straightest view of it,
+// drawn bottom to top with each layer giving way to a nearer one beneath — no gaps, no double cover.
+{
+  const RAD = Math.PI / 180;
+  const cover = (lat: number, lon: number) => {
+    const w = GEO.map((_, i) => geoWeight((j) => Math.cos(lat * RAD) * Math.cos((lon - GEO[j].lon) * RAD), i));
+    let left = 1;
+    const got: number[] = [];
+    for (let i = GEO.length - 1; i >= 0; i--) { got[i] = left * w[i]; left *= 1 - w[i]; }
+    return got;
+  };
+  const byId = (lat: number, lon: number) => Object.fromEntries(GEO.map((g, i) => [g.id, cover(lat, lon)[i]]));
+  assert.ok(byId(0, -75.2)['goes-east'] > 0.99, 'GOES-East owns its nadir');
+  assert.ok(byId(0, 10).mtg > 0.99 && byId(0, 90).iodc > 0.99 && byId(0, 150).himawari > 0.99 && byId(0, -150)['goes-west'] > 0.99);
+  const mid = byId(0, -106.2);
+  assert.ok(Math.abs(mid['goes-east'] - 0.5) < 0.1 && Math.abs(mid['goes-west'] - 0.5) < 0.1, `blend at the midline ${JSON.stringify(mid)}`);
+  for (let lon = -180; lon < 180; lon += 1) {
+    const total = cover(0, lon).reduce((a, b) => a + b, 0);
+    assert.ok(total > 0.97 && total < 1.0001, `equator coverage at ${lon}: ${total}`);
+  }
+  assert.equal(cover(82, 0).reduce((a, b) => a + b, 0), 0); // beyond every limb: the daily pass shows instead
+  // Clear sky is transparent, cloud opaque; GIBS's coloured (enhanced) pixels are the coldest tops.
+  const goes = GEO.find((g) => g.id === 'goes-east')!;
+  const mtg = GEO.find((g) => g.id === 'mtg')!;
+  assert.deepEqual([cloudiness(goes, 110, 110, 110), cloudiness(goes, 250, 250, 250), cloudiness(goes, 255, 60, 40)], [0, 1, 1]);
+  assert.deepEqual([cloudiness(mtg, 50, 50, 50), cloudiness(mtg, 200, 200, 200)], [0, 1]);
+  assert.deepEqual([daylight(Math.sin(10 * RAD)), daylight(Math.sin(-20 * RAD))], [1, 0]);
+  // Tile geometry: the whole-world tile, and the first row/column centres of a 2×2 z0 grid.
+  assert.equal(tileBbox(0, 0, 0), '-20037508.342789244,-20037508.342789244,20037508.342789244,20037508.342789244');
+  const ax = tileAxes(0, 0, 0, 2);
+  assert.ok(Math.abs(ax.lat[0] / RAD - 66.513) < 0.01 && Math.abs(ax.lon[0] / RAD + 90) < 1e-9);
+  // Time: live shows the newest frames; the past shows that day's composite, MODIS before VIIRS flew.
+  const now = Date.UTC(2026, 8, 29, 2, 30);
+  const live = skyTiles(SKY_DEFAULT, { t: null, now, frames: { 'goes-east': '2026-09-29T02:00:00Z' }, radar: null, aurora: 0 });
+  assert.equal(live['live-goes-east']?.[0], 'live://goes-east/clouds/2026-09-29T02:00:00Z/{z}/{x}/{y}');
+  assert.equal(live['live-goes-west'], null); // its newest frame isn't known yet
+  assert.match(live['live-mtg']![0], /^live:\/\/mtg\/clouds\/latest-\d+\//);
+  assert.equal(live.clouds, null);
+  const past = skyTiles(SKY_DEFAULT, { t: Date.UTC(2005, 6, 1, 12), now, frames: null, radar: null, aurora: 0 });
+  assert.match(past.clouds![0], /MODIS_Terra_CorrectedReflectance_TrueColor\/default\/2005-07-01\//);
+  assert.equal(past['live-goes-east']?.[0], 'live://goes-east/clouds/2005-07-01T12:00:00Z/{z}/{x}/{y}');
+  assert.equal(past.night?.[0], `night://${Date.UTC(2005, 6, 1, 12)}/{z}/{x}/{y}`);
 }
 
 // Camera names: operator codes become road + direction + place words; shouted names are tamed.

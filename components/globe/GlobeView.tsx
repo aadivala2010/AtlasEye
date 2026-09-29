@@ -6,10 +6,9 @@ import type {
   RasterTileSource, StyleSpecification, VectorSourceSpecification,
 } from 'maplibre-gl';
 import type { Stream } from '@/lib/stream';
-import { fillNoData } from '@/lib/clouds';
 import { distanceKm } from '@/lib/geo';
 import { subsolarPoint, sunAltitude } from '@/lib/solar';
-import { cloudsDate } from '@/lib/time';
+import { OVERLAYS, OVERLAY_IDS, registerSky, skyTiles, useAurora, useClock, useGeoFrames, useRadar, type Sky } from '@/lib/sky';
 import { readout } from '@/lib/readout';
 import { formatAlt, project, type Flight } from '@/lib/flights';
 
@@ -40,8 +39,10 @@ interface Props {
   intro: boolean;
   /** Pixels hidden under the mobile bottom sheet, so fly-to targets stay visible. */
   bottomInset: number;
-  /** Show today's cloud cover from NASA GIBS. */
-  clouds: boolean;
+  /** Imagery overlays: live clouds, night lights, senses, aurora, lightning. */
+  sky: Sky;
+  /** The time machine's moment; null = now. */
+  time: number | null;
   onSelect(id: string): void;
   onFlight(hex: string): void;
   onDossier(lat: number, lon: number): void;
@@ -149,32 +150,6 @@ const SATELLITE_MAXZOOM = 19;
 /** Deepest level Esri still has real imagery for in the polar tile rows; at z4 they are flat filler. */
 const POLAR_Z = 3;
 
-/**
- * Cloud cover: NASA GIBS VIIRS (NOAA-20) corrected-reflectance true colour, no key. Laid over the
- * Esri mosaic at partial opacity: clouds are the brightest thing in the frame, so they read as
- * clouds while the imagery beneath shows through. Fetched through `gibs://` (loadClouds), so the
- * black GIBS paints where VIIRS saw nothing is covered with stand-in clouds instead of dimming the poles.
- */
-const CLOUDS_LAYER = 'gibs://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor';
-
-const CLOUDS = `${CLOUDS_LAYER}/default/${cloudsDate()}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`;
-/** GoogleMapsCompatible_Level9 is z0–8; past that MapLibre overzooms the last level rather than 404ing. */
-const CLOUDS_MAXZOOM = 8;
-
-/** The `gibs://` scheme: the tile over https, with stand-in clouds over its no-data black (lib/clouds). */
-const loadClouds: AddProtocolAction = async ({ url }, { signal }) => {
-  const res = await fetch(url.replace('gibs://', 'https://'), { signal });
-  if (!res.ok) throw new Error(`GIBS ${res.status}`);
-  const tile = await createImageBitmap(await res.blob());
-  const ctx = Object.assign(document.createElement('canvas'), { width: tile.width, height: tile.height })
-    .getContext('2d', { willReadFrequently: true });
-  if (!ctx) return { data: tile };
-  ctx.drawImage(tile, 0, 0);
-  const img = ctx.getImageData(0, 0, tile.width, tile.height);
-  const [z, y, x] = url.match(/(\d+)\/(\d+)\/(\d+)\.jpg$/)!.slice(1).map(Number);
-  return { data: fillNoData(img.data, img.width, img.height, { z, x, y }) ? await createImageBitmap(img) : tile };
-};
-
 /** Satellite imagery, with a light OpenMapTiles overlay (borders, places) from whichever base style loaded. */
 function buildStyle(base: Base | null): StyleSpecification {
   const layers: LayerSpecification[] = [
@@ -183,14 +158,11 @@ function buildStyle(base: Base | null): StyleSpecification {
       id: 'satellite', type: 'raster', source: 'satellite',
       paint: { 'raster-fade-duration': 200, 'raster-contrast': 0.08, 'raster-saturation': 0.05 },
     },
-    {
-      // Faded out by the zoom GIBS runs out of detail at, so close-in views keep Esri's sharpness.
-      id: 'clouds', type: 'raster', source: 'clouds', layout: { visibility: 'none' },
-      paint: {
-        'raster-opacity': ['interpolate', ['linear'], ['zoom'], 2, 0.62, 5, 0.5, 7.5, 0],
-        'raster-fade-duration': 300,
-      },
-    },
+    // Every sky overlay, hidden until switched on: a hidden layer's tiles are never fetched.
+    ...OVERLAYS.map((o): LayerSpecification => ({
+      id: o.id, type: 'raster', source: o.id, layout: { visibility: 'none' },
+      paint: { 'raster-opacity': o.opacity, 'raster-fade-duration': 300 },
+    })),
   ];
   if (base) {
     const src = { source: 'omt' } as const;
@@ -228,10 +200,10 @@ function buildStyle(base: Base | null): StyleSpecification {
         type: 'raster', tiles: [SATELLITE], tileSize: 256, maxzoom: SATELLITE_MAXZOOM,
         attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community',
       },
-      clouds: {
-        type: 'raster', tiles: [CLOUDS], tileSize: 256, maxzoom: CLOUDS_MAXZOOM,
-        attribution: '<a href="https://worldview.earthdata.nasa.gov" target="_blank" rel="noopener noreferrer">NASA EOSDIS GIBS</a>',
-      },
+      // Real tiles are set when an overlay is first shown (skyTiles); this one is never requested.
+      ...Object.fromEntries(OVERLAYS.map((o) => [o.id, {
+        type: 'raster' as const, tiles: ['placeholder://{z}/{x}/{y}'], tileSize: 256, maxzoom: o.maxzoom, attribution: o.attribution,
+      }])),
       ...(base ? { omt: base.source } : {}),
     },
     ...(base ? { glyphs: base.glyphs } : {}),
@@ -271,7 +243,7 @@ const SWEEP_LAYERS: [string, string[]][] = [
 ];
 
 export default function GlobeView(props: Props) {
-  const { ref, streams, focus, flights, flightId, initialCamera, reducedMotion, rotate, intro, bottomInset, clouds } = props;
+  const { ref, streams, focus, flights, flightId, initialCamera, reducedMotion, rotate, intro, bottomInset, sky, time } = props;
   const container = useRef<HTMLDivElement>(null);
   const hoverLabel = useRef<HTMLDivElement>(null);
   const halo = useRef<HTMLDivElement>(null);
@@ -371,7 +343,7 @@ export default function GlobeView(props: Props) {
       await document.fonts.load(`500 10px ${mono}`).catch(() => undefined);
 
       const zoom = initialCamera?.zoom ?? fitZoom(el);
-      ml.addProtocol('gibs', loadClouds);
+      registerSky(ml);
       map = new ml.Map({
         container: el,
         style: buildStyle(base),
@@ -386,10 +358,11 @@ export default function GlobeView(props: Props) {
         fadeDuration: 0,
       });
       map.touchZoomRotate.disableRotation();
-      // Imagery tiles over open ocean or outside coverage fail to decode; that's expected, not an error.
+      // Imagery tiles over open ocean, outside a satellite's disk or past a layer's newest date fail;
+      // that's expected, not an error.
       map.on('error', (e) => {
         const id = (e as { sourceId?: string }).sourceId;
-        if (id === 'satellite' || id === 'clouds') return;
+        if (id === 'satellite' || (id && OVERLAY_IDS.has(id))) return;
         console.error(e.error);
       });
       mapRef.current = map;
@@ -607,10 +580,26 @@ export default function GlobeView(props: Props) {
     map.once('idle', () => map.fire('move'));
   }, [ready, streams]);
 
-  // ── today's clouds: tiles are only fetched once the layer is first shown ───
+  // ── sky: each overlay's tiles for this moment; hidden layers fetch nothing ─
+  const now = useClock(5 * 60_000);
+  const frames = useGeoFrames(ready && (sky.live || sky.sense === 'ir'));
+  const radar = useRadar(ready && sky.sense === 'radar');
+  const aurora = useAurora(ready && sky.aurora);
+  const applied = useRef<Record<string, string>>({});
   useEffect(() => {
-    if (ready) mapRef.current?.setLayoutProperty('clouds', 'visibility', clouds ? 'visible' : 'none');
-  }, [ready, clouds]);
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    const want = skyTiles(sky, { t: time, now, frames, radar, aurora });
+    for (const { id } of OVERLAYS) {
+      const tiles = want[id];
+      // Tiles first: a layer made visible with its placeholder URL would request it.
+      if (tiles && applied.current[id] !== tiles[0]) {
+        map.getSource<RasterTileSource>(id)?.setTiles(tiles);
+        applied.current[id] = tiles[0];
+      }
+      map.setLayoutProperty(id, 'visibility', tiles ? 'visible' : 'none');
+    }
+  }, [ready, sky, time, now, frames, radar, aurora]);
 
   // ── aircraft ───────────────────────────────────────────────────────────────
   useEffect(() => {
