@@ -2,9 +2,11 @@
 
 A live window onto anywhere on Earth. A 3D satellite globe scattered with ~60,000 public live
 cameras in 89 countries and on every continent — spin it, click a point, and watch what is happening
-there right now.
+there right now. Over it: the clouds as five geostationary satellites see them now, the night side's
+city lights, every satellite in orbit, every aircraft, earthquake, fire and storm as it happens, ~7,900
+live radio stations, and a time machine back to 2000.
 
-No accounts. No API keys. No tracking. One tiny server route: a caching proxy for live flights.
+No accounts. No API keys. No tracking. A few small server routes, all caching proxies.
 
 ## Run it
 
@@ -17,13 +19,14 @@ On Windows you can double-click **`start.bat`** instead: it installs dependencie
 first run, starts the dev server and opens the browser.
 
 Deploy: import the repo into Vercel — zero configuration, no environment variables.
-The page is static (the catalog is a file in `public/data/`) apart from `app/api/flights` (caching proxy to adsb.lol, live near the view) and `app/api/flights/global` (worldwide airliners, military and 7700 squawks from adsb.lol, one feed per CDN-cached request).
+The page is static (the catalogs are files in `public/data/`) apart from four caching routes: `app/api/flights` (adsb.lol, live near the view), `app/api/flights/global` (worldwide airliners, military and 7700 squawks from adsb.lol, one feed per CDN-cached request), `app/api/fires` (NASA FIRMS's 24-hour fire CSV, binned to ~250 KB) and `app/api/satellites` (CelesTrak's orbital elements, 2 h at the CDN).
 
 | Script | What it does |
 |---|---|
 | `npm run dev` / `build` / `start` | Next.js |
 | `npm run import` | Re-pull every source, validate, geocode, probe every live stream and unvetted image, write `public/data/streams.json` + `rejected.json` (~30 min) |
 | `npm run import -- --offline` | Same, from the committed snapshots in `data/upstream/` (for tuning the geocoder) |
+| `npm run extras` | Write `public/data/iss.json` (ISS live feeds, from the snapshots) and `public/data/radio.json` (Radio Browser) |
 | `npm run gazetteer` | Rebuild `data/gazetteer/cities.tsv` from GeoNames (~210 MB download; rarely needed) |
 | `npm test` | Assert-based self-test of the geocoder, solar math, clocks and camera-feed parsing |
 | `npm run typecheck` | `tsc --noEmit` |
@@ -38,8 +41,8 @@ camlisted ─────────┼─ Zod ─ dedupe ─ overrides ─ geo
 operators + OSM       (scripts/agencies.ts)
 ```
 
-`scripts/import-catalog.ts` runs offline (by you, or weekly by
-`.github/workflows/refresh-catalog.yml`) and commits its output. The app never calls it.
+`scripts/import-catalog.ts` and `scripts/import-extras.ts` run offline (by you, or weekly by
+`.github/workflows/refresh-catalog.yml`) and commit their output. The app never calls them.
 
 ### Four kinds of stream
 
@@ -110,6 +113,43 @@ and Random picks them rarely.
 
 The YouTube drop rate is deliberate. Most drops are streams whose title names no findable place
 ("Bridge Cam", "Osprey Nest 2") — those need an override, not a guess.
+
+## Seeing everything
+
+Everything below is keyless and fetched straight from the browser (CORS), except where a route is named.
+
+| | What | From |
+|---|---|---|
+| **Sky** (cloud button) | **Live clouds**: infrared from GOES-18, GOES-19, Meteosat-12, Meteosat-9 and Himawari-9, a frame every 10–15 min (~25–60 min behind). **Night side** with city lights. The **daily pass** (true colour). **Aurora**. **Lightning** (Europe, Africa, Atlantic). One **sense** at a time: infrared, rain, radar, sea temperature, marine heatwaves, smoke & dust, snow, sea ice, carbon monoxide — each with NASA's legend. **3D terrain** | NASA GIBS, EUMETSAT, RainViewer, NOAA SWPC |
+| **Earth** (on by default) | M2.5+ earthquakes of the last day, rings for the last hour; every fire of the last 24 h; storms with their tracks, wildfires, volcanoes, ice | USGS, NASA FIRMS (`/api/fires`), NASA EONET |
+| **Pulse** (P) | The notable things on Earth now, most urgent first: M4.5+ quakes, 7700 squawks, storms and eruptions, launches in the next day, geomagnetic storms. Optional background browser alerts for critical ones | the Earth feeds, adsb.lol, The Space Devs, NOAA SWPC |
+| **Satellites** | All ~16,600 active objects (~11,000 Starlink) by SGP4 every 2 s; click one for its ground track, footprint and a following camera. The ISS plays its own live video | CelesTrak (`/api/satellites`), satellite.js |
+| **Time** (T) | Scrub, step or play the planet back to 24 Feb 2000: the geostationary frames (weeks back), the night side, the senses, the day's true colour, quakes and events from their archives. The moment rides in the URL (`?t=`) | as above |
+| **Dossier** | Click anywhere: local time, sun and moon, weather, air, sea, street-level photos, Wikipedia, cameras, aircraft, satellites overhead and the next ISS pass, quakes nearby, local radio | Open-Meteo, Wikipedia, Panoramax, USGS, adsb.lol |
+| **Radio** | ~7,900 live stations with a place on the map; a radio button on every camera plays the one nearest it | Radio Browser |
+| **Wall** (W) | A grid of live feeds: in view, one per country, or wherever the sun is rising or setting | the catalog |
+| **Tour** (A) | Autopilot: follow the sunrise (or sunset) around the world, or visit the Pulse, a hop every 40 s | the catalog, the Pulse |
+| **Golden hour** | Only cameras where the sun is within a few degrees of the horizon | solar math |
+
+- **Every pixel of the live clouds comes from the satellite with the straightest view of it.** The five
+  sources are drawn bottom to top, and each gives way to one beneath it wherever that one's nadir is
+  nearer, blended ~3.5° either side of the midline; each also fades out between 62° and 76° off nadir.
+  `npm test` checks there's no gap or double cover along the equator. Infrared becomes white cloud by
+  day and moonlit grey by night (GIBS's enhanced palette's coloured pixels count as the coldest tops).
+- **GIBS's newest frame comes from DescribeDomains,** a few hundred bytes per layer: GIBS 404s any time
+  past its newest frame, and `default` never changes URL, so tiles would never refresh.
+- **The night side is per pixel,** Black Marble masked by the sun's altitude in a tile protocol, so none
+  of the old terminator's polygon trouble at the poles can happen.
+- **ISS feeds play on the ISS.** They used to be excluded for having no honest pin; in the satellite
+  layer they have one, and it moves. Music loops that only call themselves "ISS" are skipped.
+- **Radio is HTTPS-only** (an https page can't play http audio), not HLS, last check OK, one station per
+  stream; a Radio Browser outage keeps last week's list.
+- **What doesn't reach back in time** — flights, fires, launches, the aurora, the Pulse's squawks — steps
+  aside in the time machine rather than showing today's data on another day. Satellites follow the
+  clock for a week either way of their elements.
+- **Not here, and why:** ships worldwide need a key (aisstream.io) — keyless AIS only covers the Baltic;
+  lightning outside Meteosat's view has no keyless live source; GDELT's geo API is gone; an animated
+  global wind field needs GRIB2 decoding on a schedule.
 
 ## How to add an override (the main way to improve quality)
 
@@ -196,7 +236,8 @@ fixed with a rule, a stopword or an override — but automatic matching is not p
   pick the neighbour's zone — check the panel's TIMEZONE row when adding one near a border.
 - **camlisted `parking` category is excluded** (parking-lot security cameras read as
   surveillance). Moving streams (walking tours, dashcams) are pinned at the city they're in.
-- **Streams with no place on Earth** (ISS feeds) are excluded — there is no honest pin for them.
+- **Streams with no place on Earth** (ISS feeds) are kept out of the camera catalog — there is no honest
+  pin for them on the ground. They play on the ISS itself in the satellite layer (`public/data/iss.json`).
 - **Road cameras and snapshots (added on request for many more streams, then for the whole world).**
   The prompt's catalog is YouTube-only; transport agencies publish tens of thousands of public cameras
   with exact coordinates, which need no geocoding at all. Live video is verified at import. Still-image
@@ -212,15 +253,15 @@ fixed with a rule, a stopword or an override — but automatic matching is not p
 - **Satellite imagery:** the globe shows Esri World Imagery (keyless) at every zoom, with
   OpenStreetMap borders and place names from OpenFreeMap (CARTO fallback) drawn on top. EOX
   Sentinel-2 cloudless 2016 was dropped: its orbit-swath seams showed as stripes across continents.
-- **Clouds are real imagery,** not a model: NASA GIBS VIIRS (NOAA-20) corrected-reflectance true
-  colour, keyless, for **yesterday UTC** — the most recent *complete* global composite, and what NASA
+- **The daily pass is real imagery,** not a model: NASA GIBS VIIRS (NOAA-20) corrected-reflectance true
+  colour (MODIS Terra for days before 2018), keyless, for **yesterday UTC** (or the time machine's day) — the most recent *complete* global composite, and what NASA
   Worldview itself opens on. GIBS's `default` (latest date that exists) is the day still being flown:
   a polar orbiter has only swathed part of the globe so far, the rest of that day's tiles come back
   empty, and the boundary lands as a hard seam down the middle of the planet. Just after UTC midnight
   the previous day's own westernmost swaths can still be in NRT processing, so before 04:00 UTC the
   date holds a further day back. Laid over Esri at ~0.6 opacity — clouds are the brightest thing in frame, so they read
   as clouds — and faded out by z7.5, where GIBS runs out of levels and Esri is sharper. Its tiles are
-  only requested once the cloud toggle is first switched on. Where VIIRS saw nothing — the unlit
+  only requested once Daily pass (Sky menu) is first switched on. Where VIIRS saw nothing — the unlit
   polar caps and the ragged swath edges around them — GIBS paints solid black, which at that
   opacity dimmed the poles into a dark disc. Tiles come through a `gibs://` protocol that paints
   stand-in clouds over every solid block of near-black (a 3×3 core, grown two texels to take the
@@ -247,19 +288,21 @@ fixed with a rule, a stopword or an override — but automatic matching is not p
 ## Project layout
 
 ```
-app/                page, /about, error + 404 screens
-components/globe/   GlobeView (map, pins, clusters, rim light), Starfield
+app/                page, /about, error + 404 screens; api/ flights, fires, satellites
+components/globe/   GlobeView (map, pins, clusters, sky, Earth layer, orbits, radio, 3D, rim light), Starfield
 components/stream/  StreamPanel, Player (+ unavailable state), Clocks
-components/chrome/  Header (categories, random), Search, StatusBar, icons
-lib/                stream types, geo, solar (sun position), time, readout store
-scripts/            import-catalog, agencies (every camera operator), geocode, stopwords, build-gazetteer, selftest
+components/chrome/  Header, SkyMenu, TimeBar, TourBar, Search, StatusBar, icons
+components/…        flight/ (cockpit), dossier/, pulse/, satellite/, radio/, wall/
+lib/                stream types, geo, solar (sun, moon), time, readout store, sky (overlays + tile protocols),
+                    events (quakes, EONET, launches, Pulse), fires, satellites (SGP4), radio, wall
+scripts/            import-catalog, import-extras (ISS feeds, radio), agencies, geocode, stopwords, build-gazetteer, selftest
 data/               overrides.json, excluded.json, gazetteer/, upstream/ snapshots
-public/data/        streams.json, rejected.json
+public/data/        streams.json, rejected.json, iss.json, radio.json
 ```
 
 ## Keyboard
 
 `R` random · `←` `→` walk outward through the nearest streams · `/` search · `Esc` close ·
-`F` fullscreen · `M` mute
+`F` fullscreen · `M` mute · `P` pulse · `T` time machine · `W` wall · `A` tour (autopilot)
 
 Attribution and full license texts: [`ATTRIBUTION.md`](ATTRIBUTION.md).

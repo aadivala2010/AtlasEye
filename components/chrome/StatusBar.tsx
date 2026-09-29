@@ -8,9 +8,14 @@ interface Props {
   total: number | null;
   builtAt: string | null;
   loading: boolean;
+  /** Credits for whatever else is on screen (flights, sky, orbits…), after the ones that always apply. */
+  credits: string[];
 }
 
-export default function StatusBar({ total, builtAt, loading }: Props) {
+const BASE = 'Imagery © Esri, Maxar, Earthstar Geographics · © OpenStreetMap · GeoNames CC BY 4.0 · Famelack · camlisted · Cameras: public operators & OSM · via YouTube';
+
+export default function StatusBar({ total, builtAt, loading, credits }: Props) {
+  const full = [BASE, ...credits].join(' · ');
   const { cursor, zoom, inView } = useReadout();
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
@@ -21,7 +26,7 @@ export default function StatusBar({ total, builtAt, loading }: Props) {
 
   return (
     <footer className="relative z-20 flex h-7 shrink-0 items-center gap-4 overflow-hidden border-t border-subtle bg-panel px-4 max-sm:gap-2 max-sm:px-3 font-mono text-[10px] whitespace-nowrap text-secondary">
-      {/* Readouts give way before the attribution does: it must stay visible at every width. */}
+      {/* Readouts give way before the attribution does; past that it truncates, whole in its title and on /about. */}
       <div className="flex min-w-0 flex-1 items-center gap-4 overflow-hidden max-sm:gap-2">
       <span className="max-md:hidden">
         <F k="LAT">{cursor ? cursor.lat.toFixed(4) : '—'}</F>
@@ -39,9 +44,9 @@ export default function StatusBar({ total, builtAt, loading }: Props) {
       <F k="UTC" className="max-sm:hidden">{now ? utcClock(now) : '--:--:--'}</F>
       {builtAt && <F k="BUILT" className="max-xl:hidden">{builtAt.slice(0, 10)}</F>}
       </div>
-      <a href="/about" className="shrink-0 text-tertiary transition-colors duration-200 ease-atlas hover:text-secondary">
-        <span className="max-md:hidden">Imagery © Esri, Maxar, Earthstar Geographics · © OpenStreetMap · GeoNames CC BY 4.0 · Famelack · camlisted · Cameras: public operators & OSM · via YouTube · Flights: adsb.lol (ODbL) · Weather: Open-Meteo · Terrain: Mapzen</span>
-        <span className="md:hidden">©Esri·OSM·GeoNames·Famelack·camlisted·YouTube·adsb.lol·Open-Meteo</span>
+      <a href="/about" title={full} className="min-w-0 truncate text-tertiary transition-colors duration-200 ease-atlas hover:text-secondary">
+        <span className="max-md:hidden">{full}</span>
+        <span className="md:hidden">©Esri·OSM·GeoNames·Famelack·camlisted·YouTube{credits.length ? '·more' : ''}</span>
       </a>
     </footer>
   );

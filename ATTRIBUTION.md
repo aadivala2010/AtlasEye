@@ -5,12 +5,26 @@ texts are reproduced in full here and in `licenses/`.
 
 | Source | What we use | License | Where it lives in this repo |
 |---|---|---|---|
-| [Famelack](https://github.com/famelack/famelack-data) | webcam catalog (`webcams/raw/categories/*.json`) | MIT, © 2026 Famelack | `data/upstream/famelack.json`, derived `public/data/streams.json` |
-| [camlisted](https://github.com/tantran21501/camlisted) | `data/streams.json` | MIT, © 2026 zenith605 | `data/upstream/camlisted.json`, derived `public/data/streams.json` |
+| [Famelack](https://github.com/famelack/famelack-data) | webcam catalog (`webcams/raw/categories/*.json`) | MIT, © 2026 Famelack | `data/upstream/famelack.json`, derived `public/data/streams.json` and `public/data/iss.json` |
+| [camlisted](https://github.com/tantran21501/camlisted) | `data/streams.json` | MIT, © 2026 zenith605 | `data/upstream/camlisted.json`, derived `public/data/streams.json` and `public/data/iss.json` |
 | [GeoNames](https://www.geonames.org/) | `cities1000`, `alternateNamesV2`, `admin1CodesASCII` | CC BY 4.0 | `data/gazetteer/cities.tsv` (pruned; see below) |
 | [Esri World Imagery](https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9): Esri, Maxar, Earthstar Geographics, and the GIS User Community | satellite imagery of the globe and cockpit view | Esri terms of use, attribution required | not stored; tiles are fetched from server.arcgisonline.com at runtime |
 | [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors | map data in the basemap tiles | ODbL 1.0 | not stored; tiles are fetched from OpenFreeMap / CARTO at runtime |
-| [NASA EOSDIS GIBS](https://nasa-gibs.github.io/gibs-api-docs/) / [Worldview](https://worldview.earthdata.nasa.gov) | VIIRS (NOAA-20) corrected-reflectance true-colour tiles for the cloud-cover layer | NASA open data, [EOSDIS data use policy](https://www.earthdata.nasa.gov/engage/open-data-services-software-policies) — attribution requested | not stored; tiles are fetched from gibs.earthdata.nasa.gov at runtime, only while the layer is on |
+| [NASA EOSDIS GIBS](https://nasa-gibs.github.io/gibs-api-docs/) / [Worldview](https://worldview.earthdata.nasa.gov) | GOES-East/-West and Himawari infrared, VIIRS (NOAA-20) and MODIS (Terra) true colour, Black Marble night lights, IMERG rain, GHRSST sea temperature and ice, MODIS aerosol and snow, AIRS carbon monoxide | NASA open data, [EOSDIS data use policy](https://www.earthdata.nasa.gov/engage/open-data-services-software-policies) — attribution requested | not stored; tiles are fetched from gibs.earthdata.nasa.gov at runtime, only while a layer is on |
+| [EUMETSAT View Service](https://view.eumetsat.int) | Meteosat-12 (MTG) and Meteosat-9 (IODC) infrared, MTG Lightning Imager | © EUMETSAT, [EUMETSAT data policy](https://www.eumetsat.int/eumetsat-data-licensing) — attribution required | not stored; tiles fetched at runtime |
+| [RainViewer](https://www.rainviewer.com/api.html) | weather radar tiles | RainViewer API terms, attribution | not stored; fetched at runtime |
+| [NOAA SWPC](https://www.swpc.noaa.gov/) | OVATION aurora nowcast, planetary K index | US government work, public domain | not stored; fetched at runtime |
+| [USGS Earthquake Hazards Program](https://earthquake.usgs.gov/) | earthquake feeds and archive | US government work, public domain | not stored; fetched at runtime |
+| [NASA EONET](https://eonet.gsfc.nasa.gov/) | natural events: storms, wildfires, volcanoes, ice | NASA open data | not stored; fetched at runtime |
+| [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/) | VIIRS (NOAA-20) active fires, last 24 h | NASA open data; acknowledgement: NASA LANCE FIRMS | not stored; binned per request in `app/api/fires` and cached at the CDN |
+| [The Space Devs](https://thespacedevs.com/) Launch Library 2 | upcoming launches | free API, attribution | not stored; fetched at runtime |
+| [CelesTrak](https://celestrak.org/) | GP orbital elements of active satellites | free to use, attribution | not stored; cached at the CDN by `app/api/satellites` |
+| [Radio Browser](https://www.radio-browser.info/) | station names, coordinates, stream URLs, tags | free and open (usable in free and non-free software) | `public/data/radio.json` (filtered; streams are not stored) |
+| [Open-Meteo](https://open-meteo.com/) | weather, air quality, marine conditions for the dossier | CC BY 4.0 | not stored; fetched at runtime |
+| [Wikipedia](https://www.wikipedia.org/) | titles, descriptions and thumbnails of nearby articles | CC BY-SA 4.0 (text), per-file (images) | not stored; fetched at runtime |
+| [Panoramax](https://panoramax.fr/) | street-level photo thumbnails near a dossier point | per photo, as each instance publishes it | not stored; fetched at runtime |
+| [adsb.lol](https://adsb.lol/) | live aircraft positions | ODbL 1.0 | not stored; proxied at runtime by `app/api/flights` |
+| Mapzen Terrarium ([AWS Open Data](https://registry.opendata.aws/terrain-tiles/)) | elevation tiles for 3D terrain and the cockpit | open data, attribution | not stored; fetched at runtime |
 | [Caltrans](https://cwwp2.dot.ca.gov/) CCTV status feeds | camera list, coordinates, live video / still URLs | public California state data | `data/upstream/agencies.json` (normalised); video and images are not stored |
 | [Delaware DOT](https://tmc.deldot.gov/json/videocamera.json) | camera list, coordinates, live video URLs | public state data | as above |
 | [NYC DOT](https://webcams.nyctmc.org/) | camera list, coordinates, still-image URLs | public city data | as above |

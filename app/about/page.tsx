@@ -14,8 +14,9 @@ export default function About() {
         <a href="/" className="font-mono text-[10px] tracking-[0.08em] text-tertiary hover:text-accent">← BACK TO GLOBE</a>
         <h1 className="mt-6 text-[22px] font-semibold tracking-[0.14em]">ATLAS EYE</h1>
         <p className="mt-3 text-[14px] leading-6 text-secondary">
-          A live window onto anywhere on Earth: a globe of public live streams. Spin it, click a point, and watch
-          what is happening there right now.
+          A live window onto anywhere on Earth: a globe of public live streams, the sky as the satellites see it
+          now, everything in orbit, and what is happening on the planet as it happens. Spin it, click a point, and
+          watch what is happening there right now, or scrub back through time.
         </p>
 
         <Section title="What this is">
@@ -41,7 +42,8 @@ export default function About() {
             Atlas Eye collects no personal data: no accounts, no analytics, no cookies of its own, no tracking. The
             &ldquo;distance from me&rdquo; readout asks your browser for your location only when you click it, and that
             position never leaves your device. Video plays through youtube-nocookie.com; once you play a stream,
-            YouTube&apos;s own policies apply to that player.
+            YouTube&apos;s own policies apply to that player. Radio plays straight from each station&apos;s own server.
+            Pulse alerts use your browser&apos;s notifications only if you switch them on, and are sent by your own browser.
           </p>
         </Section>
 
@@ -84,10 +86,41 @@ export default function About() {
               <a className="text-accent hover:underline" href="https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9">Esri World Imagery</a>:
               Esri, Maxar, Earthstar Geographics, and the GIS User Community.
             </Credit>
-            <Credit k="Clouds">
-              Today&apos;s VIIRS (NOAA-20) true-colour imagery from{' '}
-              <a className="text-accent hover:underline" href="https://worldview.earthdata.nasa.gov">NASA EOSDIS GIBS</a>.
+            <Credit k="Sky">
+              Live clouds and infrared from GOES-18, GOES-19 and Himawari-9 via{' '}
+              <a className="text-accent hover:underline" href="https://worldview.earthdata.nasa.gov">NASA EOSDIS GIBS</a>, and
+              from Meteosat-12 and Meteosat-9, © <a className="text-accent hover:underline" href="https://view.eumetsat.int">EUMETSAT</a>,
+              as is the lightning (MTG Lightning Imager). The day&apos;s true-colour pass (VIIRS NOAA-20; MODIS Terra
+              before 2018), Black Marble city lights, IMERG rain, GHRSST sea temperature and sea ice, MODIS aerosols and
+              snow, and AIRS carbon monoxide are NASA GIBS too. Radar:{' '}
+              <a className="text-accent hover:underline" href="https://www.rainviewer.com">RainViewer</a>. Aurora: NOAA
+              Space Weather Prediction Center (OVATION).
             </Credit>
+            <Credit k="Earth">
+              Earthquakes: <a className="text-accent hover:underline" href="https://earthquake.usgs.gov">USGS</a>.
+              Storms, wildfires, volcanoes and ice: <a className="text-accent hover:underline" href="https://eonet.gsfc.nasa.gov">NASA EONET</a>.
+              Fire detections: <a className="text-accent hover:underline" href="https://firms.modaps.eosdis.nasa.gov">NASA FIRMS</a> (VIIRS NOAA-20).
+              Launches: <a className="text-accent hover:underline" href="https://thespacedevs.com">The Space Devs</a> Launch Library 2.
+              Geomagnetic storms: NOAA SWPC.
+            </Credit>
+            <Credit k="Orbits">
+              Orbital elements from <a className="text-accent hover:underline" href="https://celestrak.org">CelesTrak</a>,
+              propagated with satellite.js (MIT). ISS video: the station&apos;s public live streams, from the stream catalogs above.
+            </Credit>
+            <Credit k="Flights">
+              <a className="text-accent hover:underline" href="https://adsb.lol">adsb.lol</a>, licensed under the ODbL.
+            </Credit>
+            <Credit k="Radio">
+              Station list from <a className="text-accent hover:underline" href="https://www.radio-browser.info">Radio Browser</a>, the
+              free, community-kept radio directory. Each stream belongs to its station.
+            </Credit>
+            <Credit k="Dossier">
+              Weather, air quality and sea state: <a className="text-accent hover:underline" href="https://open-meteo.com">Open-Meteo</a>{' '}
+              (CC BY 4.0). What&apos;s here: <a className="text-accent hover:underline" href="https://www.wikipedia.org">Wikipedia</a>{' '}
+              (CC BY-SA). Street-level photos: <a className="text-accent hover:underline" href="https://panoramax.fr">Panoramax</a>,
+              each under its contributor&apos;s licence.
+            </Credit>
+            <Credit k="Terrain">Mapzen Terrarium elevation tiles (AWS Open Data).</Credit>
             <Credit k="Map tiles">
               © <a className="text-accent hover:underline" href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>,
               served by <a className="text-accent hover:underline" href="https://openfreemap.org/">OpenFreeMap</a>

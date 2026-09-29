@@ -580,7 +580,23 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
         />
       )}
 
-      <StatusBar total={catalog?.count ?? null} builtAt={catalog?.builtAt ?? null} loading={!catalog && !error} />
+      <StatusBar
+        total={catalog?.count ?? null}
+        builtAt={catalog?.builtAt ?? null}
+        loading={!catalog && !error}
+        credits={[
+          (layers.flights || tracked || other?.kind === 'dossier') && 'Flights: adsb.lol (ODbL)',
+          (sky.live || sky.clouds || sky.night || (sky.sense && sky.sense !== 'radar')) && 'Sky: NASA GIBS',
+          (sky.live || sky.sense === 'ir' || sky.lightning) && '© EUMETSAT',
+          sky.sense === 'radar' && 'Radar: RainViewer',
+          sky.aurora && 'Aurora: NOAA SWPC',
+          (layers.events || pulseOpen) && 'Events: USGS · NASA EONET · NASA FIRMS · The Space Devs',
+          (layers.satellites || satId !== null) && 'Orbits: CelesTrak',
+          (layers.radio || station) && 'Radio: Radio Browser',
+          other?.kind === 'dossier' && 'Open-Meteo (CC BY 4.0) · Wikipedia · Panoramax',
+          sky.terrain && 'Terrain: Mapzen',
+        ].filter((c): c is string => !!c)}
+      />
     </div>
   );
 }
