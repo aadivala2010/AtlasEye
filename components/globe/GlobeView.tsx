@@ -8,7 +8,9 @@ import type {
 import type { Stream } from '@/lib/stream';
 import { distanceKm } from '@/lib/geo';
 import { subsolarPoint, sunAltitude } from '@/lib/solar';
-import { OVERLAYS, OVERLAY_IDS, registerSky, skyTiles, useAurora, useClock, useGeoFrames, useRadar, type Sky } from '@/lib/sky';
+import {
+  OVERLAYS, OVERLAY_IDS, SKY_BLEND, SKY_DAY, SKY_NIGHT, SKY_OFF, TERRAIN, registerSky, skyTiles, useAurora, useClock, useGeoFrames, useRadar, type Sky,
+} from '@/lib/sky';
 import { readout } from '@/lib/readout';
 import { formatAlt, project, type Flight } from '@/lib/flights';
 import { EVENT_COLORS, EVENT_LABELS, type Planet } from '@/lib/events';
@@ -205,6 +207,16 @@ function buildStyle(base: Base | null): StyleSpecification {
     const src = { source: 'omt' } as const;
     layers.push(
       {
+        // Shown with 3D terrain (the Sky menu), from street level up.
+        id: 'buildings', type: 'fill-extrusion', ...src, 'source-layer': 'building', minzoom: 14, layout: { visibility: 'none' },
+        paint: {
+          'fill-extrusion-color': '#A9B3C6',
+          'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 8],
+          'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+          'fill-extrusion-opacity': 0.72,
+        },
+      },
+      {
         id: 'states', type: 'line', ...src, 'source-layer': 'boundary', minzoom: 5,
         filter: ['all', ['==', ['get', 'admin_level'], 4], ['!=', ['get', 'maritime'], 1]],
         paint: { 'line-color': '#FFFFFF', 'line-opacity': 0.18, 'line-width': 0.75, 'line-dasharray': [3, 2] },
@@ -242,6 +254,7 @@ function buildStyle(base: Base | null): StyleSpecification {
         type: 'raster' as const, tiles: ['placeholder://{z}/{x}/{y}'], tileSize: 256, maxzoom: o.maxzoom, attribution: o.attribution,
       }])),
       ...(base ? { omt: base.source } : {}),
+      dem: { type: 'raster-dem', tiles: [TERRAIN], tileSize: 256, maxzoom: 14, encoding: 'terrarium' },
     },
     ...(base ? { glyphs: base.glyphs } : {}),
     layers,
@@ -375,7 +388,34 @@ export default function GlobeView(props: Props) {
     el.style.transform = `translate(${mid.x - size / 2}px, ${mid.y - size / 2}px)`;
     el.style.background = `radial-gradient(circle closest-side, transparent ${r - 1}px, rgba(120,180,255,0.55) ${r}px, rgba(90,150,255,0.2) ${r + 7}px, transparent ${r + 36}px)`;
   };
+  /**
+   * The descent into 3D: tilt and rotation unlock as the globe gives way to a landscape (pitch up to
+   * 70° by z8.5), real terrain from z8 (off again below 7.5, so it doesn't flicker at the threshold),
+   * buildings from z14, and a sky at the horizon. Zooming back out past z4 turns north up again.
+   */
+  const apply3d = (map: MLMap) => {
+    if (!styled.current) return; // terrain and sky can't be set before the style is in
+    const on = cb.current.sky.terrain;
+    const z = map.getZoom();
+    const cap = on ? Math.round(Math.max(0, Math.min(70, (z - 5) * 20))) : 0;
+    if (map.getMaxPitch() !== cap) map.setMaxPitch(cap);
+    const rotate = on && z >= 5;
+    if (rotate !== map.dragRotate.isEnabled()) {
+      if (rotate) { map.dragRotate.enable(); map.touchZoomRotate.enableRotation(); }
+      else { map.dragRotate.disable(); map.touchZoomRotate.disableRotation(); }
+    }
+    const has = !!map.getTerrain();
+    const want = on && z >= (has ? 7.5 : 8);
+    if (want !== has) {
+      map.setTerrain(want ? { source: 'dem', exaggeration: 1.4 } : null);
+      const c = map.getCenter();
+      map.setSky(want ? { ...(sunAltitude(c.lat, c.lng, subsolarPoint(new Date())) < -6 ? SKY_NIGHT : SKY_DAY), ...SKY_BLEND } : SKY_OFF);
+    }
+    if (map.getLayer('buildings')) map.setLayoutProperty('buildings', 'visibility', on ? 'visible' : 'none');
+    if (z < 4 && map.getBearing() !== 0 && !map.isMoving()) map.easeTo({ bearing: 0, duration: 400 });
+  };
   const mapRef = useRef<MLMap | null>(null);
+  const styled = useRef(false);
   const markerRef = useRef<Marker | null>(null);
   const rotating = useRef(false);
   const streamsRef = useRef<Stream[]>([]);
@@ -457,10 +497,9 @@ export default function GlobeView(props: Props) {
         zoom,
         minZoom: 0.5,
         maxZoom: 18,
-        maxPitch: 0,
+        maxPitch: 0, // raised with zoom by apply3d
         attributionControl: false,
-        dragRotate: false,
-        pitchWithRotate: false,
+        dragRotate: false, // enabled once zoomed in, by apply3d
         fadeDuration: 0,
       });
       map.touchZoomRotate.disableRotation();
@@ -602,6 +641,7 @@ export default function GlobeView(props: Props) {
           },
           paint: { 'icon-color': planeColor(''), 'icon-halo-color': C.void, 'icon-halo-width': 1 },
         });
+        styled.current = true;
         setReady(true);
       });
 
@@ -731,6 +771,7 @@ export default function GlobeView(props: Props) {
         if (!map) return;
         placeHalo(map);
         sharpenPoles(map);
+        apply3d(map);
         const c = map.getCenter();
         const bounds = map.getBounds();
         const zoom = map.getZoom();
@@ -764,6 +805,7 @@ export default function GlobeView(props: Props) {
       markerRef.current?.remove();
       map?.remove();
       mapRef.current = null;
+      styled.current = false;
     };
     // The map is created once; later prop changes are applied by the effects below.
   }, []);
@@ -811,6 +853,14 @@ export default function GlobeView(props: Props) {
     map.setLayoutProperty('planes', 'icon-size', planeSize(flightId ?? ''));
     map.setPaintProperty('planes', 'icon-color', planeColor(flightId ?? ''));
   }, [ready, flightId]);
+
+  // ── 3D: re-applied on every move; this catches the Sky menu's toggle ──────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (ready && map) apply3d(map);
+    // apply3d reads the toggle through cb.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, sky.terrain]);
 
   // ── radio ──────────────────────────────────────────────────────────────────
   const { stations, radioId } = props;

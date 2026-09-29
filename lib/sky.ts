@@ -31,6 +31,16 @@ export interface Sky {
   terrain: boolean;
 }
 
+/** Mapzen/AWS Terrarium elevation tiles: open, no key, CORS-enabled. */
+export const TERRAIN = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+
+/** The sky above the horizon once the view tilts (the cockpit, and the globe in 3D). */
+export const SKY_DAY = { 'sky-color': '#4F86C9', 'horizon-color': '#CFE0F2', 'fog-color': '#C4D6EA' };
+export const SKY_NIGHT = { 'sky-color': '#03060F', 'horizon-color': '#1A2440', 'fog-color': '#0D1426' };
+export const SKY_BLEND = { 'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.8, 'fog-ground-blend': 0.4, 'atmosphere-blend': 0 };
+/** No sky at all: what MapLibre itself falls back to (the starfield shows around the globe). */
+export const SKY_OFF = { 'sky-color': 'transparent', 'horizon-color': 'transparent', 'fog-color': 'transparent', 'fog-ground-blend': 1, 'atmosphere-blend': 0 };
+
 export const SKY_DEFAULT: Sky = { live: true, clouds: false, night: true, aurora: false, lightning: false, sense: null, terrain: true };
 
 // ── the geostationary ring ─────────────────────────────────────────────────

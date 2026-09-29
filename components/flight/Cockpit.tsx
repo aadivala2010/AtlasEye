@@ -6,18 +6,15 @@ import { project, type Flight } from '@/lib/flights';
 import { subsolarPoint, sunAltitude } from '@/lib/solar';
 import { SATELLITE } from '@/components/globe/GlobeView';
 import { cockpitFor } from '@/lib/cockpits';
+import { SKY_BLEND, SKY_DAY, SKY_NIGHT, TERRAIN } from '@/lib/sky';
 
 export interface CockpitHandle { fullscreen(): void }
 
-/** Mapzen/AWS Terrarium elevation tiles: open, no key, CORS-enabled. */
-const TERRAIN = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
 /** Degrees below the horizon the eye looks, like sitting behind a nose. Calibration knob. */
 const LOOK_DOWN = 4;
 /** ADS-B roll → camera roll. Flip to -1 if banks tilt the wrong way. */
 const ROLL_SIGN = 1;
 
-const SKY_DAY = { 'sky-color': '#4F86C9', 'horizon-color': '#CFE0F2', 'fog-color': '#C4D6EA' };
-const SKY_NIGHT = { 'sky-color': '#03060F', 'horizon-color': '#1A2440', 'fog-color': '#0D1426' };
 
 /**
  * Synthetic out-of-the-window view: a second MapLibre map whose camera is placed at the
@@ -61,7 +58,7 @@ export default function Cockpit({ flight, ref }: { flight: Flight; ref?: Ref<Coc
             { id: 'sat', type: 'raster', source: 'sat', paint: { 'raster-fade-duration': 0 } },
           ],
           terrain: { source: 'dem', exaggeration: 1 },
-          sky: { ...SKY_DAY, 'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.8, 'fog-ground-blend': 0.4, 'atmosphere-blend': 0 },
+          sky: { ...SKY_DAY, ...SKY_BLEND },
         },
         interactive: false,
         attributionControl: false,
@@ -97,7 +94,7 @@ export default function Cockpit({ flight, ref }: { flight: Flight; ref?: Ref<Coc
     const map = mapRef.current;
     if (!map) return;
     const apply = () => {
-      map.setSky({ ...(night ? SKY_NIGHT : SKY_DAY), 'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.8, 'fog-ground-blend': 0.4, 'atmosphere-blend': 0 });
+      map.setSky({ ...(night ? SKY_NIGHT : SKY_DAY), ...SKY_BLEND });
       map.setPaintProperty('sat', 'raster-brightness-max', night ? 0.25 : 1);
     };
     if (map.isStyleLoaded()) apply(); else map.once('style.load', apply);
