@@ -5,7 +5,7 @@ import type { Catalog, Stream } from '@/lib/stream';
 import { byDistanceFrom } from '@/lib/geo';
 import { project, useFlights, type Flight } from '@/lib/flights';
 import { useReadout } from '@/lib/readout';
-import { SKY_DEFAULT, useClock, type Sky } from '@/lib/sky';
+import { SKY_DEFAULT, type Sky } from '@/lib/sky';
 import { sunPhase } from '@/lib/wall';
 import { pulseItems, useNotify, usePlanet, type PulseItem } from '@/lib/events';
 import { subpoint, useSatellites } from '@/lib/satellites';
@@ -92,7 +92,6 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   /** The time machine's moment; null = live. */
   const [time, setTime] = useState<number | null>(null);
   const [wall, setWall] = useState(false);
-  const [golden, setGolden] = useState(false);
   const [tour, setTour] = useState<TourMode | null>(null);
   const [tourNext, setTourNext] = useState({ at: 0, idle: false });
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -139,14 +138,11 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
     return () => ctrl.abort();
   }, [attempt]);
 
-  // Golden hour re-reads the sun each minute; otherwise the list keeps its identity (pins, search, the wall).
-  const clock = useClock(60_000);
-  const minute = golden ? clock : 0;
   const streams = useMemo(
     () => catalog
-      ? (layers.cameras ? catalog.streams.filter((s) => (snapshots || s.kind !== 'snapshot') && (!minute || sunPhase(s, minute) !== null)) : [])
+      ? (layers.cameras ? catalog.streams.filter((s) => (snapshots || s.kind !== 'snapshot')) : [])
       : null,
-    [catalog, layers.cameras, snapshots, minute],
+    [catalog, layers.cameras, snapshots],
   );
   const selected = useMemo(() => catalog?.streams.find((s) => s.id === selectedId) ?? null, [catalog, selectedId]);
 
@@ -413,8 +409,6 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
         snapshots={snapshots}
         snapshotCount={catalog?.streams.filter((s) => s.kind === 'snapshot').length ?? 0}
         onToggleSnapshots={() => setSnapshots((v) => !v)}
-        golden={golden}
-        onToggleGolden={() => setGolden((v) => !v)}
         sky={sky}
         onSky={setSky}
         tools={tools}

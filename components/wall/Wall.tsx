@@ -37,7 +37,7 @@ export default function Wall({ streams, builtAt, inView, onOpen, onClose }: Prop
     return () => mq.removeEventListener('change', sync);
   }, []);
 
-  // Dealt on a mode change or a re-deal, not whenever the list underneath changes (golden hour re-reads it each minute).
+  // Dealt on a mode change or a re-deal, not whenever the list underneath changes.
   const pool = useRef({ streams, inView });
   pool.current = { streams, inView };
   const picks = useMemo(() => {
