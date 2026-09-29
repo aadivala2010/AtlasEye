@@ -45,3 +45,6 @@ export const IconLocate = (p: P) => (
 export const IconEye = (p: P) => (
   <Svg {...p}><circle cx="8" cy="8" r="6.25" /><ellipse cx="8" cy="8" rx="2.6" ry="6.25" /><path d="M1.75 8h12.5" /></Svg>
 );
+export const IconRadio = (p: P) => (
+  <Svg {...p}><circle cx="8" cy="9" r="1.25" /><path d="M5.2 6.2a4 4 0 0 0 0 5.6M10.8 6.2a4 4 0 0 1 0 5.6M3.4 4.4a6.5 6.5 0 0 0 0 9.2M12.6 4.4a6.5 6.5 0 0 1 0 9.2" /></Svg>
+);

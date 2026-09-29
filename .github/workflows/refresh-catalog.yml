@@ -32,7 +32,7 @@ jobs:
       - name: Import and geocode
         run: npm run import
 
-      # ISS live feeds (from the snapshots the import just refreshed).
+      # ISS live feeds (from the snapshots the import just refreshed) and the radio catalog.
       - name: Extras
         run: npm run extras
 

@@ -7,6 +7,8 @@ import { fillNoData } from '../lib/clouds';
 import { cloudsDate, zonedClock } from '../lib/time';
 import { parseFlights, project } from '../lib/flights';
 import { binFires, parseEonet, pulseItems, type Quake } from '../lib/events';
+import { pickStations, tidyTitle, type RawStation } from './import-extras';
+import { nearestStations } from '../lib/radio';
 import { elevation, footprintKm, groundTrack, groupOf, nextPass, parseTle, periodMin, subpoint } from '../lib/satellites';
 import { GEO, SKY_DEFAULT, cloudiness, daylight, geoWeight, skyTiles, tileAxes, tileBbox } from '../lib/sky';
 
@@ -201,6 +203,22 @@ assert.equal(cloudsDate(Date.UTC(2026, 0, 1, 12, 0)), '2025-12-31'); // across a
   assert.equal(groupOf('INTELSAT 901', { ...iss.rec, no: (2 * Math.PI) / 1436 }), 'geo');
   assert.equal(groupOf('STARLINK-1007', iss.rec), 'starlink');
   assert.equal(groupOf('GPS BIIR-2  (PRN 13)', iss.rec), 'gnss');
+}
+
+// Radio: one station per stream (the most-voted keeps it); http (unplayable on https), HLS and (0,0) dropped.
+{
+  const raw = (o: Partial<RawStation>): RawStation => ({
+    stationuuid: 'x', name: ' Radio  One ', url_resolved: 'https://a/1', geo_lat: 10, geo_long: 20, countrycode: 'fr',
+    tags: 'Jazz,  Blues ,rock,pop', codec: 'MP3', bitrate: 128, hls: 0, lastcheckok: 1, votes: 1, ...o,
+  });
+  const picked = pickStations([
+    raw({}), raw({ stationuuid: 'loved', votes: 5 }), raw({ stationuuid: 'http', url_resolved: 'http://b' }),
+    raw({ stationuuid: 'nowhere', url_resolved: 'https://c', geo_lat: 0, geo_long: 0 }), raw({ stationuuid: 'hls', url_resolved: 'https://d', hls: 1 }),
+  ]);
+  assert.deepEqual(picked.map((s) => [s.id, s.name, s.cc, s.tags]), [['loved', 'Radio One', 'FR', 'jazz, blues, rock']]);
+  assert.equal(nearestStations(picked, 10.1, 20.1, 1, 20)[0]?.s.id, 'loved'); // ~16 km away
+  assert.equal(nearestStations(picked, 50, 20, 1, 400).length, 0);
+  assert.equal(tidyTitle('🔴 Live Now: 24/7 NASA Live Stream of Earth from Space (ISS)'), 'NASA Live Stream of Earth from Space (ISS)');
 }
 
 // Camera names: operator codes become road + direction + place words; shouted names are tamed.

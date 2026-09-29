@@ -6,7 +6,7 @@ import { distanceKm, formatCoord, formatDistance } from '@/lib/geo';
 import Player, { type PlayerHandle } from './Player';
 import Clocks from './Clocks';
 import {
-  IconCheck, IconClose, IconExternal, IconFullscreen, IconLink, IconLocate, IconMuted, IconNext, IconPrev, IconRandom, IconSound,
+  IconCheck, IconClose, IconExternal, IconFullscreen, IconLink, IconLocate, IconMuted, IconNext, IconPrev, IconRadio, IconRandom, IconSound,
 } from '@/components/chrome/icons';
 
 const countryNames = typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames(['en'], { type: 'region' }) : null;
@@ -27,6 +27,8 @@ interface Props {
   onToggleMute(): void;
   onFullscreen(): void;
   onLocate(): void;
+  /** Play a radio station from near the camera: the place's own soundtrack. */
+  onRadio(): void;
 }
 
 export default function StreamPanel(p: Props) {
@@ -107,6 +109,7 @@ export default function StreamPanel(p: Props) {
             </IconButton>
           )}
           <IconButton label="Fullscreen (F)" onClick={p.onFullscreen}><IconFullscreen /></IconButton>
+          <IconButton label="Local radio: a station from near here" onClick={p.onRadio}><IconRadio /></IconButton>
           <IconButton label={copied ? 'Link copied' : 'Copy link'} onClick={copyLink} active={copied}>
             {copied ? <IconCheck /> : <IconLink />}
           </IconButton>

@@ -8,6 +8,7 @@ import { useReadout } from '@/lib/readout';
 import { SKY_DEFAULT, type Sky } from '@/lib/sky';
 import { pulseItems, useNotify, usePlanet, type PulseItem } from '@/lib/events';
 import { subpoint, useSatellites } from '@/lib/satellites';
+import { nearestStations, useRadio, type Station } from '@/lib/radio';
 import GlobeView, { type Camera, type GlobeHandle } from './globe/GlobeView';
 import Header, { type Layer, type Layers, type Tool } from './chrome/Header';
 import StatusBar from './chrome/StatusBar';
@@ -19,6 +20,7 @@ import FlightPanel from './flight/FlightPanel';
 import DossierPanel from './dossier/DossierPanel';
 import PulsePanel from './pulse/PulsePanel';
 import SatellitePanel from './satellite/SatellitePanel';
+import RadioBar from './radio/RadioBar';
 
 /** What the side panel shows when it isn't a stream (streams keep their own id for the URL). */
 type Focus =
@@ -63,7 +65,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const [layers, setLayers] = useState<Layers>({ cameras: true, flights: false, satellites: false, events: true, dossier: false });
+  const [layers, setLayers] = useState<Layers>({ cameras: true, flights: false, satellites: false, events: true, radio: false, dossier: false });
   const [other, setOther] = useState<Focus | null>(null);
   const [snapshots, setSnapshots] = useState(true);
   const [sky, setSky] = useState<Sky>(SKY_DEFAULT);
@@ -142,6 +144,23 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   const satId = other?.kind === 'satellite' ? other.id : null;
   const sats = useSatellites(layers.satellites || satId !== null || other?.kind === 'dossier');
   const openSat = sats && satId !== null ? sats.find((x) => x.id === satId) ?? null : null;
+
+  // ── radio: the layer, a camera's local station, the dossier's list ─────────
+  const [station, setStation] = useState<Station | null>(null);
+  const [radioWanted, setRadioWanted] = useState(false);
+  const stations = useRadio(layers.radio || radioWanted || other?.kind === 'dossier');
+  const pendingTune = useRef<{ lat: number; lon: number } | null>(null);
+  /** The nearest station to a point (within 400 km if there is one); `skip` moves on from the one playing. */
+  const tune = useCallback((lat: number, lon: number, skip?: string) => {
+    if (!stations) { pendingTune.current = { lat, lon }; setRadioWanted(true); return; }
+    const near = nearestStations(stations, lat, lon, 8, 400).filter((x) => x.s.id !== skip);
+    const pick = skip ? near[Math.floor(Math.random() * near.length)] : near[0];
+    setStation((pick ?? nearestStations(stations, lat, lon, 2).find((x) => x.s.id !== skip))?.s ?? null);
+  }, [stations]);
+  useEffect(() => {
+    const p = pendingTune.current;
+    if (stations && p) { pendingTune.current = null; tune(p.lat, p.lon); }
+  }, [stations, tune]);
 
   // ── selection ──────────────────────────────────────────────────────────────
   const select = useCallback((s: Stream, mode: 'near' | 'travel', keepWalk = false) => {
@@ -323,6 +342,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
           flights: layers.flights ? (flightError && !flights ? null : flights?.length ?? null) : null,
           satellites: layers.satellites ? sats?.length ?? null : null,
           events: layers.events && planet.quakes ? planet.quakes.length + (planet.events?.length ?? 0) : null,
+          radio: layers.radio ? stations?.length ?? null : null,
         }}
         onToggleLayer={(l: Layer) => setLayers((prev) => ({ ...prev, [l]: !prev[l] }))}
         snapshots={snapshots}
@@ -360,6 +380,9 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
               follow={follow}
               onSatellite={openSatellite}
               onUnfollow={() => setFollow(false)}
+              stations={layers.radio ? stations : null}
+              radioId={station?.id ?? null}
+              onRadio={(id) => setStation(stations?.find((s) => s.id === id) ?? null)}
               onSelect={(id) => {
                 const s = catalog?.streams.find((x) => x.id === id);
                 if (s) select(s, 'near');
@@ -373,6 +396,11 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
             />
           )}
           {catalog && !error && <EmptyNotice />}
+          {station && (
+            <div className="pointer-events-none absolute top-3 left-3 z-20">
+              <RadioBar station={station} onNext={() => tune(station.lat, station.lon, station.id)} onStop={() => setStation(null)} />
+            </div>
+          )}
           {layers.flights && <FlightNotice error={flightError} count={flights?.length ?? null} past={time !== null} />}
           {time !== null && (
             <div className="pointer-events-none absolute inset-x-3 z-20" style={{ bottom: 12 + bottomInset }}>
@@ -452,6 +480,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
                 onToggleMute={() => setMuted((m) => !m)}
                 onFullscreen={() => player.current?.fullscreen()}
                 onLocate={locate}
+                onRadio={() => tune(selected.latitude, selected.longitude)}
               />
               )}
             </div>

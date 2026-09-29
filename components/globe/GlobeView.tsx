@@ -12,6 +12,7 @@ import { OVERLAYS, OVERLAY_IDS, registerSky, skyTiles, useAurora, useClock, useG
 import { readout } from '@/lib/readout';
 import { formatAlt, project, type Flight } from '@/lib/flights';
 import { EVENT_COLORS, EVENT_LABELS, type Planet } from '@/lib/events';
+import type { Station } from '@/lib/radio';
 import { GROUP_LABEL, footprint, groundTrack, periodMin, positions, subpoint, type Sat } from '@/lib/satellites';
 
 export interface Camera { lon: number; lat: number; zoom: number }
@@ -56,6 +57,10 @@ interface Props {
   follow: boolean;
   onSatellite(id: number): void;
   onUnfollow(): void;
+  /** Radio stations (null = the radio layer is off); the one on air is ringed. */
+  stations: Station[] | null;
+  radioId: string | null;
+  onRadio(id: string): void;
   onSelect(id: string): void;
   onFlight(hex: string): void;
   onDossier(lat: number, lon: number): void;
@@ -292,7 +297,7 @@ function planetData(p: Planet | null, now: number) {
 }
 
 /** Layers a click or hover can land on, topmost first. */
-const HIT_LAYERS = ['planes', 'pins', 'clusters', 'sats', 'quakes', 'events'];
+const HIT_LAYERS = ['planes', 'pins', 'clusters', 'radio', 'sats', 'quakes', 'events'];
 
 /** Satellites are placed at the moment on screen, while their elements still mean something there. */
 const satTime = (time: number | null) => (time === null ? Date.now() : Math.abs(time - Date.now()) < 7 * 86400_000 ? time : null);
@@ -533,6 +538,16 @@ export default function GlobeView(props: Props) {
           },
         });
 
+        map.addSource('radio', { type: 'geojson', data: EMPTY });
+        map.addLayer({
+          id: 'radio', type: 'circle', source: 'radio',
+          paint: {
+            'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 2, 8, 4.5],
+            'circle-color': C.radio, 'circle-opacity': 0.85,
+            'circle-stroke-width': 0.5, 'circle-stroke-color': C.void,
+          },
+        });
+
         map.addSource('streams', {
           type: 'geojson',
           data: { type: 'FeatureCollection', features: [] },
@@ -621,10 +636,12 @@ export default function GlobeView(props: Props) {
         const q = hit?.layer.id === 'quakes' ? hit.properties : undefined;
         const ev = hit?.layer.id === 'events' ? hit.properties : undefined;
         const sat = hit?.layer.id === 'sats' ? hit.properties : undefined;
+        const fm = hit?.layer.id === 'radio' ? hit.properties : undefined;
         const text = s ? [s.name, `${s.place} · ${s.country}`]
           : f ? [f.callsign, `${f.type ?? '—'} · ${formatAlt(f)} · ${Math.round(f.gs)} kt`]
           : q ? [`M${Number(q.mag).toFixed(1)} earthquake`, `${q.place} · ${ago(Number(q.age))}`]
           : ev ? [String(ev.title), String(ev.category)]
+          : fm ? [String(fm.name), [fm.cc, fm.tags].filter(Boolean).join(' · ') || 'Radio']
           : sat ? [String(sat.name), `${GROUP_LABEL[sat.g as Sat['group']]} · ${Number(sat.alt).toLocaleString('en-US')} km up`]
           : null;
         if (text) {
@@ -649,6 +666,11 @@ export default function GlobeView(props: Props) {
       map.on('click', 'planes', (e) => {
         const hex = e.features?.[0]?.properties.hex;
         if (typeof hex === 'string') cb.current.onFlight(hex);
+      });
+      map.on('click', 'radio', (e) => {
+        const id = e.features?.[0]?.properties.id;
+        if (map?.queryRenderedFeatures(e.point, { layers: ['planes', 'pins', 'clusters'] }).length) return;
+        if (typeof id === 'string') cb.current.onRadio(id);
       });
       map.on('click', 'sats', (e) => {
         const id = e.features?.[0]?.properties.id;
@@ -783,6 +805,24 @@ export default function GlobeView(props: Props) {
     map.setLayoutProperty('planes', 'icon-size', planeSize(flightId ?? ''));
     map.setPaintProperty('planes', 'icon-color', planeColor(flightId ?? ''));
   }, [ready, flightId]);
+
+  // ── radio ──────────────────────────────────────────────────────────────────
+  const { stations, radioId } = props;
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    map.getSource<GeoJSONSource>('radio')?.setData({
+      type: 'FeatureCollection',
+      features: (stations ?? []).map((s) => pt(s.lon, s.lat, { id: s.id, name: s.name, cc: s.cc, tags: s.tags })),
+    });
+  }, [ready, stations]);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    const on: ExpressionSpecification = ['==', ['get', 'id'], radioId ?? ''];
+    map.setPaintProperty('radio', 'circle-stroke-width', ['case', on, 2, 0.5]);
+    map.setPaintProperty('radio', 'circle-stroke-color', ['case', on, C.primary, C.void]);
+  }, [ready, radioId]);
 
   // ── satellites ─────────────────────────────────────────────────────────────
   useEffect(() => {
