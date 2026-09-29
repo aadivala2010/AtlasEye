@@ -129,7 +129,6 @@ Everything below is keyless and fetched straight from the browser (CORS), except
 | **Radio** | ~7,900 live stations with a place on the map; a radio button on every camera plays the one nearest it | Radio Browser |
 | **Wall** (W) | A grid of live feeds: in view, one per country, or wherever the sun is rising or setting | the catalog |
 | **Tour** (A) | Autopilot: follow the sunrise (or sunset) around the world, or visit the Pulse, a hop every 40 s | the catalog, the Pulse |
-| **Golden hour** | Only cameras where the sun is within a few degrees of the horizon | solar math |
 
 - **Every pixel of the live clouds comes from the satellite with the straightest view of it.** The five
   sources are drawn bottom to top, and each gives way to one beneath it wherever that one's nadir is
