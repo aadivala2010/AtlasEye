@@ -21,6 +21,7 @@ import DossierPanel from './dossier/DossierPanel';
 import PulsePanel from './pulse/PulsePanel';
 import SatellitePanel from './satellite/SatellitePanel';
 import RadioBar from './radio/RadioBar';
+import Wall from './wall/Wall';
 
 /** What the side panel shows when it isn't a stream (streams keep their own id for the URL). */
 type Focus =
@@ -73,6 +74,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   const [follow, setFollow] = useState(false);
   /** The time machine's moment; null = live. */
   const [time, setTime] = useState<number | null>(null);
+  const [wall, setWall] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [muted, setMuted] = useState(true);
   const [userPos, setUserPos] = useState<{ lat: number; lon: number } | null>(null);
@@ -271,11 +273,12 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
         r: random,
         ArrowRight: () => step(1),
         ArrowLeft: () => step(-1),
-        Escape: close,
+        Escape: () => (wall ? setWall(false) : close()),
         f: () => player.current?.fullscreen(),
         m: () => setMuted((m) => !m),
         p: togglePulse,
         t: toggleTime,
+        w: () => setWall((v) => !v),
       };
       const action = actions[key];
       if (!action) return;
@@ -285,7 +288,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [random, step, close, togglePulse, toggleTime]);
+  }, [random, step, close, togglePulse, toggleTime, wall]);
 
   const locate = () => navigator.geolocation?.getCurrentPosition(
     (p) => setUserPos({ lat: p.coords.latitude, lon: p.coords.longitude }),
@@ -323,11 +326,13 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   const tools: Tool[] = [
     { id: 'pulse', label: 'Pulse', key: 'P', title: 'What is happening on Earth right now', on: pulseOpen, count: pulse.filter((i) => i.level > 0).length },
     { id: 'time', label: 'Time', key: 'T', title: 'Time machine: scrub the planet back through time', on: time !== null },
+    { id: 'wall', label: 'Wall', key: 'W', title: 'A wall of live cameras: in view, around the world, at sunrise or sunset', on: wall },
   ];
   const onTool = (id: string) => {
     globe.current?.stopRotation();
     if (id === 'pulse') togglePulse();
     if (id === 'time') toggleTime();
+    if (id === 'wall') setWall((v) => !v);
   };
   const bottomInset = panelOpen && isMobile ? Math.round(sheet * viewportH) : 0;
 
@@ -491,6 +496,16 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
           </aside>
         )}
       </main>
+
+      {wall && catalog && (
+        <Wall
+          streams={streams ?? []}
+          builtAt={catalog.builtAt}
+          inView={() => globe.current?.visible(streams ?? []) ?? []}
+          onOpen={(s) => { setWall(false); select(s, 'travel'); }}
+          onClose={() => setWall(false)}
+        />
+      )}
 
       <StatusBar total={catalog?.count ?? null} builtAt={catalog?.builtAt ?? null} loading={!catalog && !error} />
     </div>

@@ -25,6 +25,8 @@ export interface GlobeHandle {
   stopRotation(): void;
   /** Whether every tile in view has arrived (the time machine waits on it before stepping). */
   loaded(): boolean;
+  /** The streams on screen: on the facing hemisphere and, once zoomed in, inside the viewport. */
+  visible(list: Stream[]): Stream[];
 }
 
 interface Props {
@@ -910,6 +912,15 @@ export default function GlobeView(props: Props) {
       return c ? { lat: c.lat, lon: c.lng } : null;
     },
     loaded() { return mapRef.current?.areTilesLoaded() ?? true; },
+    visible(list) {
+      const map = mapRef.current;
+      if (!map) return [];
+      const c = map.getCenter();
+      const b = map.getBounds();
+      const zoom = map.getZoom();
+      return list.filter((s) => (zoom <= 3 || b.contains([s.longitude, s.latitude]))
+        && distanceKm(c.lat, c.lng, s.latitude, s.longitude) <= 9000);
+    },
   }), []);
 
   return (

@@ -9,6 +9,8 @@ import { parseFlights, project } from '../lib/flights';
 import { binFires, parseEonet, pulseItems, type Quake } from '../lib/events';
 import { pickStations, tidyTitle, type RawStation } from './import-extras';
 import { nearestStations } from '../lib/radio';
+import { MAX_YOUTUBE, pickWall, sunPhase } from '../lib/wall';
+import type { Stream } from '../lib/stream';
 import { elevation, footprintKm, groundTrack, groupOf, nextPass, parseTle, periodMin, subpoint } from '../lib/satellites';
 import { GEO, SKY_DEFAULT, cloudiness, daylight, geoWeight, skyTiles, tileAxes, tileBbox } from '../lib/sky';
 
@@ -224,6 +226,23 @@ assert.equal(cloudsDate(Date.UTC(2026, 0, 1, 12, 0)), '2025-12-31'); // across a
   assert.equal(nearestStations(picked, 10.1, 20.1, 1, 20)[0]?.s.id, 'loved'); // ~16 km away
   assert.equal(nearestStations(picked, 50, 20, 1, 400).length, 0);
   assert.equal(tidyTitle('🔴 Live Now: 24/7 NASA Live Stream of Earth from Space (ISS)'), 'NASA Live Stream of Earth from Space (ISS)');
+}
+
+// Wall: never more than four YouTube embeds, one camera per country around the world.
+{
+  const mk = (i: number, kind: Stream['kind'], country: string): Stream => ({
+    id: `w${i}`, kind, name: `w${i}`, latitude: 0, longitude: i, place: `P${i}`, country, timezone: 'UTC',
+    category: 'city', source: 'famelack', geocode: 'gazetteer', confidence: 0.8, addedAt: '',
+  });
+  const pool = [...Array.from({ length: 10 }, (_, i) => mk(i, 'youtube', `C${i}`)), mk(20, 'hls', 'C0'), mk(21, 'snapshot', 'X1'), mk(22, 'mjpeg', 'X2')];
+  let seed = 7;
+  const picks = pickWall(pool, 9, true, () => ((seed = (seed * 9301 + 49297) % 233280) / 233280));
+  assert.ok(picks.filter((s) => s.kind === 'youtube').length <= MAX_YOUTUBE);
+  assert.equal(new Set(picks.map((s) => s.country)).size, picks.length);
+  assert.ok(picks.length >= 6 && picks.length <= 7, `wall of ${picks.length}`);
+  // Equinox at 0°E: the sun is rising just after 06:00 UTC, setting just after 18:00, and at noon neither.
+  const at = (h: number, m: number) => sunPhase({ latitude: 0, longitude: 0 }, Date.UTC(2026, 2, 20, h, m));
+  assert.deepEqual([at(6, 0), at(18, 0), at(12, 0)], ['rise', 'set', null]);
 }
 
 // Camera names: operator codes become road + direction + place words; shouted names are tamed.
