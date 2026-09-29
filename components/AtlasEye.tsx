@@ -139,13 +139,14 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
     return () => ctrl.abort();
   }, [attempt]);
 
-  // Golden hour re-reads the sun each minute.
-  const minute = useClock(60_000);
+  // Golden hour re-reads the sun each minute; otherwise the list keeps its identity (pins, search, the wall).
+  const clock = useClock(60_000);
+  const minute = golden ? clock : 0;
   const streams = useMemo(
     () => catalog
-      ? (layers.cameras ? catalog.streams.filter((s) => (snapshots || s.kind !== 'snapshot') && (!golden || sunPhase(s, minute) !== null)) : [])
+      ? (layers.cameras ? catalog.streams.filter((s) => (snapshots || s.kind !== 'snapshot') && (!minute || sunPhase(s, minute) !== null)) : [])
       : null,
-    [catalog, layers.cameras, snapshots, golden, minute],
+    [catalog, layers.cameras, snapshots, minute],
   );
   const selected = useMemo(() => catalog?.streams.find((s) => s.id === selectedId) ?? null, [catalog, selectedId]);
 

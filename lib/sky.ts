@@ -225,7 +225,7 @@ function colorizeIr(px: Uint8ClampedArray, k: number) {
   for (let ch = 0; ch < 3; ch++) px[k + ch] = stops[s][ch] + (stops[s + 1][ch] - stops[s][ch]) * u;
 }
 
-/** Lights brighter than this read as a city; everything darker is the night side's own colour. */
+/** How opaque full night is: the Black Marble's near-black and its lights, over the daylight imagery. */
 const NIGHT_MAX = 0.94;
 
 /**

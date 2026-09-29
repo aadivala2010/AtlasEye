@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Stream } from '@/lib/stream';
 import { pickWall, sunPhase, type WallMode } from '@/lib/wall';
 import { zonedClock } from '@/lib/time';
@@ -37,15 +37,19 @@ export default function Wall({ streams, builtAt, inView, onOpen, onClose }: Prop
     return () => mq.removeEventListener('change', sync);
   }, []);
 
+  // Dealt on a mode change or a re-deal, not whenever the list underneath changes (golden hour re-reads it each minute).
+  const pool = useRef({ streams, inView });
+  pool.current = { streams, inView };
   const picks = useMemo(() => {
     const now = Date.now();
-    const pool = mode === 'view' ? inView()
-      : mode === 'world' ? streams
-      : streams.filter((s) => sunPhase(s, now) === (mode === 'sunrise' ? 'rise' : 'set'));
-    return pickWall(pool, cells, mode !== 'view');
+    const all = pool.current.streams;
+    const from = mode === 'view' ? pool.current.inView()
+      : mode === 'world' ? all
+      : all.filter((s) => sunPhase(s, now) === (mode === 'sunrise' ? 'rise' : 'set'));
+    return pickWall(from, cells, mode !== 'view');
     // `shuffle` re-deals the same mode.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, shuffle, cells, streams]);
+  }, [mode, shuffle, cells]);
 
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {

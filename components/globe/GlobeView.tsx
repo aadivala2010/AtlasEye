@@ -2,7 +2,7 @@
 
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
 import type {
-  AddProtocolAction, ExpressionSpecification, GeoJSONSource, LayerSpecification, Map as MLMap, Marker,
+  ExpressionSpecification, GeoJSONSource, LayerSpecification, Map as MLMap, Marker,
   RasterTileSource, StyleSpecification, VectorSourceSpecification,
 } from 'maplibre-gl';
 import type { Stream } from '@/lib/stream';
@@ -13,7 +13,8 @@ import {
 } from '@/lib/sky';
 import { readout } from '@/lib/readout';
 import { formatAlt, project, type Flight } from '@/lib/flights';
-import { EVENT_COLORS, EVENT_LABELS, type Planet } from '@/lib/events';
+import { EVENT_COLORS, EVENT_LABELS, type EarthEvent, type Planet, type Quake } from '@/lib/events';
+import type { Fires } from '@/lib/fires';
 import type { Station } from '@/lib/radio';
 import { GROUP_LABEL, footprint, groundTrack, periodMin, positions, subpoint, type Sat } from '@/lib/satellites';
 
@@ -285,33 +286,26 @@ const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: 
 const pt = (lon: number, lat: number, properties: GeoJSON.GeoJsonProperties): GeoJSON.Feature =>
   ({ type: 'Feature', geometry: { type: 'Point', coordinates: [lon, lat] }, properties });
 
-/** The Earth layer's sources, as of `now` (quake age drives colour and fade). */
-function planetData(p: Planet | null, now: number) {
-  const fires: GeoJSON.Feature[] = [];
-  const f = p?.fires?.f ?? [];
-  for (let i = 0; i + 2 < f.length; i += 3) fires.push(pt(f[i + 1], f[i], { frp: f[i + 2] }));
-  return {
-    fires: { type: 'FeatureCollection', features: fires } as GeoJSON.FeatureCollection,
-    quakes: {
-      type: 'FeatureCollection',
-      features: (p?.quakes ?? []).filter((q) => q.at <= now).map((q) => pt(q.lon, q.lat, {
-        id: q.id, mag: q.mag, place: q.place, age: (now - q.at) / 3600_000, depth: q.depth,
-      })),
-    } as GeoJSON.FeatureCollection,
-    events: {
-      type: 'FeatureCollection',
-      features: (p?.events ?? []).map((e) => pt(e.lon, e.lat, {
-        id: e.id, title: e.title, category: EVENT_LABELS[e.category] ?? e.category, color: EVENT_COLORS[e.category] ?? C.tertiary,
-      })),
-    } as GeoJSON.FeatureCollection,
-    tracks: {
-      type: 'FeatureCollection',
-      features: (p?.events ?? []).filter((e) => e.track.length > 1).map((e) => ({
-        type: 'Feature', geometry: { type: 'LineString', coordinates: e.track }, properties: { color: EVENT_COLORS[e.category] ?? C.tertiary },
-      })),
-    } as GeoJSON.FeatureCollection,
-  };
+const collection = (features: GeoJSON.Feature[]): GeoJSON.FeatureCollection => ({ type: 'FeatureCollection', features });
+
+/** The Earth layer's sources, each rebuilt only when its own feed changes (fires are ~47k points). */
+function fireData(fires: Fires | null | undefined) {
+  const out: GeoJSON.Feature[] = [];
+  const f = fires?.f ?? [];
+  for (let i = 0; i + 2 < f.length; i += 3) out.push(pt(f[i + 1], f[i], { frp: f[i + 2] }));
+  return collection(out);
 }
+/** Quakes up to `now`, their age in hours driving colour and fade. */
+const quakeData = (quakes: Quake[] | null | undefined, now: number) => collection((quakes ?? []).filter((q) => q.at <= now)
+  .map((q) => pt(q.lon, q.lat, { id: q.id, mag: q.mag, place: q.place, age: (now - q.at) / 3600_000, depth: q.depth })));
+const eventData = (events: EarthEvent[] | null | undefined) => ({
+  events: collection((events ?? []).map((e) => pt(e.lon, e.lat, {
+    id: e.id, title: e.title, category: EVENT_LABELS[e.category] ?? e.category, color: EVENT_COLORS[e.category] ?? C.tertiary,
+  }))),
+  tracks: collection((events ?? []).filter((e) => e.track.length > 1).map((e) => ({
+    type: 'Feature', geometry: { type: 'LineString', coordinates: e.track }, properties: { color: EVENT_COLORS[e.category] ?? C.tertiary },
+  }))),
+});
 
 /** Layers a click or hover can land on, topmost first. */
 const HIT_LAYERS = ['planes', 'pins', 'clusters', 'radio', 'sats', 'quakes', 'events'];
@@ -894,14 +888,26 @@ export default function GlobeView(props: Props) {
   }, [ready, sats, satId, time, follow]);
 
   // ── the Earth layer; quakes under an hour old ring like the selected pin ───
+  const fires = planet?.fires;
+  const quakes = planet?.quakes;
+  const events = planet?.events;
+  useEffect(() => {
+    if (ready) mapRef.current?.getSource<GeoJSONSource>('fires')?.setData(fireData(fires));
+  }, [ready, fires]);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    const d = eventData(events);
+    map.getSource<GeoJSONSource>('events')?.setData(d.events);
+    map.getSource<GeoJSONSource>('tracks')?.setData(d.tracks);
+  }, [ready, events]);
   const quakeMarks = useRef(new Map<string, Marker>());
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map || !mlLib) return;
     const at = time ?? Date.now();
-    const d = planetData(planet, at);
-    for (const id of ['fires', 'quakes', 'events', 'tracks'] as const) map.getSource<GeoJSONSource>(id)?.setData(d[id]);
-    const fresh = new Map((planet?.quakes ?? []).filter((q) => q.at <= at && at - q.at < 3600_000).map((q) => [q.id, q]));
+    map.getSource<GeoJSONSource>('quakes')?.setData(quakeData(quakes, at));
+    const fresh = new Map((quakes ?? []).filter((q) => q.at <= at && at - q.at < 3600_000).map((q) => [q.id, q]));
     for (const [id, m] of quakeMarks.current) if (!fresh.has(id)) { m.remove(); quakeMarks.current.delete(id); }
     for (const [id, q] of fresh) {
       if (quakeMarks.current.has(id)) continue;
@@ -910,7 +916,7 @@ export default function GlobeView(props: Props) {
       el.style.setProperty('--size', `${Math.round(6 + q.mag * 4)}px`);
       quakeMarks.current.set(id, new mlLib.Marker({ element: el }).setLngLat([q.lon, q.lat]).addTo(map));
     }
-  }, [ready, mlLib, planet, time]);
+  }, [ready, mlLib, quakes, time]);
 
   // ── first-load sweep: pins come online around the globe over ~900ms ──────
   const swept = useRef(false);

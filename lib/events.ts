@@ -137,6 +137,8 @@ function usePoll<T>(url: string | null, ms: number, parse: (j: never) => T): T |
 const USGS = 'https://earthquake.usgs.gov';
 const hour = (t: number) => Math.floor(t / 3600_000) * 3600_000;
 const day = (t: number) => new Date(t).toISOString().slice(0, 10);
+/** FDSN's plain UTC form: 2026-09-28T12:00:00. */
+const utc = (t: number) => new Date(t).toISOString().slice(0, 19);
 
 /**
  * Everything on the Earth layer and in the Pulse, while `on`. `t` (the time machine) swaps the live
@@ -148,7 +150,7 @@ export function usePlanet(on: boolean, t: number | null): Planet {
   const T = t === null ? 0 : hour(t);
   const quakes = usePoll(
     !on ? null : live ? `${USGS}/earthquakes/feed/v1.0/summary/2.5_day.geojson`
-      : `${USGS}/fdsnws/event/1/query?format=geojson&minmagnitude=2.5&orderby=time&limit=2000&starttime=${new Date(T - 86400_000).toISOString()}&endtime=${new Date(T).toISOString()}`,
+      : `${USGS}/fdsnws/event/1/query?format=geojson&minmagnitude=2.5&orderby=time&limit=2000&starttime=${utc(T - 86400_000)}&endtime=${utc(T)}`,
     live ? 60_000 : 0, parseQuakes,
   );
   const eventsUrl = !on ? null : live ? 'https://eonet.gsfc.nasa.gov/api/v3/events?status=open&days=30'
