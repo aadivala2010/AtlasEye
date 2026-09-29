@@ -227,25 +227,63 @@ function colorizeIr(px: Uint8ClampedArray, k: number) {
 
 /** How opaque full night is: the Black Marble's near-black and its lights, over the daylight imagery. */
 const NIGHT_MAX = 0.94;
+/** Black Marble's own dark, which the shade paints so the lights can arrive later without a seam. */
+const NIGHT_RGB = [6, 9, 20];
 
 /**
- * `night://<ms>/<z>/<x>/<y>` — NASA's Black Marble city lights, shown only where the sun is down at
- * `<ms>`. Per-pixel, so none of the polygon trouble at the poles the old terminator had.
+ * `shade://<ms>/<z>/<x>/<y>` — the dark of the night side at `<ms>`, computed, no download, so the
+ * dark lands with the daylight imagery instead of waiting on GIBS. Per-pixel, so none of the polygon
+ * trouble at the poles the old terminator had; the twilight ramp is ~10° wide, so 64 px is plenty.
  */
-const loadNight: AddProtocolAction = async ({ url }, { signal }) => {
+const loadShade: AddProtocolAction = async ({ url }) => {
+  const parts = url.slice('shade://'.length).split('/');
+  const [z, x, y] = tileXYZ(parts);
+  const size = 64;
+  const img = new ImageData(size, size);
+  const { lat, lon } = tileAxes(z, x, y, size);
+  const sun = sunAxes(lat, lon, Number(parts[0]));
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const k = 4 * (r * size + c);
+      img.data.set(NIGHT_RGB, k);
+      img.data[k + 3] = 255 * NIGHT_MAX * (1 - daylight(sun.a[r] + sun.b[r] * sun.c[c]));
+    }
+  }
+  return { data: await createImageBitmap(img) };
+};
+
+/** Black Marble tiles already fetched: the lights are a 2016 composite, so they never change. */
+const marble = new Map<string, Promise<ImageData>>();
+
+/**
+ * `night://<ms>/<z>/<x>/<y>` — NASA's Black Marble city lights on top of the shade, shown only where
+ * the sun is down at `<ms>`. Only the lights are opaque, so the shade underneath does the darkening.
+ */
+const loadNight: AddProtocolAction = async ({ url }) => {
   const parts = url.slice('night://'.length).split('/');
   const [z, x, y] = tileXYZ(parts);
-  const img = await pixels(`${GIBS}/VIIRS_Black_Marble/default/2016-01-01/GoogleMapsCompatible_Level8/${z}/${y}/${x}.png`, signal);
-  const { width: w, height: h, data: px } = img;
+  const key = `${z}/${y}/${x}`;
+  let got = marble.get(key);
+  if (!got) {
+    // ponytail: FIFO of 96 tiles (~25 MB), an LRU if panning around evicts what's on screen.
+    if (marble.size >= 96) marble.delete(marble.keys().next().value!);
+    got = pixels(`${GIBS}/VIIRS_Black_Marble/default/2016-01-01/GoogleMapsCompatible_Level8/${key}.png`, new AbortController().signal);
+    got.catch(() => marble.delete(key));
+    marble.set(key, got);
+  }
+  const src = await got;
+  const { width: w, height: h } = src;
+  const px = new Uint8ClampedArray(src.data);
   const { lat, lon } = tileAxes(z, x, y, w);
   const sun = sunAxes(lat, lon, Number(parts[0]));
   for (let r = 0; r < h; r++) {
     for (let c = 0; c < w; c++) {
+      const k = 4 * (r * w + c);
       const night = 1 - daylight(sun.a[r] + sun.b[r] * sun.c[c]);
-      px[4 * (r * w + c) + 3] = 255 * NIGHT_MAX * night;
+      px[k + 3] = night > 0 ? 255 * NIGHT_MAX * night * smooth(24, 110, Math.max(px[k], px[k + 1], px[k + 2])) : 0;
     }
   }
-  return { data: await createImageBitmap(img) };
+  return { data: await createImageBitmap(new ImageData(px, w, h)) };
 };
 
 /** NOAA SWPC OVATION: aurora probability on a 1° grid, lon-major (index lon·181 + lat+90). */
@@ -291,6 +329,7 @@ const loadAurora: AddProtocolAction = async ({ url }) => {
 export function registerSky(ml: typeof import('maplibre-gl')) {
   ml.addProtocol('gibs', loadClouds);
   ml.addProtocol('live', loadLive);
+  ml.addProtocol('shade', loadShade);
   ml.addProtocol('night', loadNight);
   ml.addProtocol('aurora', loadAurora);
 }
@@ -334,6 +373,7 @@ const EUM = '© <a href="https://view.eumetsat.int" target="_blank" rel="noopene
 export const OVERLAYS: Overlay[] = [
   // Faded out by the zoom GIBS runs out of detail at, so close-in views keep Esri's sharpness.
   { id: 'clouds', maxzoom: 8, opacity: ['interpolate', ['linear'], ['zoom'], 2, 0.62, 5, 0.5, 7.5, 0], attribution: NASA },
+  { id: 'shade', maxzoom: 5, opacity: fadeBy(8, 11), attribution: '' },
   { id: 'night', maxzoom: 8, opacity: fadeBy(8, 11), attribution: NASA },
   ...GEO.map((g) => ({ id: `live-${g.id}`, maxzoom: 6, opacity: fadeBy(5.5, 8), attribution: 'gibs' in g ? NASA : EUM })),
   ...(Object.entries(SENSES) as [SenseId, Sense][]).filter(([, s]) => s.gibs)
@@ -375,6 +415,7 @@ export function skyTiles(sky: Sky, w: When): Record<string, string[] | null> {
     ? [`gibs://gibs.earthdata.nasa.gov/wmts/epsg3857/best/${truecolor}/default/${day}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`]
     : null;
 
+  out.shade = sky.night ? [`shade://${floorTo(at, 5)}/{z}/{x}/{y}`] : null;
   out.night = sky.night ? [`night://${floorTo(at, 5)}/{z}/{x}/{y}`] : null;
 
   const ringMode = sky.sense === 'ir' ? 'ir' : sky.live ? 'clouds' : null;
