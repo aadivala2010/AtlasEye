@@ -33,6 +33,9 @@ interface Props {
   snapshots: boolean;
   snapshotCount: number;
   onToggleSnapshots(): void;
+  /** Only cameras where the sun is rising or setting now. */
+  golden: boolean;
+  onToggleGolden(): void;
   sky: Sky;
   onSky(next: Sky): void;
   tools: Tool[];
@@ -68,6 +71,15 @@ export default function Header(p: Props) {
           >
             Snapshots
             <span className="text-tertiary">{p.snapshotCount.toLocaleString('en-US')}</span>
+          </button>
+          <button
+            type="button"
+            aria-pressed={p.golden}
+            onClick={p.onToggleGolden}
+            title="Only cameras where the sun is rising or setting right now"
+            className={`${CHIP} ${chipState(p.golden)}`}
+          >
+            Golden hour
           </button>
         </>
       )}

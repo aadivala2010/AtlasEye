@@ -5,7 +5,8 @@ import type { Catalog, Stream } from '@/lib/stream';
 import { byDistanceFrom } from '@/lib/geo';
 import { project, useFlights, type Flight } from '@/lib/flights';
 import { useReadout } from '@/lib/readout';
-import { SKY_DEFAULT, type Sky } from '@/lib/sky';
+import { SKY_DEFAULT, useClock, type Sky } from '@/lib/sky';
+import { sunPhase } from '@/lib/wall';
 import { pulseItems, useNotify, usePlanet, type PulseItem } from '@/lib/events';
 import { subpoint, useSatellites } from '@/lib/satellites';
 import { nearestStations, useRadio, type Station } from '@/lib/radio';
@@ -13,6 +14,7 @@ import GlobeView, { type Camera, type GlobeHandle } from './globe/GlobeView';
 import Header, { type Layer, type Layers, type Tool } from './chrome/Header';
 import StatusBar from './chrome/StatusBar';
 import TimeBar, { TIME_MIN } from './chrome/TimeBar';
+import TourBar, { type TourMode } from './chrome/TourBar';
 import type { SearchHandle } from './chrome/Search';
 import StreamPanel from './stream/StreamPanel';
 import type { PlayerHandle } from './stream/Player';
@@ -58,6 +60,21 @@ function readBoot(): Boot {
   return { camera, selectId, time, reducedMotion, rotate: !reducedMotion && !camera && !selectId, intro };
 }
 
+/**
+ * A stream weighted toward hand-placed and confidently placed YouTube streams (the most interesting
+ * and best named), then live agency video; snapshots only occasionally. With ~60k cameras this lands
+ * roughly 2/3 YouTube, 1/4 live road video, <1/10 stills.
+ */
+function pickWeighted(pool: Stream[]): Stream | undefined {
+  const kindWeight = { youtube: 1, hls: 0.05, mjpeg: 0.05, snapshot: 0.006 } as const;
+  const weights = pool.map((s) => kindWeight[s.kind] * s.confidence ** 2 * (s.geocode === 'override' ? 3 : 1));
+  let r = Math.random() * weights.reduce((a, b) => a + b, 0);
+  return pool.find((_, i) => (r -= weights[i]) <= 0) ?? pool[pool.length - 1];
+}
+
+/** How long the autopilot stays before moving on. */
+const TOUR_DWELL = 40_000;
+
 const SHEET_PEEK = 0.6;
 const SHEET_FULL = 0.92;
 
@@ -75,6 +92,9 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   /** The time machine's moment; null = live. */
   const [time, setTime] = useState<number | null>(null);
   const [wall, setWall] = useState(false);
+  const [golden, setGolden] = useState(false);
+  const [tour, setTour] = useState<TourMode | null>(null);
+  const [tourNext, setTourNext] = useState({ at: 0, idle: false });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [muted, setMuted] = useState(true);
   const [userPos, setUserPos] = useState<{ lat: number; lon: number } | null>(null);
@@ -119,9 +139,13 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
     return () => ctrl.abort();
   }, [attempt]);
 
+  // Golden hour re-reads the sun each minute.
+  const minute = useClock(60_000);
   const streams = useMemo(
-    () => catalog ? (layers.cameras ? catalog.streams.filter((s) => snapshots || s.kind !== 'snapshot') : []) : null,
-    [catalog, layers.cameras, snapshots],
+    () => catalog
+      ? (layers.cameras ? catalog.streams.filter((s) => (snapshots || s.kind !== 'snapshot') && (!golden || sunPhase(s, minute) !== null)) : [])
+      : null,
+    [catalog, layers.cameras, snapshots, golden, minute],
   );
   const selected = useMemo(() => catalog?.streams.find((s) => s.id === selectedId) ?? null, [catalog, selectedId]);
 
@@ -174,14 +198,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
 
   const random = useCallback(() => {
     if (!streams?.length) return;
-    // Weighted toward hand-placed and confidently placed YouTube streams (the most interesting and
-    // best named), then live agency video; snapshots only occasionally. With ~60k cameras this lands
-    // roughly 2/3 YouTube, 1/4 live road video, <1/10 stills.
-    const pool = streams.filter((s) => s.id !== selectedId);
-    const kindWeight = { youtube: 1, hls: 0.05, mjpeg: 0.05, snapshot: 0.006 } as const;
-    const weights = pool.map((s) => kindWeight[s.kind] * s.confidence ** 2 * (s.geocode === 'override' ? 3 : 1));
-    let r = Math.random() * weights.reduce((a, b) => a + b, 0);
-    const pick = pool.find((_, i) => (r -= weights[i]) <= 0) ?? pool[pool.length - 1];
+    const pick = pickWeighted(streams.filter((s) => s.id !== selectedId));
     if (pick) select(pick, 'travel');
   }, [streams, selectedId, select]);
 
@@ -237,6 +254,45 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
     openDossier(it.lat, it.lon);
   }, [planet, openFlight, openDossier]);
 
+  // ── the autopilot: a hop every 40 s until a hand touches the globe ─────────
+  const tourCtx = useRef({ streams, pulse, planet, select, openFlight, openDossier });
+  tourCtx.current = { streams, pulse, planet, select, openFlight, openDossier };
+  const tourHop = useRef<() => void>(() => undefined);
+  useEffect(() => {
+    if (!tour) return;
+    const visited = new Set<string>();
+    let timer = 0;
+    const hop = () => {
+      clearTimeout(timer);
+      const c = tourCtx.current;
+      let idle = false;
+      if (tour === 'pulse') {
+        if (c.pulse.every((x) => visited.has(x.id))) visited.clear(); // round again
+        const it = c.pulse.find((x) => !visited.has(x.id));
+        if (!it) idle = true;
+        else {
+          visited.add(it.id);
+          const f = it.hex ? c.planet.emergencies?.find((x) => x.hex === it.hex) : undefined;
+          if (f) c.openFlight(f);
+          else { globe.current?.flyTo(it.lon, it.lat, 'travel'); c.openDossier(it.lat, it.lon); }
+        }
+      } else {
+        // Wherever the sun is on the horizon now: the dawn (or dusk) line moves west, and the tour with it.
+        const want = tour === 'sunrise' ? 'rise' : 'set';
+        const now = Date.now();
+        const s = pickWeighted((c.streams ?? []).filter((x) => !visited.has(x.id) && sunPhase(x, now) === want));
+        if (!s) idle = true;
+        else { visited.add(s.id); c.select(s, 'travel'); }
+      }
+      const wait = idle ? 15_000 : TOUR_DWELL;
+      setTourNext({ at: Date.now() + wait, idle });
+      timer = window.setTimeout(hop, wait);
+    };
+    tourHop.current = hop;
+    hop();
+    return () => clearTimeout(timer);
+  }, [tour]);
+
   // Shared link: once the catalog arrives, open the stream it names.
   const restored = useRef(false);
   useEffect(() => {
@@ -273,12 +329,13 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
         r: random,
         ArrowRight: () => step(1),
         ArrowLeft: () => step(-1),
-        Escape: () => (wall ? setWall(false) : close()),
+        Escape: () => { setTour(null); if (wall) setWall(false); else close(); },
         f: () => player.current?.fullscreen(),
         m: () => setMuted((m) => !m),
         p: togglePulse,
         t: toggleTime,
         w: () => setWall((v) => !v),
+        a: () => setTour((v) => (v ? null : 'sunrise')),
       };
       const action = actions[key];
       if (!action) return;
@@ -327,12 +384,14 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
     { id: 'pulse', label: 'Pulse', key: 'P', title: 'What is happening on Earth right now', on: pulseOpen, count: pulse.filter((i) => i.level > 0).length },
     { id: 'time', label: 'Time', key: 'T', title: 'Time machine: scrub the planet back through time', on: time !== null },
     { id: 'wall', label: 'Wall', key: 'W', title: 'A wall of live cameras: in view, around the world, at sunrise or sunset', on: wall },
+    { id: 'tour', label: 'Tour', key: 'A', title: 'Autopilot: follow the sunrise or sunset around the world, or tour the Pulse', on: tour !== null },
   ];
   const onTool = (id: string) => {
     globe.current?.stopRotation();
     if (id === 'pulse') togglePulse();
     if (id === 'time') toggleTime();
     if (id === 'wall') setWall((v) => !v);
+    if (id === 'tour') setTour((v) => (v ? null : 'sunrise'));
   };
   const bottomInset = panelOpen && isMobile ? Math.round(sheet * viewportH) : 0;
 
@@ -353,6 +412,8 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
         snapshots={snapshots}
         snapshotCount={catalog?.streams.filter((s) => s.kind === 'snapshot').length ?? 0}
         onToggleSnapshots={() => setSnapshots((v) => !v)}
+        golden={golden}
+        onToggleGolden={() => setGolden((v) => !v)}
         sky={sky}
         onSky={setSky}
         tools={tools}
@@ -385,6 +446,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
               follow={follow}
               onSatellite={openSatellite}
               onUnfollow={() => setFollow(false)}
+              onTouch={() => setTour(null)}
               stations={layers.radio ? stations : null}
               radioId={station?.id ?? null}
               onRadio={(id) => setStation(stations?.find((s) => s.id === id) ?? null)}
@@ -401,9 +463,19 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
             />
           )}
           {catalog && !error && <EmptyNotice />}
-          {station && (
-            <div className="pointer-events-none absolute top-3 left-3 z-20">
-              <RadioBar station={station} onNext={() => tune(station.lat, station.lon, station.id)} onStop={() => setStation(null)} />
+          {(station || tour) && (
+            <div className="pointer-events-none absolute top-3 left-3 z-20 flex flex-col items-start gap-2">
+              {tour && (
+                <TourBar
+                  mode={tour}
+                  nextAt={tourNext.at}
+                  idle={tourNext.idle}
+                  onMode={setTour}
+                  onSkip={() => tourHop.current()}
+                  onStop={() => setTour(null)}
+                />
+              )}
+              {station && <RadioBar station={station} onNext={() => tune(station.lat, station.lon, station.id)} onStop={() => setStation(null)} />}
             </div>
           )}
           {layers.flights && <FlightNotice error={flightError} count={flights?.length ?? null} past={time !== null} />}

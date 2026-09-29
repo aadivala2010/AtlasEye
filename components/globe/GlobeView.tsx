@@ -59,6 +59,8 @@ interface Props {
   follow: boolean;
   onSatellite(id: number): void;
   onUnfollow(): void;
+  /** A hand on the globe (drag, pinch, wheel): ends following and the autopilot. */
+  onTouch(): void;
   /** Radio stations (null = the radio layer is off); the one on air is ringed. */
   stations: Station[] | null;
   radioId: string | null;
@@ -679,8 +681,10 @@ export default function GlobeView(props: Props) {
         if (map?.queryRenderedFeatures(e.point, { layers: ['planes', 'pins', 'clusters'] }).length) return;
         if (id !== undefined) cb.current.onSatellite(Number(id));
       });
-      // Any hand on the globe ends following.
-      for (const ev of ['mousedown', 'touchstart', 'wheel'] as const) map.on(ev, () => { if (cb.current.follow) cb.current.onUnfollow(); });
+      // Any hand on the globe ends following, and the tour.
+      for (const ev of ['mousedown', 'touchstart', 'wheel'] as const) {
+        map.on(ev, () => { cb.current.onTouch(); if (cb.current.follow) cb.current.onUnfollow(); });
+      }
       // A quake or event opens the dossier on the spot: weather, nearby cameras, aircraft, history.
       for (const layer of ['quakes', 'events']) {
         map.on('click', layer, (e) => {
