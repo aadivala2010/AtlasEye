@@ -7,6 +7,7 @@ import { fillNoData } from '../lib/clouds';
 import { cloudsDate, zonedClock } from '../lib/time';
 import { parseFlights, project } from '../lib/flights';
 import { binFires, parseEonet, pulseItems, type Quake } from '../lib/events';
+import { elevation, footprintKm, groundTrack, groupOf, nextPass, parseTle, periodMin, subpoint } from '../lib/satellites';
 import { GEO, SKY_DEFAULT, cloudiness, daylight, geoWeight, skyTiles, tileAxes, tileBbox } from '../lib/sky';
 
 const g = loadGazetteer();
@@ -175,6 +176,31 @@ assert.equal(cloudsDate(Date.UTC(2026, 0, 1, 12, 0)), '2025-12-31'); // across a
   const items = pulseItems({ quakes: [q(4.6), q(6.8), q(3)], events: null, fires: null, launches: null, kp: 7.3, emergencies: null }, now);
   assert.deepEqual(items.map((i) => [i.kind, i.level]), [['aurora', 2], ['quake', 2], ['quake', 0]]);
   assert.equal(items[0].title, 'G3 geomagnetic storm');
+}
+
+// Orbits: the ISS from its own elements sits ~420 km up at ~7.7 km/s; seen from beneath, it's overhead.
+{
+  const [iss] = parseTle([
+    'ISS (ZARYA)             ',
+    '1 25544U 98067A   26271.46476993  .00006013  00000+0  11848-3 0  9990',
+    '2 25544  51.6312 148.9632 0007159 198.2260 161.8473 15.48680135587767',
+  ].join('\n'));
+  assert.deepEqual([iss.id, iss.intl, iss.group], [25544, '98067A', 'station']);
+  const epoch = new Date((iss.rec.jdsatepoch - 2440587.5) * 86400_000);
+  const p = subpoint(iss, epoch)!;
+  assert.ok(p.alt > 380 && p.alt < 460 && p.speed > 7.5 && p.speed < 7.8, `ISS ${JSON.stringify(p)}`);
+  assert.ok(elevation(p.lat, p.lon, p) > 89.9);
+  assert.ok(elevation(p.lat + 30, p.lon, p) < 0); // 3,300 km away it's below the horizon…
+  assert.ok(Math.abs(footprintKm(420) - 2250) < 25); // …because it only sees ~2,250 km around
+  assert.ok(Math.abs(periodMin(iss) - 93) < 1.5);
+  assert.equal(nextPass(iss, p.lat, p.lon, epoch)!.start.getTime(), epoch.getTime());
+  for (const line of groundTrack(iss, epoch, 50, 100)) {
+    for (let i = 1; i < line.length; i++) assert.ok(Math.abs(line[i][0] - line[i - 1][0]) < 180, 'track split at the antimeridian');
+  }
+  // A satellite once a day around is geostationary; everything else by name.
+  assert.equal(groupOf('INTELSAT 901', { ...iss.rec, no: (2 * Math.PI) / 1436 }), 'geo');
+  assert.equal(groupOf('STARLINK-1007', iss.rec), 'starlink');
+  assert.equal(groupOf('GPS BIIR-2  (PRN 13)', iss.rec), 'gnss');
 }
 
 // Camera names: operator codes become road + direction + place words; shouted names are tamed.

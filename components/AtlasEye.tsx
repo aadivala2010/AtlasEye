@@ -7,6 +7,7 @@ import { project, useFlights, type Flight } from '@/lib/flights';
 import { useReadout } from '@/lib/readout';
 import { SKY_DEFAULT, type Sky } from '@/lib/sky';
 import { pulseItems, useNotify, usePlanet, type PulseItem } from '@/lib/events';
+import { subpoint, useSatellites } from '@/lib/satellites';
 import GlobeView, { type Camera, type GlobeHandle } from './globe/GlobeView';
 import Header, { type Layer, type Layers, type Tool } from './chrome/Header';
 import StatusBar from './chrome/StatusBar';
@@ -16,13 +17,15 @@ import type { PlayerHandle } from './stream/Player';
 import FlightPanel from './flight/FlightPanel';
 import DossierPanel from './dossier/DossierPanel';
 import PulsePanel from './pulse/PulsePanel';
+import SatellitePanel from './satellite/SatellitePanel';
 
 /** What the side panel shows when it isn't a stream (streams keep their own id for the URL). */
 type Focus =
   | { kind: 'flight'; flight: Flight }
   | { kind: 'dossier'; lat: number; lon: number }
   /** The Pulse list; `at` is the item last flown to. */
-  | { kind: 'pulse'; at?: { lat: number; lon: number } };
+  | { kind: 'pulse'; at?: { lat: number; lon: number } }
+  | { kind: 'satellite'; id: number };
 
 interface Boot {
   camera: Camera | null;
@@ -55,11 +58,12 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const [layers, setLayers] = useState<Layers>({ cameras: true, flights: false, events: true, dossier: false });
+  const [layers, setLayers] = useState<Layers>({ cameras: true, flights: false, satellites: false, events: true, dossier: false });
   const [other, setOther] = useState<Focus | null>(null);
   const [snapshots, setSnapshots] = useState(true);
   const [sky, setSky] = useState<Sky>(SKY_DEFAULT);
   const [notify, setNotify] = useState(false);
+  const [follow, setFollow] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [muted, setMuted] = useState(true);
   const [userPos, setUserPos] = useState<{ lat: number; lon: number } | null>(null);
@@ -126,6 +130,11 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   const pulse = useMemo(() => pulseItems(planet, Date.now()), [planet]);
   useNotify(pulse, notify);
 
+  // ── orbit: loaded for the layer, an open satellite, or a dossier's "overhead now" ──
+  const satId = other?.kind === 'satellite' ? other.id : null;
+  const sats = useSatellites(layers.satellites || satId !== null || other?.kind === 'dossier');
+  const openSat = sats && satId !== null ? sats.find((x) => x.id === satId) ?? null : null;
+
   // ── selection ──────────────────────────────────────────────────────────────
   const select = useCallback((s: Stream, mode: 'near' | 'travel', keepWalk = false) => {
     if (!keepWalk) walk.current = null;
@@ -172,6 +181,12 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
     setSelectedId(null);
     walk.current = null;
     setOther({ kind: 'dossier', lat, lon });
+  }, []);
+  const openSatellite = useCallback((id: number) => {
+    setSelectedId(null);
+    walk.current = null;
+    setOther({ kind: 'satellite', id });
+    setFollow(true);
   }, []);
   const togglePulse = useCallback(() => {
     setSelectedId(null);
@@ -289,6 +304,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
         counts={{
           cameras: streams?.length ?? null,
           flights: layers.flights ? (flightError && !flights ? null : flights?.length ?? null) : null,
+          satellites: layers.satellites ? sats?.length ?? null : null,
           events: layers.events && planet.quakes ? planet.quakes.length + (planet.events?.length ?? 0) : null,
         }}
         onToggleLayer={(l: Layer) => setLayers((prev) => ({ ...prev, [l]: !prev[l] }))}
@@ -322,6 +338,11 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
               sky={sky}
               time={null}
               planet={layers.events ? planet : null}
+              sats={layers.satellites || satId !== null ? sats : null}
+              satId={satId}
+              follow={follow}
+              onSatellite={openSatellite}
+              onUnfollow={() => setFollow(false)}
               onSelect={(id) => {
                 const s = catalog?.streams.find((x) => x.id === id);
                 if (s) select(s, 'near');
@@ -341,7 +362,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
 
         {panelOpen && (
           <aside
-            aria-label={other ? { flight: 'Flight', dossier: 'Dossier', pulse: 'Pulse' }[other.kind] : 'Stream'}
+            aria-label={other ? { flight: 'Flight', dossier: 'Dossier', pulse: 'Pulse', satellite: 'Satellite' }[other.kind] : 'Stream'}
             style={isMobile ? { height: `${sheet * 100}dvh` } : undefined}
             className={`z-20 flex flex-col border-subtle bg-panel transition-[translate,opacity] duration-400 ease-atlas starting:opacity-0
               max-lg:absolute max-lg:inset-x-0 max-lg:bottom-0 max-lg:rounded-t-[4px] max-lg:border-t max-lg:shadow-[0_-16px_40px_rgba(0,0,0,0.55)] max-lg:starting:translate-y-8
@@ -362,6 +383,19 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
                   onClose={close}
                   onLocate={() => { const p = project(other.flight, Date.now()); globe.current?.flyTo(p.lon, p.lat, 'near'); }}
                 />
+              ) : other?.kind === 'satellite' ? (
+                openSat ? (
+                  <SatellitePanel
+                    sat={openSat}
+                    time={null}
+                    follow={follow}
+                    muted={muted}
+                    onFollow={setFollow}
+                    onLocate={() => { const p = subpoint(openSat, new Date()); if (p) globe.current?.flyTo(p.lon, p.lat, 'near'); }}
+                    onToggleMute={() => setMuted((m) => !m)}
+                    onClose={close}
+                  />
+                ) : <div className="grid h-full place-items-center font-mono text-[11px] text-tertiary"><span className="ellipsis">loading orbits</span></div>
               ) : other?.kind === 'pulse' ? (
                 <PulsePanel
                   items={pulse}

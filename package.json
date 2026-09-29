@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx scripts/selftest.ts",
     "gazetteer": "tsx scripts/build-gazetteer.ts",
-    "import": "tsx scripts/import-catalog.ts"
+    "import": "tsx scripts/import-catalog.ts",
+    "extras": "tsx scripts/import-extras.ts"
   },
   "dependencies": {
     "geist": "^1.7.2",
@@ -19,6 +20,7 @@
     "next": "^15.5.26",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "satellite.js": "^7.1.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {

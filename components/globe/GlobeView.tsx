@@ -12,6 +12,7 @@ import { OVERLAYS, OVERLAY_IDS, registerSky, skyTiles, useAurora, useClock, useG
 import { readout } from '@/lib/readout';
 import { formatAlt, project, type Flight } from '@/lib/flights';
 import { EVENT_COLORS, EVENT_LABELS, type Planet } from '@/lib/events';
+import { GROUP_LABEL, footprint, groundTrack, periodMin, positions, subpoint, type Sat } from '@/lib/satellites';
 
 export interface Camera { lon: number; lat: number; zoom: number }
 export interface GlobeHandle {
@@ -46,6 +47,13 @@ interface Props {
   time: number | null;
   /** Earthquakes, fires, storms, ice (null = the Earth layer is off). */
   planet: Planet | null;
+  /** Everything in orbit (null = the layer is off and nothing in orbit is open). */
+  sats: Sat[] | null;
+  satId: number | null;
+  /** Keep the camera under the open satellite as it moves. */
+  follow: boolean;
+  onSatellite(id: number): void;
+  onUnfollow(): void;
   onSelect(id: string): void;
   onFlight(hex: string): void;
   onDossier(lat: number, lon: number): void;
@@ -63,8 +71,19 @@ const C = {
   live: '#2BE88A', night: '#6C7BA8', plane: '#FFB547',
   // Kept in step with --flight-mil / --flight-emer / --quake / --sat / --radio in globals.css (MapLibre can't read CSS vars).
   mil: '#7CFC4B', emergency: '#FF3B4E', quake: '#FF7A45', sat: '#B48CFF', radio: '#FF5CC8',
-  fireLow: '#FFC23D', fire: '#FF7A1A', fireHot: '#FF3B1F',
+  fireLow: '#FFC23D', fire: '#FF7A1A', fireHot: '#FF3B1F', starlink: '#8B94A7', gnss: '#FFD27A', geo: '#7CE3C4',
 };
+
+/** Satellites by kind; the open one ringed in accent. A zoom curve must be the top-level expression. */
+const satRadius = (id: number): ExpressionSpecification => {
+  const sel: ExpressionSpecification = ['==', ['get', 'id'], id];
+  return ['interpolate', ['linear'], ['zoom'],
+    1, ['case', sel, 4.5, ['match', ['get', 'g'], 'station', 4, 'starlink', 0.9, 1.4]],
+    6, ['case', sel, 7, ['match', ['get', 'g'], 'station', 6, 'starlink', 2, 3]]];
+};
+const satStroke = (id: number): ExpressionSpecification =>
+  ['case', ['==', ['get', 'id'], id], 2, ['match', ['get', 'g'], 'station', 1.5, 0]];
+const satStrokeColor = (id: number): ExpressionSpecification => ['case', ['==', ['get', 'id'], id], C.accent, C.void];
 
 /** "12 min ago" from an age in hours. */
 const ago = (hours: number) => (hours < 1 ? `${Math.max(1, Math.round(hours * 60))} min ago` : `${Math.round(hours)} h ago`);
@@ -271,7 +290,10 @@ function planetData(p: Planet | null, now: number) {
 }
 
 /** Layers a click or hover can land on, topmost first. */
-const HIT_LAYERS = ['planes', 'pins', 'clusters', 'quakes', 'events'];
+const HIT_LAYERS = ['planes', 'pins', 'clusters', 'sats', 'quakes', 'events'];
+
+/** Satellites are placed at the moment on screen, while their elements still mean something there. */
+const satTime = (time: number | null) => (time === null ? Date.now() : Math.abs(time - Date.now()) < 7 * 86400_000 ? time : null);
 
 /** Opacity for the sweep at progress p (0→1), using each pin's / cluster's earliest rank. */
 const reveal = (p: number): ExpressionSpecification =>
@@ -285,7 +307,7 @@ const SWEEP_LAYERS: [string, string[]][] = [
 ];
 
 export default function GlobeView(props: Props) {
-  const { ref, streams, focus, flights, flightId, initialCamera, reducedMotion, rotate, intro, bottomInset, sky, time, planet } = props;
+  const { ref, streams, focus, flights, flightId, initialCamera, reducedMotion, rotate, intro, bottomInset, sky, time, planet, sats, satId, follow } = props;
   const container = useRef<HTMLDivElement>(null);
   const hoverLabel = useRef<HTMLDivElement>(null);
   const halo = useRef<HTMLDivElement>(null);
@@ -350,6 +372,36 @@ export default function GlobeView(props: Props) {
   const sweepFrom = useRef(0);
   const cb = useRef(props);
   cb.current = props;
+  const satsRef = useRef<Sat[]>([]);
+
+  /** Every satellite where it is now; the open one with its ground track and footprint (and the camera, when following). */
+  const drawSats = (map: MLMap) => {
+    const src = map.getSource<GeoJSONSource>('sats');
+    if (!src) return;
+    const list = satsRef.current;
+    const at = satTime(cb.current.time);
+    const clear = (ids: string[]) => { for (const id of ids) map.getSource<GeoJSONSource>(id)?.setData(EMPTY); };
+    if (!list.length || at === null) { clear(['sats', 'sat-track', 'sat-foot']); return; }
+    const date = new Date(at);
+    const pos = positions(list, date);
+    const features: GeoJSON.Feature[] = [];
+    for (let i = 0; i < list.length; i++) {
+      if (Number.isNaN(pos[3 * i])) continue;
+      features.push(pt(pos[3 * i + 1], pos[3 * i], { id: list[i].id, name: list[i].name, g: list[i].group, alt: Math.round(pos[3 * i + 2]) }));
+    }
+    src.setData({ type: 'FeatureCollection', features });
+    const sel = list.find((x) => x.id === cb.current.satId);
+    const p = sel && subpoint(sel, date);
+    if (!sel || !p) { clear(['sat-track', 'sat-foot']); return; }
+    const per = periodMin(sel);
+    map.getSource<GeoJSONSource>('sat-track')?.setData({
+      type: 'Feature', properties: {}, geometry: { type: 'MultiLineString', coordinates: groundTrack(sel, date, per * 0.4, per, per / 180) },
+    });
+    map.getSource<GeoJSONSource>('sat-foot')?.setData({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: footprint(p) } });
+    if (cb.current.follow && cb.current.time === null && !map.isMoving()) {
+      map.easeTo({ center: [p.lon, p.lat], duration: 1900, easing: (x) => x });
+    }
+  };
   const [ready, setReady] = useState(false);
   /** A fly requested before the map existed (e.g. a shared link that resolves before the map loads). */
   const pendingFly = useRef<[number, number, 'near' | 'travel'] | null>(null);
@@ -373,6 +425,7 @@ export default function GlobeView(props: Props) {
     let raf = 0;
     let minuteTimer = 0;
     let planeTimer = 0;
+    let satTimer = 0;
     let map: MLMap | null = null;
 
     (async () => {
@@ -464,6 +517,20 @@ export default function GlobeView(props: Props) {
           paint: { 'circle-radius': 5.5, 'circle-color': ['get', 'color'], 'circle-stroke-width': 1.5, 'circle-stroke-color': C.void },
         });
 
+        // Everything in orbit, beneath the pins: ~16,600 dots, the stations ringed.
+        for (const id of ['sats', 'sat-track', 'sat-foot']) map.addSource(id, { type: 'geojson', data: EMPTY });
+        map.addLayer({ id: 'sat-foot', type: 'line', source: 'sat-foot', paint: { 'line-color': C.sat, 'line-width': 1, 'line-opacity': 0.55, 'line-dasharray': [3, 3] } });
+        map.addLayer({ id: 'sat-track', type: 'line', source: 'sat-track', paint: { 'line-color': C.sat, 'line-width': 1.2, 'line-opacity': 0.75 } });
+        map.addLayer({
+          id: 'sats', type: 'circle', source: 'sats',
+          paint: {
+            'circle-radius': satRadius(-1),
+            'circle-color': ['match', ['get', 'g'], 'station', C.accent, 'starlink', C.starlink, 'gnss', C.gnss, 'geo', C.geo, C.sat],
+            'circle-opacity': ['match', ['get', 'g'], 'starlink', 0.55, 0.9],
+            'circle-stroke-width': satStroke(-1), 'circle-stroke-color': satStrokeColor(-1),
+          },
+        });
+
         map.addSource('streams', {
           type: 'geojson',
           data: { type: 'FeatureCollection', features: [] },
@@ -527,6 +594,8 @@ export default function GlobeView(props: Props) {
       planeTimer = window.setInterval(() => {
         if (flightsRef.current.length) map?.getSource<GeoJSONSource>('planes')?.setData(planeData(flightsRef.current, Date.now()));
       }, 1000);
+      // Satellites by SGP4 every 2 s (~30 ms for all of them); Starlink moves ~15 km in that time.
+      satTimer = window.setInterval(() => { if (map && satsRef.current.length) drawSats(map); }, 2000);
 
       // ── interaction ──
       let hoverCluster: number | string | undefined;
@@ -549,10 +618,12 @@ export default function GlobeView(props: Props) {
         const f = hit?.layer.id === 'planes' ? flightsRef.current.find((x) => x.hex === hit.properties.hex) : undefined;
         const q = hit?.layer.id === 'quakes' ? hit.properties : undefined;
         const ev = hit?.layer.id === 'events' ? hit.properties : undefined;
+        const sat = hit?.layer.id === 'sats' ? hit.properties : undefined;
         const text = s ? [s.name, `${s.place} · ${s.country}`]
           : f ? [f.callsign, `${f.type ?? '—'} · ${formatAlt(f)} · ${Math.round(f.gs)} kt`]
           : q ? [`M${Number(q.mag).toFixed(1)} earthquake`, `${q.place} · ${ago(Number(q.age))}`]
           : ev ? [String(ev.title), String(ev.category)]
+          : sat ? [String(sat.name), `${GROUP_LABEL[sat.g as Sat['group']]} · ${Number(sat.alt).toLocaleString('en-US')} km up`]
           : null;
         if (text) {
           label.firstElementChild!.textContent = text[0];
@@ -577,6 +648,13 @@ export default function GlobeView(props: Props) {
         const hex = e.features?.[0]?.properties.hex;
         if (typeof hex === 'string') cb.current.onFlight(hex);
       });
+      map.on('click', 'sats', (e) => {
+        const id = e.features?.[0]?.properties.id;
+        if (map?.queryRenderedFeatures(e.point, { layers: ['planes', 'pins', 'clusters'] }).length) return;
+        if (id !== undefined) cb.current.onSatellite(Number(id));
+      });
+      // Any hand on the globe ends following.
+      for (const ev of ['mousedown', 'touchstart', 'wheel'] as const) map.on(ev, () => { if (cb.current.follow) cb.current.onUnfollow(); });
       // A quake or event opens the dossier on the spot: weather, nearby cameras, aircraft, history.
       for (const layer of ['quakes', 'events']) {
         map.on('click', layer, (e) => {
@@ -652,6 +730,7 @@ export default function GlobeView(props: Props) {
       cancelAnimationFrame(raf);
       clearInterval(minuteTimer);
       clearInterval(planeTimer);
+      clearInterval(satTimer);
       markerRef.current?.remove();
       map?.remove();
       mapRef.current = null;
@@ -702,6 +781,19 @@ export default function GlobeView(props: Props) {
     map.setLayoutProperty('planes', 'icon-size', planeSize(flightId ?? ''));
     map.setPaintProperty('planes', 'icon-color', planeColor(flightId ?? ''));
   }, [ready, flightId]);
+
+  // ── satellites ─────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    satsRef.current = sats ?? [];
+    map.setPaintProperty('sats', 'circle-radius', satRadius(satId ?? -1));
+    map.setPaintProperty('sats', 'circle-stroke-width', satStroke(satId ?? -1));
+    map.setPaintProperty('sats', 'circle-stroke-color', satStrokeColor(satId ?? -1));
+    drawSats(map);
+    // drawSats reads time and follow through cb; they're listed so a change redraws at once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, sats, satId, time, follow]);
 
   // ── the Earth layer; quakes under an hour old ring like the selected pin ───
   const quakeMarks = useRef(new Map<string, Marker>());

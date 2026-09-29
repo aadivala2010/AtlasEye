@@ -32,6 +32,10 @@ jobs:
       - name: Import and geocode
         run: npm run import
 
+      # ISS live feeds (from the snapshots the import just refreshed).
+      - name: Extras
+        run: npm run extras
+
       - name: Self-test
         run: npm test
 
