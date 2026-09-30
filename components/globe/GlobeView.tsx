@@ -2,14 +2,14 @@
 
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
 import type {
-  ExpressionSpecification, GeoJSONSource, LayerSpecification, Map as MLMap, Marker,
+  CanvasSource, ExpressionSpecification, GeoJSONSource, LayerSpecification, Map as MLMap, Marker,
   RasterTileSource, StyleSpecification, VectorSourceSpecification,
 } from 'maplibre-gl';
 import type { Stream } from '@/lib/stream';
 import { distanceKm } from '@/lib/geo';
 import { subsolarPoint, sunAltitude } from '@/lib/solar';
 import {
-  OVERLAYS, OVERLAY_IDS, SKY_BLEND, SKY_DAY, SKY_NIGHT, SKY_OFF, TERRAIN, registerSky, skyTiles, useAurora, useClock, useGeoFrames, useRadar, type Sky,
+  OVERLAYS, OVERLAY_IDS, SHADE_COORDS, SKY_BLEND, SKY_DAY, SKY_NIGHT, SKY_OFF, TERRAIN, drawShade, fadeBy, registerSky, skyTiles, useAurora, useClock, useGeoFrames, useRadar, type Sky,
 } from '@/lib/sky';
 import { readout } from '@/lib/readout';
 import { formatAlt, project, type Flight } from '@/lib/flights';
@@ -635,6 +635,15 @@ export default function GlobeView(props: Props) {
           },
           paint: { 'icon-color': planeColor(''), 'icon-halo-color': C.void, 'icon-halo-width': 1 },
         });
+        // The night shade: one canvas over the whole world, under the city lights (see drawShade).
+        shadeCanvas.current = document.createElement('canvas');
+        drawShade(shadeCanvas.current, Date.now());
+        map.addSource('shade', { type: 'canvas', canvas: shadeCanvas.current, coordinates: SHADE_COORDS, animate: false });
+        map.addLayer({
+          id: 'shade', type: 'raster', source: 'shade', layout: { visibility: 'none' },
+          paint: { 'raster-opacity': fadeBy(8, 11), 'raster-fade-duration': 0 },
+        }, 'night');
+
         styled.current = true;
         setReady(true);
       });
@@ -819,6 +828,22 @@ export default function GlobeView(props: Props) {
   const radar = useRadar(ready && sky.sense === 'radar');
   const aurora = useAurora(ready && sky.aurora);
   const applied = useRef<Record<string, string>>({});
+  const shadeCanvas = useRef<HTMLCanvasElement | null>(null);
+  const minute = useClock(60_000);
+  const shadeAt = useRef(0);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map || !shadeCanvas.current) return;
+    map.setLayoutProperty('shade', 'visibility', sky.night ? 'visible' : 'none');
+    const at = time ?? minute;
+    if (!sky.night || at === shadeAt.current) return;
+    shadeAt.current = at;
+    drawShade(shadeCanvas.current, at);
+    // A still canvas source re-uploads only while playing: play for one frame.
+    const src = map.getSource<CanvasSource>('shade');
+    src?.play();
+    map.once('render', () => src?.pause());
+  }, [ready, sky.night, time, minute]);
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map) return;
