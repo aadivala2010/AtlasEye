@@ -1493,6 +1493,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "ZZevIUr2cTk",
+  "title": "Black River Landing",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
+ },
+ {
   "id": "6GKQTGz_NHk",
   "title": "Blessed Sacrament Chapel",
   "source": "famelack",
@@ -1923,6 +1930,13 @@
   }
  },
  {
+  "id": "eg9MG8sySNw",
+  "title": "Bright Bird Feeder",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
+ },
+ {
   "id": "tkpmcVQroqs",
   "title": "Broad Haven Beach & Seafront",
   "source": "famelack",
@@ -1954,6 +1968,13 @@
   "source": "famelack",
   "country": "ID",
   "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "ccN7Cgs4XfI",
+  "title": "Brooks Memorial Fountain",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
  },
  {
   "id": "KjK02QIm4ZI",
@@ -2034,6 +2055,13 @@
   "source": "famelack",
   "country": "NO",
   "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "S-mbsv-02_0",
+  "title": "Bullens Field Baseball Diamond",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
  },
  {
   "id": "TJ7VDkaYNmE",
@@ -2490,18 +2518,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "JH_NzhSsqis",
-  "title": "Catalina Island Underwater Marine Reserve Cam",
-  "source": "famelack",
-  "country": "US",
-  "reason": "ambiguous:catalina|reserve",
-  "best": {
-   "matched": "catalina",
-   "place": "Catalina, Arizona, US",
-   "confidence": 0.741
-  }
- },
- {
   "id": "g8sUK4RNIEg",
   "title": "Cathedral of the Good Shepherd: Eucharistic Adoration",
   "source": "famelack",
@@ -2561,6 +2577,13 @@
   "source": "famelack",
   "country": "IT",
   "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "WYgjhPHIw1k",
+  "title": "Champlain Marina",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
  },
  {
   "id": "OAJF1Ie1m_Q",
@@ -3245,6 +3268,13 @@
   "source": "famelack",
   "country": "DK",
   "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "JkoXcXI04Qk",
+  "title": "Dashibi Hill",
+  "source": "famelack",
+  "country": "TW",
+  "reason": "misplaced"
  },
  {
   "id": "bUomNllBJRU",
@@ -4180,6 +4210,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "7cvAsqcfYKQ",
+  "title": "Enzo Stella Maris Beach",
+  "source": "famelack",
+  "country": "IT",
+  "reason": "misplaced"
+ },
+ {
   "id": "gsViKzj7nuQ",
   "title": "Erasmus Bridge",
   "source": "famelack",
@@ -4199,6 +4236,13 @@
   "source": "famelack",
   "country": "TW",
   "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "AspLvGaVG-4",
+  "title": "Essex",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
  },
  {
   "id": "e0tSa2z92mM",
@@ -4344,6 +4388,20 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "69rI-RUVNaA",
+  "title": "Flagstaff General Store",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
+ },
+ {
+  "id": "U-xxaUie50w",
+  "title": "Flagstaff General Store Trailhead",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
+ },
+ {
   "id": "DATTZ-F82Zk",
   "title": "Flamands Beach, St. Barths",
   "source": "famelack",
@@ -4424,6 +4482,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "p1IbYzNwWDQ",
+  "title": "Foster Memorial Beach",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
+ },
+ {
   "id": "q28Q9_qzqyg",
   "title": "Fotherdale Wildlife",
   "source": "famelack",
@@ -4441,6 +4506,13 @@
    "place": "Four Corners, Florida, US",
    "confidence": 0
   }
+ },
+ {
+  "id": "xp1b7w3qPd8",
+  "title": "Four Winds Marina Pine Island",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
  },
  {
   "id": "DXffBemFgHQ",
@@ -5284,6 +5356,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "pUQf75fPvzE",
+  "title": "Hatchet Resort Mountain View",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
+ },
+ {
   "id": "wIoKWDNPVlQ",
   "title": "Hauger Golfklubb",
   "source": "famelack",
@@ -5394,18 +5473,6 @@
   "source": "famelack",
   "country": "US",
   "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "qzCDW6w9ayM",
-  "title": "Hearne Railroad Diamond",
-  "source": "famelack",
-  "country": "US",
-  "reason": "ambiguous:diamond|hearne",
-  "best": {
-   "matched": "diamond",
-   "place": "Diamond, Illinois, US",
-   "confidence": 0.671
-  }
  },
  {
   "id": "gm1-4Y5qURE",
@@ -6136,6 +6203,20 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "SLbSOmAazhg",
+  "title": "JR Chuo Line Kumano Gongen Crossing",
+  "source": "famelack",
+  "country": "JP",
+  "reason": "misplaced"
+ },
+ {
+  "id": "9YpQONYzX_A",
+  "title": "JR Chuo Line Trains",
+  "source": "famelack",
+  "country": "JP",
+  "reason": "misplaced"
+ },
+ {
   "id": "WhNoqKDlx8Y",
   "title": "JR Motoyawata Station North Exit Taxi Stand",
   "source": "famelack",
@@ -6410,6 +6491,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "0XzNRaLVBqE",
+  "title": "Keystone",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
+ },
+ {
   "id": "ccTVAhJU5lg",
   "title": "Kilpisjärvi Fell Valley View",
   "source": "famelack",
@@ -6422,6 +6510,13 @@
   "source": "famelack",
   "country": "NZ",
   "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "A3pJIBKMqFI",
+  "title": "Kincaid Lake Bald Eagle Nest",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
  },
  {
   "id": "9Ah3utsQXkQ",
@@ -7682,6 +7777,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "OUc-R6Mtg0E",
+  "title": "Macaw Recovery Network Great Green Macaw Nest",
+  "source": "famelack",
+  "country": "CR",
+  "reason": "misplaced"
+ },
+ {
   "id": "JViQ_cai7aQ",
   "title": "Mad River Glen Birdcage",
   "source": "famelack",
@@ -8101,6 +8203,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "10jukqY3NU4",
+  "title": "Marine Emporium Landing",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
+ },
+ {
   "id": "GFzyA9BkHW4",
   "title": "Mariner Park on the St. Clair River",
   "source": "famelack",
@@ -8484,6 +8593,13 @@
   }
  },
  {
+  "id": "XoANQufSSXY",
+  "title": "Midtown Main Street",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
+ },
+ {
   "id": "EiUyBIcG4fQ",
   "title": "Midway Airport Apron & Runway",
   "source": "famelack",
@@ -8524,11 +8640,11 @@
   "title": "Mills Tower Railcam Diamond Crossing",
   "source": "famelack",
   "country": "US",
-  "reason": "ambiguous:diamond|mills",
+  "reason": "below-threshold",
   "best": {
-   "matched": "diamond",
-   "place": "Diamond, Illinois, US",
-   "confidence": 0.671
+   "matched": "mills",
+   "place": "Mills, Wyoming, US",
+   "confidence": 0.613
   }
  },
  {
@@ -8650,6 +8766,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "MjkEVVlOHvY",
+  "title": "Montifalco Vineyard",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
+ },
+ {
   "id": "RyrzZRL0s7s",
   "title": "Monument to the Revolution",
   "source": "famelack",
@@ -8728,6 +8851,13 @@
    "place": "Dunn, North Carolina, US",
    "confidence": 0.606
   }
+ },
+ {
+  "id": "5DlywACQ9qM",
+  "title": "Moraine Preservation Fund Osprey Nest",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
  },
  {
   "id": "TttAUtCLN7M",
@@ -9320,6 +9450,13 @@
    "place": "New London, Connecticut, US",
    "confidence": 0
   }
+ },
+ {
+  "id": "3LtOF19QGQY",
+  "title": "New River South Fork",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
  },
  {
   "id": "J4oNJrCzyzU",
@@ -10738,6 +10875,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "WLSkgf-dvOI",
+  "title": "PixCams Migration Thermal Camera",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
+ },
+ {
   "id": "pgMuZvyFw4k",
   "title": "PixCams Natural Bird Bath",
   "source": "famelack",
@@ -11021,6 +11165,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "kawl6kTUfaE",
+  "title": "Praia do Boqueirão",
+  "source": "famelack",
+  "country": "BR",
+  "reason": "misplaced"
+ },
+ {
   "id": "9K9f_tgRDXI",
   "title": "Praia do Infante Beach",
   "source": "famelack",
@@ -11040,6 +11191,13 @@
   "source": "famelack",
   "country": "PT",
   "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "rOKC_OWsC0M",
+  "title": "Prato della Cipolla",
+  "source": "famelack",
+  "country": "IT",
+  "reason": "misplaced"
  },
  {
   "id": "QdA71XaNrBk",
@@ -11573,18 +11731,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "rDlYuUHTZ4g",
-  "title": "Redondo Beach Waterfront",
-  "source": "famelack",
-  "country": "US",
-  "reason": "ambiguous:redondo beach|waterfront",
-  "best": {
-   "matched": "redondo beach",
-   "place": "Redondo Beach, California, US",
-   "confidence": 0.881
-  }
- },
- {
   "id": "WOOJaQmQ_u4",
   "title": "Refugio Collado Jermoso",
   "source": "famelack",
@@ -12079,6 +12225,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "UMWur82iiVI",
+  "title": "Salinas Marina",
+  "source": "famelack",
+  "country": "ES",
+  "reason": "misplaced"
+ },
+ {
   "id": "870YJO-cr_w",
   "title": "Salisbury Beach",
   "source": "famelack",
@@ -12501,6 +12654,13 @@
   "source": "famelack",
   "country": "ZA",
   "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "bCISRUH5eVo",
+  "title": "Sea Tow South Shore",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
  },
  {
   "id": "F5yLGZp5nsA",
@@ -12984,6 +13144,13 @@
   "source": "famelack",
   "country": "SX",
   "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "wf5mPSE2w9c",
+  "title": "Singh Sabha Washington",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
  },
  {
   "id": "sF5hFDGN20Y",
@@ -13679,6 +13846,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "aYtgGjMDagw",
+  "title": "Spotlight Germany Webcam Tour",
+  "source": "famelack",
+  "country": "DE",
+  "reason": "misplaced"
+ },
+ {
   "id": "3UzgSRYzDEQ",
   "title": "Spotted Horse Ranch on the Hoback River",
   "source": "famelack",
@@ -13839,6 +14013,13 @@
   "source": "famelack",
   "country": "CZ",
   "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "umZkZ8IQUO4",
+  "title": "Star Valley Ranchland and Mountain Vista",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
  },
  {
   "id": "tS2PHJmvJzo",
@@ -14225,18 +14406,6 @@
   }
  },
  {
-  "id": "hXqjUfQJf9U",
-  "title": "Surfside Beach Pier Over the Atlantic",
-  "source": "famelack",
-  "country": "US",
-  "reason": "ambiguous:surfside beach|atlantic",
-  "best": {
-   "matched": "surfside beach",
-   "place": "Surfside Beach, South Carolina, US",
-   "confidence": 0.795
-  }
- },
- {
   "id": "qr7dGchfX3g",
   "title": "Sutter's Marina",
   "source": "famelack",
@@ -14336,6 +14505,13 @@
   "source": "famelack",
   "country": "ES",
   "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "s_lziIKyUT4",
+  "title": "Tamarack Cross-Country Ski Center",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
  },
  {
   "id": "fTh5ssC1z-c",
@@ -14673,6 +14849,13 @@
   "source": "famelack",
   "country": "US",
   "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "r-7zA9fAg1c",
+  "title": "Thistle Dew Cabin Mountain View",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
  },
  {
   "id": "L5PXjssNFqc",
@@ -15159,6 +15342,13 @@
   "source": "famelack",
   "country": "JP",
   "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "e2gC37ILQmk",
+  "title": "Ukraine Cameras",
+  "source": "famelack",
+  "country": "UA",
+  "reason": "misplaced"
  },
  {
   "id": "zqc0Z2oWmo8",
@@ -15807,6 +15997,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "9e2vtFJk73E",
+  "title": "Washington Depot Grade Crossing Railcam",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
+ },
+ {
   "id": "t3qbzZHOTyg",
   "title": "Wassenaarse Slag Beach",
   "source": "famelack",
@@ -15826,18 +16023,6 @@
   "source": "famelack",
   "country": "US",
   "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "l7b5RFAkKhY",
-  "title": "Waterfront Museum Harbor Cam, Red Hook",
-  "source": "famelack",
-  "country": "US",
-  "reason": "ambiguous:waterfront|red hook",
-  "best": {
-   "matched": "waterfront",
-   "place": "Boston Seaport, Massachusetts, US",
-   "confidence": 0.79
-  }
  },
  {
   "id": "L3bYhofjjRU",
@@ -16434,6 +16619,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "IvZ22jZgvOI",
+  "title": "Yellowstone River Whitewater",
+  "source": "famelack",
+  "country": "US",
+  "reason": "misplaced"
+ },
+ {
   "id": "ZL1SUWuFxKQ",
   "title": "Yeouido Han River Park Fountain Show",
   "source": "famelack",
@@ -16471,18 +16663,6 @@
    "matched": "york",
    "place": "York, England, GB",
    "confidence": 0.692
-  }
- },
- {
-  "id": "JhzmoVE_Xag",
-  "title": "York Beach North Surf & Atlantic Shore",
-  "source": "famelack",
-  "country": "US",
-  "reason": "ambiguous:york beach|atlantic",
-  "best": {
-   "matched": "york beach",
-   "place": "York Beach, Maine, US",
-   "confidence": 0.829
   }
  },
  {
@@ -16732,6 +16912,13 @@
   "source": "camlisted",
   "country": "KR",
   "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "viImr8SK8To",
+  "title": "Colorado Cams",
+  "source": "camlisted",
+  "country": "US",
+  "reason": "misplaced"
  },
  {
   "id": "kOzNBWZlfHk",
@@ -17059,18 +17246,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "Y28qU7UsFko",
-  "title": "Deshler, Ohio, USA | LIVE Train Camera (Fixed View — Diamond)",
-  "source": "camlisted",
-  "country": "US",
-  "reason": "region-mismatch:ohio",
-  "best": {
-   "matched": "diamond",
-   "place": "Diamond, Illinois, US",
-   "confidence": 0.671
-  }
- },
- {
   "id": "bHmaUXTOvqw",
   "title": "4K LIVE Cam Avila Beach Hotel | Curacao 🌴☀️",
   "source": "camlisted",
@@ -17106,11 +17281,25 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "x_ruIH2UmjQ",
+  "title": "New England Summer is LIVE - Webcams, Weather, Music, Timelapse",
+  "source": "camlisted",
+  "country": "GB",
+  "reason": "misplaced"
+ },
+ {
   "id": "aA9-nxILUH4",
   "title": "🔴 24/7 LIVE CAT TV NO ADS😺 Awesome Red Squirrels and Adorable Little Birds Forest Nut Party for All",
   "source": "camlisted",
   "country": "FI",
   "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "wfGEsNQYAeE",
+  "title": "Bay Shore Park - Boat Launch",
+  "source": "camlisted",
+  "country": "US",
+  "reason": "misplaced"
  },
  {
   "id": "OS94xU5WhrQ",
@@ -17391,6 +17580,13 @@
   "source": "camlisted",
   "country": "JP",
   "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "jmWZy59tBbk",
+  "title": "Ely Park Fountain Cam",
+  "source": "camlisted",
+  "country": "US",
+  "reason": "misplaced"
  },
  {
   "id": "Mfq_QtuyrYI",
@@ -17896,11 +18092,25 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "nr0jFa7mKQE",
+  "title": "Webcam Saint-Aubin",
+  "source": "camlisted",
+  "country": "FR",
+  "reason": "misplaced"
+ },
+ {
   "id": "uO1ctLJzu9M",
   "title": "Livestream Hotel Berghof",
   "source": "camlisted",
   "country": "AT",
   "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "nhffONcy8Eg",
+  "title": "BirdSouls Colombia Bird Feeder 1",
+  "source": "camlisted",
+  "country": "CO",
+  "reason": "misplaced"
  },
  {
   "id": "ey9f0276Kyk",
@@ -18005,6 +18215,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "In_JCa4hZ_0",
+  "title": "大川３．０ｋ鎌倉公園上流｜河川課｜群馬県",
+  "source": "camlisted",
+  "country": "JP",
+  "reason": "misplaced"
+ },
+ {
   "id": "Rzpgp9eylzw",
   "title": "Live-HD-Webcam Kirner Land - Skywalk",
   "source": "camlisted",
@@ -18087,6 +18304,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "lxtB5GiLQtk",
+  "title": "須川ライブカメラ（飯塚橋）",
+  "source": "camlisted",
+  "country": "JP",
+  "reason": "misplaced"
+ },
+ {
   "id": "yImwm-Wc8NA",
   "title": "Boulder Cam",
   "source": "camlisted",
@@ -18144,6 +18368,13 @@
   "source": "camlisted",
   "country": "TW",
   "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "UncorGx2S2w",
+  "title": "山田川０．４ｋ川内町二丁目｜河川課｜群馬県",
+  "source": "camlisted",
+  "country": "JP",
+  "reason": "misplaced"
  },
  {
   "id": "lGo8fZd1OwE",

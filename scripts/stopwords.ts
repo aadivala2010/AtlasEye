@@ -24,4 +24,7 @@ export const STOPWORDS = new Set<string>([
   '海岸', '公園', '中央', '本町', '駅前', '大橋', '港町', '新町', '温泉', '市場', '空港', '本通', '中町', '北口', '南口',
   'national park', 'state park',
   'canyon', 'panorama', 'lake panorama', 'vista', 'bellevue', 'belvedere', 'piazza', 'simpang', 'landing',
+  // plain words that are also a small town ("Dillon Reservoir" ≠ Reservoir, MA; "Waterfront" is an alias of Boston Seaport)
+  'waterfront', 'reservoir', 'diamond', 'fountain', 'atlantic', 'mountain view', 'west end', 'north end', 'reserve',
+  'plantation', 'white house',
 ]);

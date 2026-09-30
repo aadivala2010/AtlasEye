@@ -11,7 +11,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { z } from 'zod';
 import type { Catalog, Category, Stream } from '../lib/stream';
 import {
-  distanceKm, geocode, loadGazetteer, nearestPlace, normalize, placeLabel, CONFIDENCE_THRESHOLD, type GeocodeHit,
+  distanceKm, geocode, loadGazetteer, nearestPlace, normalize, placeLabel, unflipLongitudes, CONFIDENCE_THRESHOLD, type GeocodeHit,
 } from './geocode';
 import { AGENCIES, SchemaError, blockedSources, verifyImages, verifyLive, type AgencyCam, type ProbeTally } from './agencies';
 
@@ -69,7 +69,8 @@ const Override = z.object({
   country: z.string().length(2),
   category: z.enum(['city', 'nature', 'wildlife', 'beach', 'harbor', 'traffic', 'transit', 'weather', 'space', 'other']).optional(),
 });
-const Overrides = z.record(z.string(), Override);
+/** null: the title points somewhere wrong and we can't tell where — keep it off the globe. */
+const Overrides = z.record(z.string(), Override.nullable());
 
 /** Famelack category files, most specific first — a stream in several takes the first. */
 const FAMELACK_CATEGORIES: Record<string, Category> = {
@@ -326,6 +327,10 @@ const counts = { gps: 0, agreed: 0 };
 for (const c of candidates.values()) {
   const base = { id: c.id, kind: 'youtube' as const, title: c.title, source: c.source, addedAt: previousAdded.get(c.id) ?? c.addedAt ?? now };
   const o = overrides[c.id];
+  if (o === null) {
+    rejected.push({ id: c.id, title: c.title, source: c.source, country: c.country, reason: 'misplaced' });
+    continue;
+  }
   if (o) {
     streams.push({
       ...base, name: o.name, latitude: o.latitude, longitude: o.longitude, place: o.place, country: o.country,
@@ -394,6 +399,7 @@ for (const cam of agencies.cams) {
     addedAt: previousAdded.get(cam.id) ?? now,
   });
 }
+for (const s of unflipLongitudes(gazetteer, agencyStreams)) console.warn(`  unflipped longitude: ${s.id} → ${s.place}`);
 const youtubeCount = streams.length;
 streams.push(...agencyStreams);
 const tally = (list: Stream[], key: (s: Stream) => string) =>

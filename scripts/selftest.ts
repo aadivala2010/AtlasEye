@@ -1,6 +1,6 @@
 /** `npm test` — assert-based checks for the parts that are easy to break silently. */
 import assert from 'node:assert/strict';
-import { distanceKm, geocode, loadGazetteer, nearestPlace } from './geocode';
+import { distanceKm, geocode, loadGazetteer, nearestPlace, unflipLongitudes } from './geocode';
 import { blockedSources, cameraName, titleCase, tmInverse } from './agencies';
 import { moonPhase, subsolarPoint, sunAltitude } from '../lib/solar';
 import { fillNoData } from '../lib/clouds';
@@ -49,6 +49,13 @@ assert.match(place('a nice view of the harbour', 'FR'), /^REJECT/);
 assert.equal(nearestPlace(g, 49.1093, -116.1695).place.timezone, 'America/Creston');
 assert.equal(nearestPlace(g, 40.7324, -73.9849).place.timezone, 'America/New_York');
 assert.ok(nearestPlace(g, 60.3858, 23.9049).km < 20);
+
+// A Virginia camera published at +77° is flipped back; NOAA's buoy past the antimeridian isn't.
+const cam = (source: string, latitude: number, longitude: number) => ({ source, latitude, longitude, place: '', timezone: '' });
+const vdot = [cam('vdot', 37.5, -77.3), cam('vdot', 38.9, -77.2), cam('vdot', 38.88, 77.27)];
+const ndbc = [cam('ndbc', 30, -80), cam('ndbc', 35, -120), cam('ndbc', 51.0, 179.8)];
+assert.deepEqual(unflipLongitudes(g, [...vdot, ...ndbc]).map((c) => c.longitude), [-77.27]);
+assert.equal(vdot[2].timezone, 'America/New_York');
 
 // Solar: at the June solstice the subsolar point sits on the Tropic of Cancer, near 0° at 12:00 UTC.
 const solstice = subsolarPoint(new Date('2026-06-21T12:00:00Z'));

@@ -153,7 +153,8 @@ Everything below is keyless and fetched straight from the browser (CORS), except
 ## How to add an override (the main way to improve quality)
 
 `data/overrides.json` maps a YouTube video ID to exact coordinates. It always wins over automatic
-matching.
+matching. Map an ID to `null` when the automatic match is wrong and the real spot is unknown — the
+stream is left off the globe (reason `misplaced` in `rejected.json`).
 
 ```json
 {

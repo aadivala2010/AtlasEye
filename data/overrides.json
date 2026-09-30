@@ -1182,5 +1182,1746 @@
     "place": "Trempealeau, Wisconsin",
     "country": "US",
     "category": "transit"
+  },
+  "OhoZnH1jGbE": {
+    "name": "Puente Gral Belgrano",
+    "latitude": -27.4706,
+    "longitude": -58.8575,
+    "place": "Corrientes, Corrientes",
+    "country": "AR",
+    "category": "beach"
+  },
+  "SVVgY6TjIhg": {
+    "name": "Barra da Lagoa",
+    "latitude": -27.574,
+    "longitude": -48.425,
+    "place": "Florianópolis, Santa Catarina",
+    "country": "BR",
+    "category": "beach"
+  },
+  "YAK0xJxzp_Y": {
+    "name": "Molhe da Barra Sul",
+    "latitude": -27.0038,
+    "longitude": -48.6178,
+    "place": "Balneário Camboriú, Santa Catarina",
+    "country": "BR",
+    "category": "beach"
+  },
+  "kawl6kTUfaE": null,
+  "lHWmEIVk11s": {
+    "name": "Candeias Beach, Jaboatão",
+    "latitude": -8.213,
+    "longitude": -34.924,
+    "place": "Jaboatão dos Guararapes, Pernambuco",
+    "country": "BR",
+    "category": "beach"
+  },
+  "2UXzm-eDsAw": {
+    "name": "Congonhas Airport Camera 2",
+    "latitude": -23.6266,
+    "longitude": -46.6554,
+    "place": "São Paulo, São Paulo",
+    "country": "BR",
+    "category": "transit"
+  },
+  "HN5r8CT8PBs": {
+    "name": "Congonhas Airport Camera 3",
+    "latitude": -23.6266,
+    "longitude": -46.6554,
+    "place": "São Paulo, São Paulo",
+    "country": "BR",
+    "category": "transit"
+  },
+  "IPR2ENWQlrs": {
+    "name": "Goioerê Av. Curitiba Cam 3",
+    "latitude": -24.185,
+    "longitude": -53.027,
+    "place": "Goioerê, Paraná",
+    "country": "BR",
+    "category": "city"
+  },
+  "q5jrRV0Tc-Y": {
+    "name": "Praia das Pitangueiras",
+    "latitude": -23.998,
+    "longitude": -46.256,
+    "place": "Guarujá, São Paulo",
+    "country": "BR",
+    "category": "beach"
+  },
+  "IdAvz5TD6Wc": {
+    "name": "Salgado Filho Airport",
+    "latitude": -29.994,
+    "longitude": -51.171,
+    "place": "Porto Alegre, Rio Grande do Sul",
+    "country": "BR",
+    "category": "transit"
+  },
+  "NzJXLSjKjjs": {
+    "name": "Santos Dumont Airport",
+    "latitude": -22.91,
+    "longitude": -43.163,
+    "place": "Rio de Janeiro, Rio de Janeiro",
+    "country": "BR",
+    "category": "transit"
+  },
+  "ukoSyGLdoTQ": {
+    "name": "Morro do Itararé",
+    "latitude": -23.975,
+    "longitude": -46.37,
+    "place": "São Vicente, São Paulo",
+    "country": "BR",
+    "category": "beach"
+  },
+  "lFlovxrE9Og": {
+    "name": "Laranjeiras Beach",
+    "latitude": -27.0287,
+    "longitude": -48.5937,
+    "place": "Balneário Camboriú, Santa Catarina",
+    "country": "BR",
+    "category": "beach"
+  },
+  "a0i1Kg6fROg": {
+    "name": "Aurora Borealis over Churchill",
+    "latitude": 58.7684,
+    "longitude": -94.165,
+    "place": "Churchill, Manitoba",
+    "country": "CA",
+    "category": "space"
+  },
+  "baWRGSBBWhw": {
+    "name": "Confederation Bridge",
+    "latitude": 46.217,
+    "longitude": -63.753,
+    "place": "Borden-Carleton, Prince Edward Island",
+    "country": "CA",
+    "category": "traffic"
+  },
+  "CBtjrr2k34A": {
+    "name": "King St S & Young St",
+    "latitude": 44.153,
+    "longitude": -79.868,
+    "place": "Alliston, Ontario",
+    "country": "CA",
+    "category": "city"
+  },
+  "nhffONcy8Eg": null,
+  "OUc-R6Mtg0E": null,
+  "dZOJ0u1x-3g": {
+    "name": "Playa de El Palmar Vejer",
+    "latitude": 36.228,
+    "longitude": -6.07,
+    "place": "Vejer de la Frontera, Andalusia",
+    "country": "ES",
+    "category": "beach"
+  },
+  "qtFXKPN0xkQ": {
+    "name": "Vigo Venezuela - Granada",
+    "latitude": 42.232,
+    "longitude": -8.72,
+    "place": "Vigo, Galicia",
+    "country": "ES",
+    "category": "traffic"
+  },
+  "ii_PElrmCwE": {
+    "name": "Vigo Gran Vía - Tarragona",
+    "latitude": 42.232,
+    "longitude": -8.72,
+    "place": "Vigo, Galicia",
+    "country": "ES",
+    "category": "city"
+  },
+  "UMWur82iiVI": null,
+  "f6tsHCx4-3g": {
+    "name": "Sant Antoni Bay Panorama",
+    "latitude": 38.98,
+    "longitude": 1.3,
+    "place": "Sant Antoni de Portmany, Balearic Islands",
+    "country": "ES",
+    "category": "harbor"
+  },
+  "oNppHiImdzE": {
+    "name": "Sant Antoni de Calonge Beachfront",
+    "latitude": 41.846,
+    "longitude": 3.1,
+    "place": "Sant Antoni de Calonge, Catalonia",
+    "country": "ES",
+    "category": "beach"
+  },
+  "C7gwOwqHpWo": {
+    "name": "Tenerife TFS SPAIN Landings & Takeoffs",
+    "latitude": 28.0445,
+    "longitude": -16.5725,
+    "place": "Tenerife South Airport, Canary Islands",
+    "country": "ES",
+    "category": "transit"
+  },
+  "yrx0fvj-4QI": {
+    "name": "Tenerife North Airport",
+    "latitude": 28.4827,
+    "longitude": -16.3415,
+    "place": "Tenerife North Airport, Canary Islands",
+    "country": "ES",
+    "category": "transit"
+  },
+  "oT7SngrdgGE": {
+    "name": "Fuerteventura Airport Runway Cam",
+    "latitude": 28.4527,
+    "longitude": -13.8638,
+    "place": "Fuerteventura Airport, Canary Islands",
+    "country": "ES",
+    "category": "transit"
+  },
+  "CdLzCCHDaYQ": {
+    "name": "Périphérique Nord Porte de Croix-Luizet",
+    "latitude": 45.78,
+    "longitude": 4.87,
+    "place": "Villeurbanne, Auvergne-Rhône-Alpes",
+    "country": "FR",
+    "category": "traffic"
+  },
+  "B0vZX9GnpxI": {
+    "name": "Arc 2000 Village, Les Arcs",
+    "latitude": 45.5735,
+    "longitude": 6.8265,
+    "place": "Arc 2000, Savoie",
+    "country": "FR",
+    "category": "nature"
+  },
+  "SXXHa5SoAHo": {
+    "name": "Arc 1800 Village, Les Arcs",
+    "latitude": 45.5717,
+    "longitude": 6.7965,
+    "place": "Arc 1800, Savoie",
+    "country": "FR",
+    "category": "nature"
+  },
+  "BuB981VNriE": {
+    "name": "Les Arcs Varet",
+    "latitude": 45.57,
+    "longitude": 6.82,
+    "place": "Les Arcs, Savoie",
+    "country": "FR",
+    "category": "nature"
+  },
+  "aYtgGjMDagw": null,
+  "zLlwPU3Xtrk": {
+    "name": "Bopparder Hamm",
+    "latitude": 50.2316,
+    "longitude": 7.5905,
+    "place": "Boppard, Rhineland-Palatinate",
+    "country": "DE",
+    "category": "nature"
+  },
+  "WpOjXw7FN3E": {
+    "name": "Blick vom Kirchturm St. Martin Pfaffenhofen a.d. Roth",
+    "latitude": 48.355,
+    "longitude": 10.16,
+    "place": "Pfaffenhofen an der Roth, Bavaria",
+    "country": "DE",
+    "category": "city"
+  },
+  "nr0jFa7mKQE": null,
+  "x_ruIH2UmjQ": null,
+  "YEHwZHXa6Bw": {
+    "name": "Langstone Harbour",
+    "latitude": 50.8,
+    "longitude": -1.03,
+    "place": "Langstone Harbour, England",
+    "country": "GB",
+    "category": "harbor"
+  },
+  "eAm6iAB1pQQ": {
+    "name": "Djúpivogur Harbour",
+    "latitude": 64.656,
+    "longitude": -14.283,
+    "place": "Djúpivogur, East",
+    "country": "IS",
+    "category": "harbor"
+  },
+  "xNmvMyDRq0I": {
+    "name": "Torre di Bari Beach & Watchtower",
+    "latitude": 39.84,
+    "longitude": 9.7,
+    "place": "Bari Sardo, Sardinia",
+    "country": "IT",
+    "category": "beach"
+  },
+  "FmWMwV_6JJQ": {
+    "name": "Hotel Dolasilla, La Villa",
+    "latitude": 46.588,
+    "longitude": 11.899,
+    "place": "La Villa, Trentino-Alto Adige",
+    "country": "IT",
+    "category": "nature"
+  },
+  "tUPmbZqrC6I": {
+    "name": "Piazza Grande & Palazzo dei Consoli",
+    "latitude": 43.353,
+    "longitude": 12.577,
+    "place": "Gubbio, Umbria",
+    "country": "IT",
+    "category": "city"
+  },
+  "gXm3PGF4z0s": {
+    "name": "St. Peter's Dome & Prati",
+    "latitude": 41.9022,
+    "longitude": 12.4568,
+    "place": "Rome, Lazio",
+    "country": "IT",
+    "category": "city"
+  },
+  "rOKC_OWsC0M": null,
+  "4LXclnG5lng": {
+    "name": "Sappada Center & Santa Margherita Church",
+    "latitude": 46.567,
+    "longitude": 12.7,
+    "place": "Sappada, Friuli Venezia Giulia",
+    "country": "IT",
+    "category": "nature"
+  },
+  "CJLrYIS7NFg": {
+    "name": "Campo Santa Maria Formosa",
+    "latitude": 45.4375,
+    "longitude": 12.341,
+    "place": "Venice, Veneto",
+    "country": "IT",
+    "category": "city"
+  },
+  "7cvAsqcfYKQ": null,
+  "CVp0bl7ROSM": {
+    "name": "福島空港24時間ライブカメラ",
+    "latitude": 37.227,
+    "longitude": 140.431,
+    "place": "Fukushima Airport, Fukushima",
+    "country": "JP",
+    "category": "transit"
+  },
+  "47xoP12hJxs": {
+    "name": "長生村一松海岸潮位監視カメラ",
+    "latitude": 35.41,
+    "longitude": 140.4,
+    "place": "Chōsei, Chiba",
+    "country": "JP",
+    "category": "beach"
+  },
+  "9YpQONYzX_A": null,
+  "SLbSOmAazhg": null,
+  "mvQZp5md0a8": {
+    "name": "Chuo Line, Hino",
+    "latitude": 35.671,
+    "longitude": 139.395,
+    "place": "Hino, Tokyo",
+    "country": "JP",
+    "category": "transit"
+  },
+  "AvGewy9yONA": {
+    "name": "JR Chuo Line Trainspotting at Tamadaira",
+    "latitude": 35.66,
+    "longitude": 139.37,
+    "place": "Hino, Tokyo",
+    "country": "JP",
+    "category": "transit"
+  },
+  "RlU6BRXBP9c": {
+    "name": "JR Chuo Line Kasugaicho - Isawa-onsen",
+    "latitude": 35.66,
+    "longitude": 138.66,
+    "place": "Fuefuki, Yamanashi",
+    "country": "JP",
+    "category": "transit"
+  },
+  "_6nLps25Kws": {
+    "name": "Fuji-Q Highland Fujiyama Tower",
+    "latitude": 35.487,
+    "longitude": 138.78,
+    "place": "Fujiyoshida, Yamanashi",
+    "country": "JP",
+    "category": "nature"
+  },
+  "JGyGoXlKZmw": {
+    "name": "富士本栖湖リゾート",
+    "latitude": 35.47,
+    "longitude": 138.59,
+    "place": "Lake Motosu, Yamanashi",
+    "country": "JP",
+    "category": "beach"
+  },
+  "HXRBcbOmf-A": {
+    "name": "24時間LIVE",
+    "latitude": 33.19,
+    "longitude": 129.06,
+    "place": "Ojika, Nagasaki",
+    "country": "JP",
+    "category": "beach"
+  },
+  "2vtOhscrIG8": {
+    "name": "HIDA TAKAYAMA",
+    "latitude": 36.146,
+    "longitude": 137.252,
+    "place": "Takayama, Gifu",
+    "country": "JP",
+    "category": "nature"
+  },
+  "fbY0VRfHsS8": {
+    "name": "HIDA TAKAYAMA",
+    "latitude": 36.146,
+    "longitude": 137.252,
+    "place": "Takayama, Gifu",
+    "country": "JP",
+    "category": "city"
+  },
+  "KWarKq_pvTM": {
+    "name": "広島空港ライブカメラ @Hiroshima Airport HIJ",
+    "latitude": 34.436,
+    "longitude": 132.919,
+    "place": "Hiroshima Airport, Hiroshima",
+    "country": "JP",
+    "category": "transit"
+  },
+  "uYTeQCjKLKE": {
+    "name": "日高川龍神",
+    "latitude": 33.94,
+    "longitude": 135.55,
+    "place": "Ryūjin, Wakayama",
+    "country": "JP",
+    "category": "nature"
+  },
+  "lxtB5GiLQtk": null,
+  "1XphVUBHHmk": {
+    "name": "西武池袋線保谷駅付近の電留線ライブ映像",
+    "latitude": 35.748,
+    "longitude": 139.567,
+    "place": "Nishitokyo, Tokyo",
+    "country": "JP",
+    "category": "transit"
+  },
+  "In_JCa4hZ_0": null,
+  "Iv2VUE_UhRQ": {
+    "name": "Kappa Bridge over the Azusa River",
+    "latitude": 36.25,
+    "longitude": 137.638,
+    "place": "Kamikōchi, Nagano",
+    "country": "JP",
+    "category": "nature"
+  },
+  "ftkM0BVLhtg": {
+    "name": "Kanda Station North Exit Cityscape",
+    "latitude": 35.692,
+    "longitude": 139.771,
+    "place": "Kanda, Tokyo",
+    "country": "JP",
+    "category": "transit"
+  },
+  "jX46WOhWAFo": {
+    "name": "河津町笹原公園ライブカメラ",
+    "latitude": 34.756,
+    "longitude": 138.988,
+    "place": "Kawazu, Shizuoka",
+    "country": "JP",
+    "category": "nature"
+  },
+  "Xn7YQxxC5R0": {
+    "name": "河津町ライブカメラ",
+    "latitude": 34.756,
+    "longitude": 138.988,
+    "place": "Kawazu, Shizuoka",
+    "country": "JP",
+    "category": "nature"
+  },
+  "nUpNlSRQVJA": {
+    "name": "人吉ライブ映像",
+    "latitude": 32.21,
+    "longitude": 130.76,
+    "place": "Hitoyoshi, Kumamoto",
+    "country": "JP",
+    "category": "nature"
+  },
+  "p9PSlQIFl9s": {
+    "name": "牛深 ライブ映像",
+    "latitude": 32.19,
+    "longitude": 130.03,
+    "place": "Ushibuka, Kumamoto",
+    "country": "JP",
+    "category": "harbor"
+  },
+  "0ACRdNv3D9w": {
+    "name": "Ura-Kusatsu Jizo Mangado",
+    "latitude": 36.6206,
+    "longitude": 138.5961,
+    "place": "Kusatsu, Gunma",
+    "country": "JP",
+    "category": "nature"
+  },
+  "J3zIOmIrSzM": {
+    "name": "Kusatsu Undochaya Park Roadside Station",
+    "latitude": 36.6206,
+    "longitude": 138.5961,
+    "place": "Kusatsu, Gunma",
+    "country": "JP",
+    "category": "traffic"
+  },
+  "WB4jllqVRCc": {
+    "name": "Kusatsu Route 292 Kusatsu-Maeguchi",
+    "latitude": 36.6206,
+    "longitude": 138.5961,
+    "place": "Kusatsu, Gunma",
+    "country": "JP",
+    "category": "traffic"
+  },
+  "tv7c5sVzaeQ": {
+    "name": "Odaiba Bay & Skyline Panorama",
+    "latitude": 35.627,
+    "longitude": 139.776,
+    "place": "Odaiba, Tokyo",
+    "country": "JP",
+    "category": "harbor"
+  },
+  "Arw1omQUnr4": {
+    "name": "現在の浅間山の様子",
+    "latitude": 36.348,
+    "longitude": 138.6,
+    "place": "Karuizawa, Nagano",
+    "country": "JP",
+    "category": "nature"
+  },
+  "Y4KAMd2eGuU": {
+    "name": "国道18号追分付近ライブカメラ",
+    "latitude": 36.335,
+    "longitude": 138.56,
+    "place": "Karuizawa, Nagano",
+    "country": "JP",
+    "category": "traffic"
+  },
+  "8VbOUB-dplM": {
+    "name": "プリンス通り付近ライブカメラ",
+    "latitude": 36.34,
+    "longitude": 138.63,
+    "place": "Karuizawa, Nagano",
+    "country": "JP",
+    "category": "city"
+  },
+  "WRFxBWoOzb8": {
+    "name": "Nakajima Koen Station Road Conditions",
+    "latitude": 43.047,
+    "longitude": 141.354,
+    "place": "Sapporo, Hokkaido",
+    "country": "JP",
+    "category": "traffic"
+  },
+  "4ZHJ7zIRF10": {
+    "name": "新宿~小田原を走る小田急線ライブカメラ 厚木駅付近 ロマンスカー VSE 鉄道 電車 列車 天気 UFO",
+    "latitude": 35.44,
+    "longitude": 139.36,
+    "place": "Atsugi, Kanagawa",
+    "country": "JP",
+    "category": "transit"
+  },
+  "sFhl7CFnNZA": {
+    "name": "Oita Airport Apron",
+    "latitude": 33.479,
+    "longitude": 131.737,
+    "place": "Ōita Airport, Ōita",
+    "country": "JP",
+    "category": "transit"
+  },
+  "XpIILFB9iS0": {
+    "name": "Ryogoku",
+    "latitude": 35.696,
+    "longitude": 139.793,
+    "place": "Ryōgoku, Tokyo",
+    "country": "JP",
+    "category": "transit"
+  },
+  "THy9p2xJSek": {
+    "name": "能登さくら駅",
+    "latitude": 37.19,
+    "longitude": 136.89,
+    "place": "Anamizu, Ishikawa",
+    "country": "JP",
+    "category": "transit"
+  },
+  "UncorGx2S2w": null,
+  "_Upz1dlQgpg": {
+    "name": "静岡県下田市",
+    "latitude": 34.7,
+    "longitude": 138.98,
+    "place": "Shimoda, Shizuoka",
+    "country": "JP",
+    "category": "beach"
+  },
+  "mWu0lcIsEX8": {
+    "name": "静岡県下田市",
+    "latitude": 34.7,
+    "longitude": 138.98,
+    "place": "Shimoda, Shizuoka",
+    "country": "JP",
+    "category": "beach"
+  },
+  "suBsw5F_1u0": {
+    "name": "静岡県下田市",
+    "latitude": 34.66,
+    "longitude": 138.93,
+    "place": "Shimoda, Shizuoka",
+    "country": "JP",
+    "category": "beach"
+  },
+  "y2snSN1CIEg": {
+    "name": "静岡県下田市",
+    "latitude": 34.66,
+    "longitude": 138.99,
+    "place": "Shimoda, Shizuoka",
+    "country": "JP",
+    "category": "beach"
+  },
+  "IAdFjoGEoII": {
+    "name": "Tateyama Murodo",
+    "latitude": 36.577,
+    "longitude": 137.596,
+    "place": "Murodō, Toyama",
+    "country": "JP",
+    "category": "nature"
+  },
+  "_jN3KzK-V-U": {
+    "name": "新島港",
+    "latitude": 34.37,
+    "longitude": 139.26,
+    "place": "Niijima, Tokyo",
+    "country": "JP",
+    "category": "harbor"
+  },
+  "PHcM-Xh2fyY": {
+    "name": "若郷漁港",
+    "latitude": 34.41,
+    "longitude": 139.25,
+    "place": "Niijima, Tokyo",
+    "country": "JP",
+    "category": "harbor"
+  },
+  "3n3J_Npip8Q": {
+    "name": "三浦漁港",
+    "latitude": 34.21,
+    "longitude": 139.13,
+    "place": "Kōzushima, Tokyo",
+    "country": "JP",
+    "category": "harbor"
+  },
+  "bH-zSqhkF8A": {
+    "name": "Tokyo",
+    "latitude": 26.64,
+    "longitude": 142.16,
+    "place": "Hahajima, Tokyo",
+    "country": "JP",
+    "category": "city"
+  },
+  "cbOGrOtBGhk": {
+    "name": "阿古漁港",
+    "latitude": 34.07,
+    "longitude": 139.48,
+    "place": "Miyakejima, Tokyo",
+    "country": "JP",
+    "category": "harbor"
+  },
+  "FPDC_vKXuzk": {
+    "name": "三池港",
+    "latitude": 34.06,
+    "longitude": 139.56,
+    "place": "Miyakejima, Tokyo",
+    "country": "JP",
+    "category": "harbor"
+  },
+  "ciBuVo8Sozk": {
+    "name": "神湊漁港",
+    "latitude": 33.12,
+    "longitude": 139.8,
+    "place": "Hachijōjima, Tokyo",
+    "country": "JP",
+    "category": "harbor"
+  },
+  "SilNYdV2HNs": {
+    "name": "神湊港底土",
+    "latitude": 33.12,
+    "longitude": 139.8,
+    "place": "Hachijōjima, Tokyo",
+    "country": "JP",
+    "category": "harbor"
+  },
+  "f-pmgHI_VgM": {
+    "name": "野伏漁港",
+    "latitude": 34.33,
+    "longitude": 139.21,
+    "place": "Shikinejima, Tokyo",
+    "country": "JP",
+    "category": "harbor"
+  },
+  "kuov5Bd0aYE": {
+    "name": "御蔵島港",
+    "latitude": 33.9,
+    "longitude": 139.6,
+    "place": "Mikurajima, Tokyo",
+    "country": "JP",
+    "category": "harbor"
+  },
+  "PxvOdMbj6gA": {
+    "name": "岡田港",
+    "latitude": 34.79,
+    "longitude": 139.39,
+    "place": "Izu Ōshima, Tokyo",
+    "country": "JP",
+    "category": "harbor"
+  },
+  "WAb_fXdeQMs": {
+    "name": "波浮港",
+    "latitude": 34.69,
+    "longitude": 139.44,
+    "place": "Izu Ōshima, Tokyo",
+    "country": "JP",
+    "category": "harbor"
+  },
+  "wOvC84yodk4": {
+    "name": "元町港",
+    "latitude": 34.75,
+    "longitude": 139.36,
+    "place": "Izu Ōshima, Tokyo",
+    "country": "JP",
+    "category": "harbor"
+  },
+  "ZwuLUTTHnGE": {
+    "name": "利島港",
+    "latitude": 34.52,
+    "longitude": 139.28,
+    "place": "Toshima, Tokyo",
+    "country": "JP",
+    "category": "harbor"
+  },
+  "oQVfclB6nvY": {
+    "name": "Moto-Yawata Station Trainspotting",
+    "latitude": 35.72,
+    "longitude": 139.927,
+    "place": "Ichikawa, Chiba",
+    "country": "JP",
+    "category": "traffic"
+  },
+  "uHdQeCyNyGY": {
+    "name": "Chapultepec Park Panorama",
+    "latitude": 19.42,
+    "longitude": -99.18,
+    "place": "Mexico City",
+    "country": "MX",
+    "category": "nature"
+  },
+  "paW4jp4oWfs": {
+    "name": "Hotel Xcaret México",
+    "latitude": 20.58,
+    "longitude": -87.12,
+    "place": "Playa del Carmen, Quintana Roo",
+    "country": "MX",
+    "category": "beach"
+  },
+  "9HyGes7M-o0": {
+    "name": "Paseo de la Reforma",
+    "latitude": 19.427,
+    "longitude": -99.167,
+    "place": "Mexico City",
+    "country": "MX",
+    "category": "traffic"
+  },
+  "YC13-sQ6pbg": {
+    "name": "Santo Domingo de Guzmán, Oaxaca",
+    "latitude": 17.066,
+    "longitude": -96.723,
+    "place": "Oaxaca, Oaxaca",
+    "country": "MX",
+    "category": "nature"
+  },
+  "dOSZ5uFGLi4": {
+    "name": "Pico de Orizaba",
+    "latitude": 19.03,
+    "longitude": -97.27,
+    "place": "Pico de Orizaba, Puebla",
+    "country": "MX",
+    "category": "nature"
+  },
+  "0gT7jvaLCkg": {
+    "name": "Guadalupe International Bridge South",
+    "latitude": 31.44,
+    "longitude": -106.08,
+    "place": "Guadalupe, Chihuahua",
+    "country": "MX",
+    "category": "traffic"
+  },
+  "8u-hBawdG8c": {
+    "name": "Guadalupe International Bridge North",
+    "latitude": 31.44,
+    "longitude": -106.08,
+    "place": "Guadalupe, Chihuahua",
+    "country": "MX",
+    "category": "traffic"
+  },
+  "CYhISA_wFQ8": {
+    "name": "Lerdo South View",
+    "latitude": 31.752,
+    "longitude": -106.487,
+    "place": "Ciudad Juárez, Chihuahua",
+    "country": "MX",
+    "category": "traffic"
+  },
+  "RVXhhbkBGbI": {
+    "name": "Lerdo International Bridge Queue",
+    "latitude": 31.752,
+    "longitude": -106.487,
+    "place": "Ciudad Juárez, Chihuahua",
+    "country": "MX",
+    "category": "traffic"
+  },
+  "sOHFG6_3zAs": {
+    "name": "Lerdo International Bridge North",
+    "latitude": 31.752,
+    "longitude": -106.487,
+    "place": "Ciudad Juárez, Chihuahua",
+    "country": "MX",
+    "category": "traffic"
+  },
+  "SjY9wJXBQP8": {
+    "name": "Oldehove Tower",
+    "latitude": 53.204,
+    "longitude": 5.79,
+    "place": "Leeuwarden, Friesland",
+    "country": "NL",
+    "category": "city"
+  },
+  "tD_a03trUvE": {
+    "name": "Yongan Fishing Harbor",
+    "latitude": 24.99,
+    "longitude": 121.01,
+    "place": "Guanyin, Taoyuan",
+    "country": "TW",
+    "category": "harbor"
+  },
+  "fjhg3gAnMFg": {
+    "name": "Gaomei Wetland",
+    "latitude": 24.31,
+    "longitude": 120.55,
+    "place": "Qingshui, Taichung",
+    "country": "TW",
+    "category": "nature"
+  },
+  "JhQuR77AR7U": {
+    "name": "Torik Visitor Center",
+    "latitude": 23.06,
+    "longitude": 121.35,
+    "place": "Chenggong, Taitung",
+    "country": "TW",
+    "category": "nature"
+  },
+  "JnD8Rk3o0BM": {
+    "name": "Changhong Bridge",
+    "latitude": 23.47,
+    "longitude": 121.5,
+    "place": "Fengbin, Hualien",
+    "country": "TW",
+    "category": "nature"
+  },
+  "mXnigLvIL0Q": {
+    "name": "Shitiping Recreation Area",
+    "latitude": 23.56,
+    "longitude": 121.51,
+    "place": "Fengbin, Hualien",
+    "country": "TW",
+    "category": "nature"
+  },
+  "ZdqHgQwvZOw": {
+    "name": "Jinzun Coastal Area",
+    "latitude": 22.95,
+    "longitude": 121.3,
+    "place": "Donghe, Taitung",
+    "country": "TW",
+    "category": "beach"
+  },
+  "q3KJt-SZc2s": {
+    "name": "Taitung Jinzun",
+    "latitude": 22.95,
+    "longitude": 121.3,
+    "place": "Donghe, Taitung",
+    "country": "TW",
+    "category": "beach"
+  },
+  "JkoXcXI04Qk": null,
+  "LSkq-wHMxQY": {
+    "name": "Taitung Southern Cross-Island Highway Yakou",
+    "latitude": 23.26,
+    "longitude": 120.88,
+    "place": "Yakou, Taitung",
+    "country": "TW",
+    "category": "traffic"
+  },
+  "UCG1aXVO8H8": {
+    "name": "Taitung Duoliang Train Station",
+    "latitude": 22.53,
+    "longitude": 120.97,
+    "place": "Taimali, Taitung",
+    "country": "TW",
+    "category": "beach"
+  },
+  "2lVMTs_Fj0M": {
+    "name": "合歡山武嶺亭即時影像 Wuling Hehuanshan Taiwan #武嶺 #合歡山武嶺亭",
+    "latitude": 24.137,
+    "longitude": 121.276,
+    "place": "Wuling, Hehuanshan",
+    "country": "TW",
+    "category": "nature"
+  },
+  "e2gC37ILQmk": null,
+  "xNZBPxx8ykg": {
+    "name": "Dune Allen Beach",
+    "latitude": 30.37,
+    "longitude": -86.24,
+    "place": "Dune Allen Beach, Florida",
+    "country": "US",
+    "category": "beach"
+  },
+  "3hwTkO_5KXo": {
+    "name": "Dunlawton Beach Atlantic Shoreline Panorama",
+    "latitude": 29.15,
+    "longitude": -80.98,
+    "place": "Daytona Beach Shores, Florida",
+    "country": "US",
+    "category": "beach"
+  },
+  "V5ZGle1_tAI": {
+    "name": "Long Sands Beach & Atlantic Surf",
+    "latitude": 43.16,
+    "longitude": -70.62,
+    "place": "York Beach, Maine",
+    "country": "US",
+    "category": "beach"
+  },
+  "ENsZTariVY4": {
+    "name": "Barrett CPKC Elbow Lake Sub Railcam",
+    "latitude": 45.91,
+    "longitude": -95.89,
+    "place": "Barrett, Minnesota",
+    "country": "US",
+    "category": "transit"
+  },
+  "zm440ODo0mY": {
+    "name": "Barrett East PTZ Railcam",
+    "latitude": 45.91,
+    "longitude": -95.89,
+    "place": "Barrett, Minnesota",
+    "country": "US",
+    "category": "transit"
+  },
+  "cTL6RHF3WDs": {
+    "name": "Thunder Bay Harbor Camera",
+    "latitude": 45.06,
+    "longitude": -83.43,
+    "place": "Alpena, Michigan",
+    "country": "US",
+    "category": "harbor"
+  },
+  "jjFUDD3hWxE": {
+    "name": "Sawfish Bay Park",
+    "latitude": 26.94,
+    "longitude": -80.08,
+    "place": "Jupiter, Florida",
+    "country": "US",
+    "category": "nature"
+  },
+  "wfGEsNQYAeE": null,
+  "vMKMwEFHb_g": {
+    "name": "Smith Island Bayside Inn",
+    "latitude": 37.998,
+    "longitude": -76.03,
+    "place": "Smith Island, Maryland",
+    "country": "US",
+    "category": "harbor"
+  },
+  "ZZevIUr2cTk": null,
+  "dHq4oTSyiVg": {
+    "name": "Merrimack River Waterfront",
+    "latitude": 42.81,
+    "longitude": -70.87,
+    "place": "Newburyport, Massachusetts",
+    "country": "US",
+    "category": "harbor"
+  },
+  "JIE0vE51OKU": {
+    "name": "Burlington Waterfront & Lake Champlain",
+    "latitude": 44.476,
+    "longitude": -73.22,
+    "place": "Burlington, Vermont",
+    "country": "US",
+    "category": "harbor"
+  },
+  "qSIEIAYaDcI": {
+    "name": "Boca Ciega Bay Waterfront Panorama",
+    "latitude": 27.76,
+    "longitude": -82.75,
+    "place": "St. Petersburg, Florida",
+    "country": "US",
+    "category": "harbor"
+  },
+  "R6mgkdG33Do": {
+    "name": "Highland Bayou Waterfront in Bayou Vista",
+    "latitude": 29.32,
+    "longitude": -94.94,
+    "place": "Bayou Vista, Texas",
+    "country": "US",
+    "category": "nature"
+  },
+  "utGfq6AkxiM": {
+    "name": "St. Clair River Waterfront",
+    "latitude": 42.97,
+    "longitude": -82.42,
+    "place": "Port Huron, Michigan",
+    "country": "US",
+    "category": "nature"
+  },
+  "ZDiFe7c1ovQ": {
+    "name": "Manteo Waterfront Marina",
+    "latitude": 35.908,
+    "longitude": -75.67,
+    "place": "Manteo, North Carolina",
+    "country": "US",
+    "category": "harbor"
+  },
+  "eg9MG8sySNw": null,
+  "QIIVxUJzJQw": {
+    "name": "Bryant Park",
+    "latitude": 40.7536,
+    "longitude": -73.9832,
+    "place": "Manhattan, New York",
+    "country": "US",
+    "category": "nature"
+  },
+  "Jqo7Z9QiOEQ": {
+    "name": "Teton Range Over Buffalo Valley",
+    "latitude": 43.83,
+    "longitude": -110.33,
+    "place": "Moran, Wyoming",
+    "country": "US",
+    "category": "nature"
+  },
+  "WeeDyqRKqVI": {
+    "name": "Turpin Meadow Ranch in Buffalo Valley",
+    "latitude": 43.83,
+    "longitude": -110.33,
+    "place": "Moran, Wyoming",
+    "country": "US",
+    "category": "wildlife"
+  },
+  "VWDi2Po3ZsQ": {
+    "name": "World's Largest Buffalo",
+    "latitude": 46.91,
+    "longitude": -98.69,
+    "place": "Jamestown, North Dakota",
+    "country": "US",
+    "category": "city"
+  },
+  "j-0fhrHzEiM": {
+    "name": "East Gros Ventre Butte Grand Teton",
+    "latitude": 43.49,
+    "longitude": -110.78,
+    "place": "Jackson, Wyoming",
+    "country": "US",
+    "category": "nature"
+  },
+  "PftkGaoFl_0": {
+    "name": "Centennial Station Live Railcam, Olympia-Lacey",
+    "latitude": 47.02,
+    "longitude": -122.8,
+    "place": "Lacey, Washington",
+    "country": "US",
+    "category": "transit"
+  },
+  "JcjXzM_WAe4": {
+    "name": "Champlain Valley Fairgrounds",
+    "latitude": 44.49,
+    "longitude": -73.11,
+    "place": "Essex Junction, Vermont",
+    "country": "US",
+    "category": "weather"
+  },
+  "WYgjhPHIw1k": null,
+  "ilvq5Ir-qRA": {
+    "name": "Charlotte Railcam on the CN Flint Sub",
+    "latitude": 42.56,
+    "longitude": -84.84,
+    "place": "Charlotte, Michigan",
+    "country": "US",
+    "category": "transit"
+  },
+  "XAHa3fQnorM": {
+    "name": "Charlotte-Genesee Lighthouse",
+    "latitude": 43.25,
+    "longitude": -77.61,
+    "place": "Rochester, New York",
+    "country": "US",
+    "category": "harbor"
+  },
+  "cavcN9tRJzE": {
+    "name": "Range Dubois Town",
+    "latitude": 43.53,
+    "longitude": -109.63,
+    "place": "Dubois, Wyoming",
+    "country": "US",
+    "category": "nature"
+  },
+  "a83Y5shllLg": {
+    "name": "U. S. Steel Bald Eagle River View",
+    "latitude": 40.36,
+    "longitude": -79.91,
+    "place": "West Mifflin, Pennsylvania",
+    "country": "US",
+    "category": "nature"
+  },
+  "E8fp7TDgQUk": {
+    "name": "East Hampton Main Beach",
+    "latitude": 40.946,
+    "longitude": -72.185,
+    "place": "East Hampton, New York",
+    "country": "US",
+    "category": "beach"
+  },
+  "Reih0grPrWM": {
+    "name": "Main Street, East Hampton",
+    "latitude": 40.963,
+    "longitude": -72.185,
+    "place": "East Hampton, New York",
+    "country": "US",
+    "category": "city"
+  },
+  "xM1-e429Y3A": {
+    "name": "East Hampton Main Beach",
+    "latitude": 40.946,
+    "longitude": -72.185,
+    "place": "East Hampton, New York",
+    "country": "US",
+    "category": "beach"
+  },
+  "xvMcuLPJbbs": {
+    "name": "Georgica Beach, East Hampton",
+    "latitude": 40.94,
+    "longitude": -72.225,
+    "place": "East Hampton, New York",
+    "country": "US",
+    "category": "beach"
+  },
+  "10jukqY3NU4": null,
+  "AspLvGaVG-4": null,
+  "s7sY1waeOf4": {
+    "name": "Historic Fishtown Harbor",
+    "latitude": 45.02,
+    "longitude": -85.76,
+    "place": "Leland, Michigan",
+    "country": "US",
+    "category": "harbor"
+  },
+  "YlAtgGTbm4M": {
+    "name": "Flagstaff Lake at Flagstaff Landing",
+    "latitude": 45.2,
+    "longitude": -70.3,
+    "place": "Flagstaff Lake, Maine",
+    "country": "US",
+    "category": "nature"
+  },
+  "69rI-RUVNaA": null,
+  "U-xxaUie50w": null,
+  "p1IbYzNwWDQ": null,
+  "ccN7Cgs4XfI": null,
+  "jmWZy59tBbk": null,
+  "OY4V_AppZ6s": {
+    "name": "Fraser Point Bald Eagle Nest",
+    "latitude": 34.06,
+    "longitude": -119.92,
+    "place": "Santa Cruz Island, California",
+    "country": "US",
+    "category": "wildlife"
+  },
+  "DV2ADV6XbmA": {
+    "name": "Guttenberg Riverfront Railcam, Marquette Sub",
+    "latitude": 42.785,
+    "longitude": -91.1,
+    "place": "Guttenberg, Iowa",
+    "country": "US",
+    "category": "transit"
+  },
+  "catvjIWNrZg": {
+    "name": "York Harbor Beach Cove",
+    "latitude": 43.135,
+    "longitude": -70.64,
+    "place": "York Harbor, Maine",
+    "country": "US",
+    "category": "beach"
+  },
+  "6tq8S2pp8PQ": {
+    "name": "Pigeon River Hartford",
+    "latitude": 35.82,
+    "longitude": -83.15,
+    "place": "Hartford, Tennessee",
+    "country": "US",
+    "category": "nature"
+  },
+  "R2jNOtYEwdI": {
+    "name": "Upper East Side Rooftops",
+    "latitude": 40.77,
+    "longitude": -73.96,
+    "place": "Upper East Side, New York",
+    "country": "US",
+    "category": "city"
+  },
+  "4kzVkq8YLko": {
+    "name": "Boyne Mountain Hemlock",
+    "latitude": 45.16,
+    "longitude": -84.93,
+    "place": "Boyne Falls, Michigan",
+    "country": "US",
+    "category": "nature"
+  },
+  "sBtvpwKH2BE": {
+    "name": "Holden Beach",
+    "latitude": 33.91,
+    "longitude": -78.27,
+    "place": "Holden Beach, North Carolina",
+    "country": "US",
+    "category": "beach"
+  },
+  "RjVZXgl_PdE": {
+    "name": "Rainy Lake at Camp Idlewood",
+    "latitude": 48.6,
+    "longitude": -93.4,
+    "place": "International Falls, Minnesota",
+    "country": "US",
+    "category": "nature"
+  },
+  "OjVFvL3uH9A": {
+    "name": "Cape Porpoise Inner Harbor",
+    "latitude": 43.36,
+    "longitude": -70.43,
+    "place": "Kennebunkport, Maine",
+    "country": "US",
+    "category": "harbor"
+  },
+  "S-mbsv-02_0": null,
+  "s1j4VctQDMk": {
+    "name": "Crossroads Museum Railroad Diamond",
+    "latitude": 34.935,
+    "longitude": -88.52,
+    "place": "Corinth, Mississippi",
+    "country": "US",
+    "category": "transit"
+  },
+  "s_lziIKyUT4": null,
+  "cYvIot1LQsc": {
+    "name": "St. James City",
+    "latitude": 26.5,
+    "longitude": -82.08,
+    "place": "St. James City, Florida",
+    "country": "US",
+    "category": "harbor"
+  },
+  "MqzQdTHCTOg": {
+    "name": "Ohio River at Jeffersonville",
+    "latitude": 38.28,
+    "longitude": -85.74,
+    "place": "Jeffersonville, Indiana",
+    "country": "US",
+    "category": "nature"
+  },
+  "ZqejkPC4mm0": {
+    "name": "Bayhealth Kent Campus",
+    "latitude": 39.16,
+    "longitude": -75.52,
+    "place": "Dover, Delaware",
+    "country": "US",
+    "category": "city"
+  },
+  "26UKfo8te2Q": {
+    "name": "Bayhealth Sussex Campus Panorama",
+    "latitude": 38.93,
+    "longitude": -75.43,
+    "place": "Milford, Delaware",
+    "country": "US",
+    "category": "traffic"
+  },
+  "viImr8SK8To": null,
+  "0XzNRaLVBqE": null,
+  "A3pJIBKMqFI": null,
+  "Sc8wb-8CfpU": {
+    "name": "Lake Geneva at Canada Creek Ranch",
+    "latitude": 45.18,
+    "longitude": -84.17,
+    "place": "Atlanta, Michigan",
+    "country": "US",
+    "category": "nature"
+  },
+  "Vz3pCfSinek": {
+    "name": "Lake Hebron at Lakeshore House",
+    "latitude": 45.29,
+    "longitude": -69.51,
+    "place": "Monson, Maine",
+    "country": "US",
+    "category": "nature"
+  },
+  "s869fYS-TGY": {
+    "name": "Leavenworth Adventure Park Aerial View",
+    "latitude": 47.596,
+    "longitude": -120.661,
+    "place": "Leavenworth, Washington",
+    "country": "US",
+    "category": "nature"
+  },
+  "TmtVbezZaqg": {
+    "name": "Leavenworth Village Center",
+    "latitude": 47.596,
+    "longitude": -120.661,
+    "place": "Leavenworth, Washington",
+    "country": "US",
+    "category": "nature"
+  },
+  "wdl24JBMMis": {
+    "name": "Downtown Leavenworth Panorama",
+    "latitude": 47.596,
+    "longitude": -120.661,
+    "place": "Leavenworth, Washington",
+    "country": "US",
+    "category": "nature"
+  },
+  "XjhxRZEm638": {
+    "name": "Downtown Leavenworth Bavarian Village",
+    "latitude": 47.596,
+    "longitude": -120.661,
+    "place": "Leavenworth, Washington",
+    "country": "US",
+    "category": "city"
+  },
+  "yHH8EWIR01Y": {
+    "name": "Bavarian Village Square at Leavenworth",
+    "latitude": 47.596,
+    "longitude": -120.661,
+    "place": "Leavenworth, Washington",
+    "country": "US",
+    "category": "nature"
+  },
+  "XoANQufSSXY": null,
+  "N8E8JIZFaS0": {
+    "name": "Trevor Zoo Pond, Millbrook",
+    "latitude": 41.78,
+    "longitude": -73.69,
+    "place": "Millbrook, New York",
+    "country": "US",
+    "category": "wildlife"
+  },
+  "jJI5w_RVGtQ": {
+    "name": "Mendenhall Glacier & Mountain Goats",
+    "latitude": 58.42,
+    "longitude": -134.55,
+    "place": "Juneau, Alaska",
+    "country": "US",
+    "category": "wildlife"
+  },
+  "wDgZkzkOP-s": {
+    "name": "Mission Mountains",
+    "latitude": 47.4,
+    "longitude": -113.9,
+    "place": "Mission Mountains, Montana",
+    "country": "US",
+    "category": "nature"
+  },
+  "5DlywACQ9qM": null,
+  "JS679d7WFDI": {
+    "name": "Mount Washington from Wildcat",
+    "latitude": 44.2706,
+    "longitude": -71.3033,
+    "place": "Mount Washington, New Hampshire",
+    "country": "US",
+    "category": "weather"
+  },
+  "JuJVUhj9JBo": {
+    "name": "Mount Washington Observatory Tower",
+    "latitude": 44.2706,
+    "longitude": -71.3033,
+    "place": "Mount Washington, New Hampshire",
+    "country": "US",
+    "category": "weather"
+  },
+  "xYbH_qKYb5A": {
+    "name": "Cog Railway Mount Washington Track",
+    "latitude": 44.2706,
+    "longitude": -71.3033,
+    "place": "Mount Washington, New Hampshire",
+    "country": "US",
+    "category": "transit"
+  },
+  "Z27ghRYocJ4": {
+    "name": "Mount Washington Observatory Deck",
+    "latitude": 44.2706,
+    "longitude": -71.3033,
+    "place": "Mount Washington, New Hampshire",
+    "country": "US",
+    "category": "weather"
+  },
+  "pUQf75fPvzE": null,
+  "qjfPiDu9F50": {
+    "name": "Mt. Bachelor Mid-Mountain View",
+    "latitude": 43.98,
+    "longitude": -121.69,
+    "place": "Mount Bachelor, Oregon",
+    "country": "US",
+    "category": "nature"
+  },
+  "r-7zA9fAg1c": null,
+  "3LtOF19QGQY": null,
+  "mVaiVrtHnNA": {
+    "name": "North End Zone Multi-Use Facility",
+    "latitude": 32.602,
+    "longitude": -85.489,
+    "place": "Auburn, Alabama",
+    "country": "US",
+    "category": "city"
+  },
+  "9drSEKsgG-c": {
+    "name": "Nottingham Lake & Beach",
+    "latitude": 39.63,
+    "longitude": -106.52,
+    "place": "Avon, Colorado",
+    "country": "US",
+    "category": "beach"
+  },
+  "hc-wNhICyAo": {
+    "name": "Nottingham Park Upper Field",
+    "latitude": 39.63,
+    "longitude": -106.52,
+    "place": "Avon, Colorado",
+    "country": "US",
+    "category": "nature"
+  },
+  "ZcvUDEDw17I": {
+    "name": "The Sea Pines Resort Plantation Golf Club Driving Range",
+    "latitude": 32.14,
+    "longitude": -80.79,
+    "place": "Hilton Head Island, South Carolina",
+    "country": "US",
+    "category": "other"
+  },
+  "xp1b7w3qPd8": null,
+  "rArvNLNmhOo": {
+    "name": "Portland Head Light",
+    "latitude": 43.623,
+    "longitude": -70.208,
+    "place": "Cape Elizabeth, Maine",
+    "country": "US",
+    "category": "nature"
+  },
+  "lq15dNFXISw": {
+    "name": "Rehoboth Boardwalk",
+    "latitude": 38.716,
+    "longitude": -75.076,
+    "place": "Rehoboth Beach, Delaware",
+    "country": "US",
+    "category": "beach"
+  },
+  "NeKZVw6-EGg": {
+    "name": "Dillon Reservoir & Amphitheater",
+    "latitude": 39.62,
+    "longitude": -106.06,
+    "place": "Dillon, Colorado",
+    "country": "US",
+    "category": "nature"
+  },
+  "oWM8Xo9TLXY": {
+    "name": "Angostura Reservoir Marina & Foothills",
+    "latitude": 43.3,
+    "longitude": -103.43,
+    "place": "Angostura Reservoir, South Dakota",
+    "country": "US",
+    "category": "harbor"
+  },
+  "zScdt7Z839s": {
+    "name": "Lower Otay Reservoir",
+    "latitude": 32.61,
+    "longitude": -116.93,
+    "place": "Chula Vista, California",
+    "country": "US",
+    "category": "nature"
+  },
+  "vswdnCbYK-M": {
+    "name": "Roanoke Marshes Lighthouse",
+    "latitude": 35.91,
+    "longitude": -75.67,
+    "place": "Manteo, North Carolina",
+    "country": "US",
+    "category": "harbor"
+  },
+  "oWKwLIixxjE": {
+    "name": "Rogers Beach Westhampton",
+    "latitude": 40.8,
+    "longitude": -72.64,
+    "place": "Westhampton Beach, New York",
+    "country": "US",
+    "category": "beach"
+  },
+  "AvO984goDHQ": {
+    "name": "Round Lake, Charlevoix",
+    "latitude": 45.318,
+    "longitude": -85.26,
+    "place": "Charlevoix, Michigan",
+    "country": "US",
+    "category": "harbor"
+  },
+  "1aPhtRjjzb0": {
+    "name": "Sacramento National Wildlife Refuge",
+    "latitude": 39.43,
+    "longitude": -122.19,
+    "place": "Willows, California",
+    "country": "US",
+    "category": "wildlife"
+  },
+  "99rql3wym9I": {
+    "name": "Turtley Rad Cut, St. George Island",
+    "latitude": 29.66,
+    "longitude": -84.86,
+    "place": "St. George Island, Florida",
+    "country": "US",
+    "category": "beach"
+  },
+  "9G7k0C8E9PQ": {
+    "name": "Savanna Riverfront Live Railcam",
+    "latitude": 42.09,
+    "longitude": -90.16,
+    "place": "Savanna, Illinois",
+    "country": "US",
+    "category": "transit"
+  },
+  "taI7GiyvDxE": {
+    "name": "Royal Sonesta San Juan",
+    "latitude": 18.44,
+    "longitude": -66.02,
+    "place": "San Juan, Puerto Rico",
+    "country": "PR",
+    "category": "beach"
+  },
+  "g-Bm7qA5mxs": {
+    "name": "Port San Luis",
+    "latitude": 35.17,
+    "longitude": -120.74,
+    "place": "Avila Beach, California",
+    "country": "US",
+    "category": "wildlife"
+  },
+  "bCISRUH5eVo": null,
+  "umZkZ8IQUO4": null,
+  "bM0GplM_vPY": {
+    "name": "Elbo Room Patio Beachfront Cam",
+    "latitude": 26.119,
+    "longitude": -80.104,
+    "place": "Fort Lauderdale, Florida",
+    "country": "US",
+    "category": "beach"
+  },
+  "wVNt3l657X0": {
+    "name": "Elbo Room Bar",
+    "latitude": 26.119,
+    "longitude": -80.104,
+    "place": "Fort Lauderdale, Florida",
+    "country": "US",
+    "category": "city"
+  },
+  "YWs0HMRVCBY": {
+    "name": "Elbo Room Beach Bar",
+    "latitude": 26.119,
+    "longitude": -80.104,
+    "place": "Fort Lauderdale, Florida",
+    "country": "US",
+    "category": "city"
+  },
+  "MwHWDokyUhw": {
+    "name": "The Village at Mammoth Plaza",
+    "latitude": 37.65,
+    "longitude": -118.97,
+    "place": "Mammoth Lakes, California",
+    "country": "US",
+    "category": "city"
+  },
+  "EVs4CG-eSto": {
+    "name": "Theodore Roosevelt Memorial Ranch",
+    "latitude": 48.1,
+    "longitude": -112.6,
+    "place": "Dupuyer, Montana",
+    "country": "US",
+    "category": "wildlife"
+  },
+  "WLSkgf-dvOI": null,
+  "QODC7uV21Bg": {
+    "name": "Triangle North Executive Airport",
+    "latitude": 36.02,
+    "longitude": -78.33,
+    "place": "Louisburg, North Carolina",
+    "country": "US",
+    "category": "transit"
+  },
+  "_U6TLQvS9VU": {
+    "name": "Trinidad Harbor",
+    "latitude": 41.06,
+    "longitude": -124.14,
+    "place": "Trinidad, California",
+    "country": "US",
+    "category": "nature"
+  },
+  "MjkEVVlOHvY": null,
+  "h-Z0wCdD3dI": {
+    "name": "Warrior Canine Connection Puppy Playroom",
+    "latitude": 39.18,
+    "longitude": -77.31,
+    "place": "Boyds, Maryland",
+    "country": "US",
+    "category": "wildlife"
+  },
+  "Qeq2Kax0v64": {
+    "name": "Warrior Canine Puppy Cam",
+    "latitude": 39.18,
+    "longitude": -77.31,
+    "place": "Boyds, Maryland",
+    "country": "US",
+    "category": "wildlife"
+  },
+  "9e2vtFJk73E": null,
+  "LXJ3KRwnFnk": {
+    "name": "George Washington Bridge",
+    "latitude": 40.851,
+    "longitude": -73.953,
+    "place": "Washington Heights, New York",
+    "country": "US",
+    "category": "traffic"
+  },
+  "UmiLYeh8-r8": {
+    "name": "Washington Island Ferry Dock",
+    "latitude": 45.35,
+    "longitude": -86.93,
+    "place": "Washington Island, Wisconsin",
+    "country": "US",
+    "category": "harbor"
+  },
+  "wf5mPSE2w9c": null,
+  "aT1adgYSfbc": {
+    "name": "West End Bald Eagle Nest Cliff Cam",
+    "latitude": 33.47,
+    "longitude": -118.6,
+    "place": "Santa Catalina Island, California",
+    "country": "US",
+    "category": "wildlife"
+  },
+  "wfuqjSNXZ14": {
+    "name": "West End Bald Eagle Nest",
+    "latitude": 33.47,
+    "longitude": -118.6,
+    "place": "Santa Catalina Island, California",
+    "country": "US",
+    "category": "wildlife"
+  },
+  "laKzBnfVIsQ": {
+    "name": "Bailey Yard West View",
+    "latitude": 41.14,
+    "longitude": -100.83,
+    "place": "North Platte, Nebraska",
+    "country": "US",
+    "category": "transit"
+  },
+  "5p_KGD4fJZs": {
+    "name": "White House",
+    "latitude": 38.8977,
+    "longitude": -77.0365,
+    "place": "Washington, District of Columbia",
+    "country": "US",
+    "category": "city"
+  },
+  "IvZ22jZgvOI": null,
+  "Dt_WhmxV0yE": {
+    "name": "Winter Park Resort Snoasis",
+    "latitude": 39.886,
+    "longitude": -105.763,
+    "place": "Winter Park, Colorado",
+    "country": "US",
+    "category": "nature"
+  },
+  "HfX4H3MSwXs": {
+    "name": "Winter Park Resort Lunch Rock",
+    "latitude": 39.886,
+    "longitude": -105.763,
+    "place": "Winter Park, Colorado",
+    "country": "US",
+    "category": "nature"
+  },
+  "jGS0j-viJmM": {
+    "name": "Winter Park Resort Slope View",
+    "latitude": 39.886,
+    "longitude": -105.763,
+    "place": "Winter Park, Colorado",
+    "country": "US",
+    "category": "nature"
+  },
+  "vyWAzJAWv4w": {
+    "name": "Winter Park Resort Base",
+    "latitude": 39.886,
+    "longitude": -105.763,
+    "place": "Winter Park, Colorado",
+    "country": "US",
+    "category": "nature"
+  },
+  "8vs7QuHgyfI": {
+    "name": "Selati Wilderness Foundation Verreaux's Eagle Nest",
+    "latitude": -24.1,
+    "longitude": 30.9,
+    "place": "Selati Game Reserve, Limpopo",
+    "country": "ZA",
+    "category": "wildlife"
+  },
+  "GL_2CrLwSDA": {
+    "name": "Napili Sunset Beachfront Resort",
+    "latitude": 20.99,
+    "longitude": -156.67,
+    "place": "Napili, Hawaii",
+    "country": "US",
+    "category": "beach"
+  },
+  "3RWnb5E2xw4": {
+    "name": "Richardson Nature Center",
+    "latitude": 44.83,
+    "longitude": -93.37,
+    "place": "Bloomington, Minnesota",
+    "country": "US",
+    "category": "wildlife"
+  },
+  "9fzUjSTK5F8": {
+    "name": "Kansas City Skyline & Union Station",
+    "latitude": 39.085,
+    "longitude": -94.586,
+    "place": "Kansas City, Missouri",
+    "country": "US",
+    "category": "city"
+  },
+  "QhT13bsgL-U": {
+    "name": "Shenandoah Junction, West Virginia",
+    "latitude": 39.36,
+    "longitude": -77.86,
+    "place": "Shenandoah Junction, West Virginia",
+    "country": "US",
+    "category": "transit"
+  },
+  "TCGyi19a6J4": {
+    "name": "Catalina Island West End Overlook",
+    "latitude": 33.47,
+    "longitude": -118.6,
+    "place": "Santa Catalina Island, California",
+    "country": "US",
+    "category": "nature"
+  },
+  "JH_NzhSsqis": {
+    "name": "Catalina Island Underwater Marine Reserve Cam",
+    "latitude": 33.345,
+    "longitude": -118.325,
+    "place": "Avalon, California",
+    "country": "US",
+    "category": "wildlife"
   }
 }

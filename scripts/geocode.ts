@@ -215,7 +215,9 @@ export function geocode(
   // "Arkansas River Whitewater": the title names a state the best match isn't in — wrong homonym.
   let rest = ` ${context} `;
   for (const h of hits) rest = rest.replaceAll(` ${h.matched} `, ' ');
-  const named = [...regions].filter((r) => stateOnly(r) && rest.includes(` ${r} `));
+  const mentioned = [...regions].filter((r) => stateOnly(r) && rest.includes(` ${r} `));
+  // "West Virginia" doesn't also name Virginia.
+  const named = mentioned.filter((r) => !mentioned.some((o) => o !== r && ` ${o} `.includes(` ${r} `)));
   if (named.length && !named.includes(normalize(best.place.admin1))) {
     return { ok: false, reason: `region-mismatch:${named[0]}`, best: { ...best, confidence: Math.max(best.confidence, 0) } };
   }
@@ -268,4 +270,34 @@ export function nearestPlace(g: Gazetteer, lat: number, lon: number): { place: P
 export function placeLabel(p: Place): string {
   return p.admin1 && normalize(p.admin1) !== normalize(p.name) && !p.admin1.includes(p.name)
     ? `${p.name}, ${p.admin1}` : p.name;
+}
+
+/**
+ * Operators occasionally publish a longitude with its sign dropped (a Virginia camera at 77°E lands in
+ * Xinjiang). A camera over 3000 km from the rest of its feed that sits among them once flipped is moved
+ * back and re-labelled; the median keeps wide feeds (USGS, NOAA buoys) from being touched.
+ */
+export function unflipLongitudes<T extends { source: string; latitude: number; longitude: number; place: string; timezone: string }>(
+  g: Gazetteer, cams: T[],
+): T[] {
+  const bySource = new Map<string, T[]>();
+  for (const c of cams) {
+    const list = bySource.get(c.source);
+    if (list) list.push(c); else bySource.set(c.source, [c]);
+  }
+  const median = (xs: number[]) => xs.sort((a, b) => a - b)[xs.length >> 1];
+  const fixed: T[] = [];
+  for (const list of bySource.values()) {
+    const lat = median(list.map((c) => c.latitude));
+    const lon = median(list.map((c) => c.longitude));
+    for (const c of list) {
+      if (distanceKm(lat, lon, c.latitude, c.longitude) < 3000 || distanceKm(lat, lon, c.latitude, -c.longitude) > 1000) continue;
+      c.longitude = -c.longitude;
+      const near = nearestPlace(g, c.latitude, c.longitude).place;
+      c.place = placeLabel(near);
+      c.timezone = near.timezone;
+      fixed.push(c);
+    }
+  }
+  return fixed;
 }
