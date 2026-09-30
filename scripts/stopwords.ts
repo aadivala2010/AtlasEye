@@ -17,7 +17,7 @@ export const STOPWORDS = new Set<string>([
   'union', 'liberty', 'victory', 'harmony', 'unity', 'concord', 'hope', 'friendship', 'grand', 'royal',
   'apex', 'scenic', 'lakes', 'banks', 'pantai', 'laghi', 'noord', 'zuid', 'sertao', 'nord', 'sud',
   'shoreline', 'boulder', 'university', 'college', 'kennedy', 'marine', 'junction', 'osprey', 'falcon', 'heron',
-  'hawk', 'pelican', 'owl', 'puffin', 'ixtapa', 'skyline', 'skyline view', 'ocean view', 'volcano',
+  'hawk', 'temple', 'pelican', 'owl', 'puffin', 'ixtapa', 'skyline', 'skyline view', 'ocean view', 'volcano',
   // volcanoes named like a town elsewhere (Kīlauea town is on Kauai; the volcano is on Hawaiʻi) — use overrides
   'kilauea', 'etna', 'vesuvius',
   // everyday Japanese/Chinese words that are also district names

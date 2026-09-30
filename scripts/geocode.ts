@@ -19,6 +19,8 @@ export interface Place {
 export interface Gazetteer {
   places: Place[];
   index: Map<string, Place[]>;
+  /** Normalised admin1 names (states, prefectures) per country. */
+  regions: Map<string, Set<string>>;
 }
 
 export interface GeocodeHit {
@@ -40,6 +42,8 @@ export const CONFIDENCE_THRESHOLD = 0.65;
 const MAX_NGRAM = 6;
 /** A top place holding less than this share of its name's population, with no state/prefecture named, is a coin flip. */
 const MIN_NAME_SHARE = 0.75;
+/** A town sharing its name with a state outside it ("Florida, NY") only wins at this size (Washington, DC). */
+const REGION_NAMESAKE_POP = 500_000;
 /** Words that, following a place name, make it part of a street or facility name. */
 const FEATURE_SUFFIX = new Set([
   'street', 'st', 'avenue', 'ave', 'road', 'rd', 'boulevard', 'blvd', 'drive', 'dr', 'lane', 'ln', 'way',
@@ -65,6 +69,7 @@ export function normalize(s: string): string {
 export function loadGazetteer(path = 'data/gazetteer/cities.tsv'): Gazetteer {
   const places: Place[] = [];
   const index = new Map<string, Place[]>();
+  const regions = new Map<string, Set<string>>();
   for (const line of readFileSync(path, 'utf8').split('\n')) {
     const f = line.split('\t');
     if (f.length < 10) continue;
@@ -73,6 +78,11 @@ export function loadGazetteer(path = 'data/gazetteer/cities.tsv'): Gazetteer {
       admin1: f[6], population: +f[7], timezone: f[8],
     };
     places.push(place);
+    const region = normalize(place.admin1);
+    if (region.length >= 4 && !STOPWORDS.has(region)) {
+      const set = regions.get(place.country);
+      if (set) set.add(region); else regions.set(place.country, new Set([region]));
+    }
     const keys = new Set([f[1], ...f[9].split('|')].map(normalize).filter((k) => k.length >= 2));
     for (const k of keys) {
       if (STOPWORDS.has(k)) continue;
@@ -81,7 +91,7 @@ export function loadGazetteer(path = 'data/gazetteer/cities.tsv'): Gazetteer {
       else index.set(k, [place]);
     }
   }
-  return { places, index };
+  return { places, index, regions };
 }
 
 const clamp = (x: number) => Math.max(0, Math.min(1, x));
@@ -163,11 +173,18 @@ export function geocode(
     (p.admin1 !== '' && normalize(p.admin1) !== normalize(p.name) && ` ${context} `.includes(` ${normalize(p.admin1)} `))
     || (p.country === 'US' && contextWords.has(p.admin1Code));
 
+  const regions = (country && g.regions.get(country)) || new Set<string>();
+  // Only states with no big or same-region namesake: "Osaka", "Madrid", "Washington" (DC) are also cities.
+  const stateOnly = (r: string) => regions.has(r)
+    && !(g.index.get(r) ?? []).some((p) => p.country === country && (normalize(p.admin1) === r || p.population >= REGION_NAMESAKE_POP));
+
   const hits: GeocodeHit[] = [];
   for (const field of ['title', 'channel'] as const) {
     const text = fields[field];
     if (!text) continue;
     for (const m of findMatches(g, text, country)) {
+      // "Central Florida", "USS Alabama": a state named, not the small town sharing its name.
+      if (stateOnly(m.key)) continue;
       const ranked = [...m.places].sort((a, b) =>
         Number(admin1Hit(b)) - Number(admin1Hit(a)) || b.population - a.population);
       const top = ranked[0];
@@ -190,11 +207,18 @@ export function geocode(
   if (!hits.length) return { ok: false, reason: country ? 'no-gazetteer-match-in-country' : 'no-gazetteer-match' };
 
   // "Seattle, Washington": a match that names another match's own state is context, not a place.
-  const regions = new Set(hits.flatMap((h) => [normalize(h.place.admin1), h.place.admin1Code.toLowerCase()]));
-  const places = hits.filter((h) => !regions.has(h.matched));
+  const hitRegions = new Set(hits.flatMap((h) => [normalize(h.place.admin1), h.place.admin1Code.toLowerCase()]));
+  const places = hits.filter((h) => !hitRegions.has(h.matched));
   if (places.length) hits.splice(0, hits.length, ...places);
   hits.sort((a, b) => b.confidence - a.confidence);
   let best = hits[0];
+  // "Arkansas River Whitewater": the title names a state the best match isn't in — wrong homonym.
+  let rest = ` ${context} `;
+  for (const h of hits) rest = rest.replaceAll(` ${h.matched} `, ' ');
+  const named = [...regions].filter((r) => stateOnly(r) && rest.includes(` ${r} `));
+  if (named.length && !named.includes(normalize(best.place.admin1))) {
+    return { ok: false, reason: `region-mismatch:${named[0]}`, best: { ...best, confidence: Math.max(best.confidence, 0) } };
+  }
   if (best.confidence < 0) return { ok: false, reason: `ambiguous-name:${best.matched}`, best: { ...best, confidence: 0 } };
   // Two strong matches far apart ("Tokyo to Osaka") — we can't tell which one the camera is at.
   const rival = hits.find((h) => h !== best && h.confidence >= best.confidence - 0.1

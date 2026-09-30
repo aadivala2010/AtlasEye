@@ -583,11 +583,23 @@
   "title": "Arizona Snowbowl Hart Prairie Area",
   "source": "famelack",
   "country": "US",
-  "reason": "ambiguous-name:hart",
+  "reason": "region-mismatch:arizona",
   "best": {
    "matched": "hart",
    "place": "Hart, Michigan, US",
    "confidence": 0
+  }
+ },
+ {
+  "id": "X_iECBFS7gY",
+  "title": "Arkansas River Whitewater Wave",
+  "source": "famelack",
+  "country": "US",
+  "reason": "region-mismatch:arkansas",
+  "best": {
+   "matched": "whitewater",
+   "place": "Whitewater, Wisconsin, US",
+   "confidence": 0.833
   }
  },
  {
@@ -1903,7 +1915,7 @@
   "title": "Bridgeport Tennessee River Bridge",
   "source": "famelack",
   "country": "US",
-  "reason": "ambiguous-name:bridgeport",
+  "reason": "region-mismatch:tennessee",
   "best": {
    "matched": "bridgeport",
    "place": "Bridgeport, Connecticut, US",
@@ -2201,24 +2213,14 @@
   "title": "California Academy of Sciences Penguins",
   "source": "famelack",
   "country": "US",
-  "reason": "ambiguous-name:california",
-  "best": {
-   "matched": "california",
-   "place": "California, Maryland, US",
-   "confidence": 0
-  }
+  "reason": "no-gazetteer-match-in-country"
  },
  {
   "id": "w6ShS41ZmPg",
   "title": "California Earthquake Watch",
   "source": "famelack",
   "country": "US",
-  "reason": "ambiguous-name:california",
-  "best": {
-   "matched": "california",
-   "place": "California, Maryland, US",
-   "confidence": 0
-  }
+  "reason": "no-gazetteer-match-in-country"
  },
  {
   "id": "H1IrOXZIlDU",
@@ -2504,6 +2506,20 @@
   "title": "Cathedral of the Good Shepherd: Eucharistic Adoration",
   "source": "famelack",
   "country": "SG",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "0oMoIrLM13Y",
+  "title": "Central Florida Bald Eagle Nest",
+  "source": "famelack",
+  "country": "US",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "8AtRJpORh5A",
+  "title": "Central Florida Osprey Nest",
+  "source": "famelack",
+  "country": "US",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -5831,6 +5847,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "sIFRzKjCtrA",
+  "title": "Illinois, Indiana, and Michigan Trains",
+  "source": "famelack",
+  "country": "US",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
   "id": "0GRxQoFMmqo",
   "title": "Ilulissat Iceberg",
   "source": "famelack",
@@ -5882,24 +5905,14 @@
   "title": "Iowa BNSF, CPKC, and CN Trains",
   "source": "famelack",
   "country": "US",
-  "reason": "below-threshold",
-  "best": {
-   "matched": "iowa",
-   "place": "Iowa, Louisiana, US",
-   "confidence": 0.572
-  }
+  "reason": "no-gazetteer-match-in-country"
  },
  {
   "id": "Exa4xEN873A",
   "title": "Iowa UP and IAIS Trains",
   "source": "famelack",
   "country": "US",
-  "reason": "below-threshold",
-  "best": {
-   "matched": "iowa",
-   "place": "Iowa, Louisiana, US",
-   "confidence": 0.572
-  }
+  "reason": "no-gazetteer-match-in-country"
  },
  {
   "id": "yyKt4PYmyJ0",
@@ -5913,12 +5926,7 @@
   "title": "Ishikawa Prefectural Office",
   "source": "famelack",
   "country": "JP",
-  "reason": "ambiguous-name:ishikawa",
-  "best": {
-   "matched": "ishikawa",
-   "place": "Ishikawa, Okinawa, JP",
-   "confidence": 0
-  }
+  "reason": "no-gazetteer-match-in-country"
  },
  {
   "id": "awQzjn72bI0",
@@ -8568,7 +8576,7 @@
   "title": "Mississippi River at Newport",
   "source": "famelack",
   "country": "US",
-  "reason": "ambiguous-name:newport",
+  "reason": "region-mismatch:mississippi",
   "best": {
    "matched": "newport",
    "place": "Newport, Rhode Island, US",
@@ -9196,6 +9204,18 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "cmn_2BnK2xM",
+  "title": "Nauvoo Temple & Historic Downtown",
+  "source": "famelack",
+  "country": "US",
+  "reason": "below-threshold",
+  "best": {
+   "matched": "nauvoo",
+   "place": "Nauvoo, Illinois, US",
+   "confidence": 0.61
+  }
+ },
+ {
   "id": "bEZByG4nP-A",
   "title": "NC State Lonnie Poole Golf Course",
   "source": "famelack",
@@ -9261,12 +9281,7 @@
   "title": "Nevada Trainspotting at the Grade Crossing",
   "source": "famelack",
   "country": "US",
-  "reason": "ambiguous-name:nevada",
-  "best": {
-   "matched": "nevada",
-   "place": "Nevada, Missouri, US",
-   "confidence": 0
-  }
+  "reason": "no-gazetteer-match-in-country"
  },
  {
   "id": "w_Dg2vC0tUE",
@@ -10503,7 +10518,7 @@
   "title": "Pennsylvania Forest Wildlife Cam",
   "source": "famelack",
   "country": "US",
-  "reason": "ambiguous-name:forest",
+  "reason": "region-mismatch:pennsylvania",
   "best": {
    "matched": "forest",
    "place": "Forest, Virginia, US",
@@ -10909,7 +10924,7 @@
   "title": "Port Byron Railcam on the Mississippi",
   "source": "famelack",
   "country": "US",
-  "reason": "ambiguous-name:port byron",
+  "reason": "region-mismatch:mississippi",
   "best": {
    "matched": "port byron",
    "place": "Port Byron, Illinois, US",
@@ -11159,6 +11174,13 @@
   "title": "Queen Isabella Memorial Causeway",
   "source": "famelack",
   "country": "US",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "sE2N-L7iubQ",
+  "title": "Querétaro Skyline",
+  "source": "famelack",
+  "country": "MX",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -15228,11 +15250,25 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "RbPzFQiZ-Sc",
+  "title": "University of Florida Barn Owl Nest",
+  "source": "famelack",
+  "country": "US",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "6f-D2AjeEi0",
+  "title": "University of Florida Barn Owl Nest 2",
+  "source": "famelack",
+  "country": "US",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
   "id": "4PMMSI_p7BE",
   "title": "University of Illinois Morrow Plots",
   "source": "famelack",
   "country": "US",
-  "reason": "below-threshold",
+  "reason": "region-mismatch:illinois",
   "best": {
    "matched": "morrow",
    "place": "Morrow, Georgia, US",
@@ -15282,6 +15318,13 @@
  {
   "id": "uY29Vmpptn4",
   "title": "USA Now",
+  "source": "famelack",
+  "country": "US",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "iQPgyQYfVjQ",
+  "title": "USS Alabama Battleship",
   "source": "famelack",
   "country": "US",
   "reason": "no-gazetteer-match-in-country"
@@ -16618,6 +16661,18 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "3CAU9Ex_GKk",
+  "title": "Zoos Victoria Penguin Exhibit",
+  "source": "famelack",
+  "country": "AU",
+  "reason": "region-mismatch:victoria",
+  "best": {
+   "matched": "penguin",
+   "place": "Penguin, Tasmania, AU",
+   "confidence": 0.684
+  }
+ },
+ {
   "id": "4wb6o3QvrxY",
   "title": "Zoos Victoria Snow Leopard Outdoor Exhibit",
   "source": "famelack",
@@ -16803,7 +16858,7 @@
   "title": "🔴Riva Del Sole Pool - Tuscany, Italy - Live Cam",
   "source": "camlisted",
   "country": "IT",
-  "reason": "below-threshold",
+  "reason": "region-mismatch:tuscany",
   "best": {
    "matched": "riva",
    "place": "Riva, Piedmont, IT",
@@ -16815,7 +16870,7 @@
   "title": "Le Saline beach - Sardinia, Italy - Live Cam",
   "source": "camlisted",
   "country": "IT",
-  "reason": "below-threshold",
+  "reason": "region-mismatch:sardinia",
   "best": {
    "matched": "saline",
    "place": "Saline, Tuscany, IT",
@@ -17008,7 +17063,7 @@
   "title": "Deshler, Ohio, USA | LIVE Train Camera (Fixed View — Diamond)",
   "source": "camlisted",
   "country": "US",
-  "reason": "ambiguous:diamond|deshler",
+  "reason": "region-mismatch:ohio",
   "best": {
    "matched": "diamond",
    "place": "Diamond, Illinois, US",
@@ -17206,36 +17261,21 @@
   "title": "Pond Camera",
   "source": "camlisted",
   "country": "US",
-  "reason": "below-threshold",
-  "best": {
-   "matched": "maine",
-   "place": "Maine, Wisconsin, US",
-   "confidence": 0.523
-  }
+  "reason": "no-gazetteer-match-in-country"
  },
  {
   "id": "jSq4IZT3o1M",
   "title": "Scenic Katahdin",
   "source": "camlisted",
   "country": "US",
-  "reason": "below-threshold",
-  "best": {
-   "matched": "maine",
-   "place": "Maine, Wisconsin, US",
-   "confidence": 0.523
-  }
+  "reason": "no-gazetteer-match-in-country"
  },
  {
   "id": "-_u15pRKsQM",
   "title": "Wildlife Camera",
   "source": "camlisted",
   "country": "US",
-  "reason": "below-threshold",
-  "best": {
-   "matched": "maine",
-   "place": "Maine, Wisconsin, US",
-   "confidence": 0.523
-  }
+  "reason": "no-gazetteer-match-in-country"
  },
  {
   "id": "lvlFx0PAJ-k",
@@ -17976,7 +18016,7 @@
   "title": "Tobacco River Dam - Michigan - 24/7 HD Live Stream",
   "source": "camlisted",
   "country": "US",
-  "reason": "below-threshold",
+  "reason": "region-mismatch:michigan",
   "best": {
    "matched": "jordan",
    "place": "Jordan, Minnesota, US",
@@ -17988,6 +18028,13 @@
   "title": "【Live】近畿地方整備局　主要河川映像１６カ所",
   "source": "camlisted",
   "country": "JP",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "3Rp_9FUKH4I",
+  "title": "Alabama Weather Network - Coastal SkyCam Cameras",
+  "source": "camlisted",
+  "country": "US",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -18068,6 +18115,18 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "rxyNjFKwzJA",
+  "title": "🔴🚢 Vancouver LIVE Cam | Cruise Ship LiveStream 24/7 | City Views & Canada Place | Alaska Season 2026",
+  "source": "camlisted",
+  "country": "US",
+  "reason": "region-mismatch:alaska",
+  "best": {
+   "matched": "vancouver",
+   "place": "Vancouver, Washington, US",
+   "confidence": 0.878
+  }
+ },
+ {
   "id": "EKohXgHGCj8",
   "title": "BNSF Railway Yard in Belen, New Mexico, USA | LIVE Train Camera (PTZ)",
   "source": "camlisted",
@@ -18110,6 +18169,13 @@
   "title": "國海院_GoOcean_頭城濱海公園南側",
   "source": "camlisted",
   "country": "TW",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "-DCRjdSpZ4c",
+  "title": "Project ZeeLand - Camera 2",
+  "source": "camlisted",
+  "country": "NL",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -18564,7 +18630,7 @@
   "title": "FLYING OVER OAHU (HAWAII) 4K 🌊 Flying Over Waikiki, Diamond Head, North Shore & Blue Coast | 4K UHD",
   "source": "camlisted",
   "country": "US",
-  "reason": "ambiguous:north shore|diamond head",
+  "reason": "region-mismatch:hawaii",
   "best": {
    "matched": "north shore",
    "place": "North Shore, Virginia, US",

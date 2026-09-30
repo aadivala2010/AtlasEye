@@ -30,6 +30,12 @@ assert.equal(place('Paris Eiffel Tower View', 'FR'), 'Paris, FR');
 assert.equal(place('Seattle, Washington, USA | LIVE Train Camera', 'US'), 'Seattle, US');
 // "St." before a proper noun is Saint, not Street.
 assert.equal(place("Venice St. Mark's Basin", 'IT'), 'Venice, IT');
+// A state name isn't the small town sharing it, and a named state the match isn't in means the wrong homonym.
+assert.match(place('Central Florida Osprey Nest', 'US'), /^REJECT/);
+assert.match(place('Arkansas River Whitewater Wave', 'US'), /^REJECT/);
+assert.equal(place('Lions, Riga Zoo', 'LV'), 'Riga, LV');
+assert.equal(place('Washington DC Capitol Dome', 'US'), 'Washington, US');
+assert.equal(place('Yokosuka Anjindai Tokyo Bay View', 'JP'), 'Yokosuka, JP');
 // Street and feature names don't resolve to the town they share a name with.
 assert.match(place('Duval Street', 'US'), /^REJECT/);
 assert.match(place('Mount Fuji Panorama', 'JP'), /^REJECT/);

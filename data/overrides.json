@@ -1166,5 +1166,21 @@
     "place": "Banff, Alberta",
     "country": "CA",
     "category": "nature"
+  },
+  "eLOmV1GDEnQ": {
+    "name": "Sagg Main Beach, Sagaponack",
+    "latitude": 40.9066,
+    "longitude": -72.2746,
+    "place": "Sagaponack, New York",
+    "country": "US",
+    "category": "beach"
+  },
+  "oTkZxcvOXHQ": {
+    "name": "Mississippi River Railcam at Trempealeau",
+    "latitude": 44.0055,
+    "longitude": -91.4418,
+    "place": "Trempealeau, Wisconsin",
+    "country": "US",
+    "category": "transit"
   }
 }
