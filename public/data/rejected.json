@@ -52,7 +52,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "JL7xxYEKe64",
+  "id": "TsYmDrB89c0",
   "title": "Aðaldalshraun Aurora & Heath Sky",
   "source": "famelack",
   "country": "IS",
@@ -287,7 +287,19 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "0mEf4MbHKDo",
+  "id": "WutCg15eZ4M",
+  "title": "Alliance Railcam at the Grade Crossing",
+  "source": "famelack",
+  "country": "US",
+  "reason": "ambiguous-name:alliance",
+  "best": {
+   "matched": "alliance",
+   "place": "Alliance, Ohio, US",
+   "confidence": 0
+  }
+ },
+ {
+  "id": "yCIG2pwdFHg",
   "title": "Alma Mater",
   "source": "famelack",
   "country": "US",
@@ -440,14 +452,14 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "sSBswg_K0SE",
+  "id": "oufxM2Rxh-0",
   "title": "Animal Adventure Park Giraffe Deck",
   "source": "famelack",
   "country": "US",
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "C-ISPy32rwU",
+  "id": "bTP7DyoruXw",
   "title": "Animal Adventure Park Tigers",
   "source": "famelack",
   "country": "US",
@@ -579,7 +591,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "_qduVakNToY",
+  "id": "eRKNErHtJUE",
   "title": "Arizona Snowbowl Hart Prairie Area",
   "source": "famelack",
   "country": "US",
@@ -729,35 +741,11 @@
   }
  },
  {
-  "id": "S6v-8dHcd04",
-  "title": "Assisi Piazza del Comune",
-  "source": "famelack",
-  "country": "IT",
-  "reason": "below-threshold",
-  "best": {
-   "matched": "assisi",
-   "place": "Assisi, Umbria, IT",
-   "confidence": 0.648
-  }
- },
- {
   "id": "zyolcXe2A4g",
   "title": "Astillero Marshes Tern Cam",
   "source": "famelack",
   "country": "ES",
   "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "t0J6D3XAVh8",
-  "title": "Auburn Airport",
-  "source": "famelack",
-  "country": "US",
-  "reason": "ambiguous-name:auburn",
-  "best": {
-   "matched": "auburn",
-   "place": "Auburn, Washington, US",
-   "confidence": 0
-  }
  },
  {
   "id": "q4DuLov-blY",
@@ -824,7 +812,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "RpmfSMwK2p8",
+  "id": "k5wkyi9vZGo",
   "title": "Avenida 5 de Febrero",
   "source": "famelack",
   "country": "MX",
@@ -901,6 +889,13 @@
  {
   "id": "OIyy1ZmRryM",
   "title": "Ayala Cove at Angel Island State Park",
+  "source": "famelack",
+  "country": "US",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "lhrlIB3KB00",
+  "title": "AZGMRS White Tanks Repeater Site",
   "source": "famelack",
   "country": "US",
   "reason": "no-gazetteer-match-in-country"
@@ -1002,6 +997,13 @@
   "title": "Baie de Lorient",
   "source": "famelack",
   "country": "BL",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "d1Hqy8eNi9w",
+  "title": "Baix Guinardó",
+  "source": "famelack",
+  "country": "ES",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -1134,13 +1136,6 @@
   }
  },
  {
-  "id": "7mrTDVL9il4",
-  "title": "Barcelona Harbor on Lake Erie",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "jvKRoSXHSrk",
   "title": "Barn Owl Nest at Goose Pond",
   "source": "famelack",
@@ -1218,6 +1213,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "MyH6yRwgmi4",
+  "title": "Bay Street",
+  "source": "famelack",
+  "country": "US",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
   "id": "xqAZJTY2q-Y",
   "title": "Bay Street at The Beach Bar",
   "source": "famelack",
@@ -1225,14 +1227,14 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "O1kjwJMesfk",
+  "id": "rir0nFI5YmM",
   "title": "BC Place",
   "source": "famelack",
   "country": "CA",
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "Zmh6LMXCQcg",
+  "id": "AnQRM1q16kc",
   "title": "Beach Bar & Seaside Promenade",
   "source": "famelack",
   "country": "ES",
@@ -1300,13 +1302,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "HVCL4Nn0FN4",
-  "title": "Bear Valley Mountain Resort Base Area",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "-av1ojd_JkI",
   "title": "Bees and Butterflies Garden",
   "source": "famelack",
@@ -1314,7 +1309,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "8EKxnxlagvI",
+  "id": "FtIu4-7VYMs",
   "title": "Beitostølen Ski Resort",
   "source": "famelack",
   "country": "NO",
@@ -1427,20 +1422,6 @@
  {
   "id": "djeIw7J94kY",
   "title": "Big Wood Lake from Sally Mountain Cabins",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "RgF6aEXGgvE",
-  "title": "Bigfoot Zipline Landing 6",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "XkIqYn2Bm30",
-  "title": "Bigfoot Zipline Tower 6",
   "source": "famelack",
   "country": "US",
   "reason": "no-gazetteer-match-in-country"
@@ -1563,14 +1544,14 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "wpv6AqkvpXI",
+  "id": "QjguH0KEyDY",
   "title": "BNSF Cajon Subdivision Trainspotting",
   "source": "famelack",
   "country": "US",
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "idjQ-3bXC0U",
+  "id": "iPcZmrI0pBM",
   "title": "BNSF Midway Sub Freight Trains",
   "source": "famelack",
   "country": "US",
@@ -1661,6 +1642,13 @@
    "place": "Bol, Split-Dalmatia, HR",
    "confidence": 0.516
   }
+ },
+ {
+  "id": "-lI2AH2WkEA",
+  "title": "Bondi Bar Lamai",
+  "source": "famelack",
+  "country": "TH",
+  "reason": "no-gazetteer-match-in-country"
  },
  {
   "id": "MRMzzjyumHs",
@@ -2158,7 +2146,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "Z4_E905UAGA",
+  "id": "ty2ZPpnQdYI",
   "title": "Cajon Pass",
   "source": "famelack",
   "country": "US",
@@ -2213,6 +2201,18 @@
   }
  },
  {
+  "id": "ovYQ26GqWRQ",
+  "title": "Cala Fornells Beach",
+  "source": "famelack",
+  "country": "ES",
+  "reason": "below-threshold",
+  "best": {
+   "matched": "cala",
+   "place": "Cala, Andalusia, ES",
+   "confidence": 0.536
+  }
+ },
+ {
   "id": "ptP3bbWo4zA",
   "title": "Cala Gat Beach",
   "source": "famelack",
@@ -2225,7 +2225,7 @@
   }
  },
  {
-  "id": "t4x0u0ARLwo",
+  "id": "4dbXjCzI5FU",
   "title": "Calheta Marina & Beach",
   "source": "famelack",
   "country": "PT",
@@ -2244,7 +2244,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "w6ShS41ZmPg",
+  "id": "RFeqCCSRV8I",
   "title": "California Earthquake Watch",
   "source": "famelack",
   "country": "US",
@@ -2312,7 +2312,7 @@
   }
  },
  {
-  "id": "-Q20DkjKgpM",
+  "id": "sVENjHlL4Pk",
   "title": "Campus Point Surf",
   "source": "famelack",
   "country": "US",
@@ -2448,6 +2448,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "hjRY01AGmJo",
+  "title": "Castro Street",
+  "source": "famelack",
+  "country": "US",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
   "id": "M1hMK6H9F98",
   "title": "Castro Street Cam 1",
   "source": "famelack",
@@ -2455,14 +2462,14 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "bBFWeqV67bM",
+  "id": "zrzg0Lfe92U",
   "title": "Castro Street Cam 2",
   "source": "famelack",
   "country": "US",
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "Vla45aL56nk",
+  "id": "1ubDrek-gq4",
   "title": "Cat Inn Hotel",
   "source": "famelack",
   "country": "CZ",
@@ -2553,18 +2560,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "1wRNkVvfWsM",
-  "title": "Centro Sobradinho RS",
-  "source": "famelack",
-  "country": "BR",
-  "reason": "ambiguous-name:sobradinho",
-  "best": {
-   "matched": "sobradinho",
-   "place": "Sobradinho, Federal District, BR",
-   "confidence": 0
-  }
- },
- {
   "id": "NtdJf7DVXZQ",
   "title": "Černý Důl JZ",
   "source": "famelack",
@@ -2604,13 +2599,6 @@
   "title": "Chapel of the Apparitions",
   "source": "famelack",
   "country": "PT",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "JlxDI6rGH-U",
-  "title": "Chapel of the Holy Cross",
-  "source": "famelack",
-  "country": "US",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -3014,13 +3002,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "3g9R9mlYTXo",
-  "title": "Court Avenue District",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "4DkMy1__nV4",
   "title": "Cowan Railroad Museum",
   "source": "famelack",
@@ -3113,7 +3094,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "8DrrXhpC6d0",
+  "id": "hjljDV-qfCM",
   "title": "Cristo Acolhedor, Sobradinho",
   "source": "famelack",
   "country": "BR",
@@ -3179,7 +3160,7 @@
   }
  },
  {
-  "id": "GoFaRKaO4hM",
+  "id": "yDSZcjG4x0Y",
   "title": "CSX River Line Rail Crossing",
   "source": "famelack",
   "country": "US",
@@ -3350,7 +3331,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "yuVNNxNADCs",
+  "id": "fBVJIU9Fd1Q",
   "title": "Desembocadura Río Maipo",
   "source": "famelack",
   "country": "CL",
@@ -3381,6 +3362,13 @@
    "place": "Dexter, Missouri, US",
    "confidence": 0
   }
+ },
+ {
+  "id": "fkiEG6LlR_A",
+  "title": "DFW Airport East",
+  "source": "famelack",
+  "country": "US",
+  "reason": "no-gazetteer-match-in-country"
  },
  {
   "id": "f5Rjm5tiEkU",
@@ -3586,7 +3574,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "L13keKx-5cM",
+  "id": "SQrfcbKyA-M",
   "title": "Donner Pass Summit East Norden",
   "source": "famelack",
   "country": "US",
@@ -3626,6 +3614,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "soT0yMSldwI",
+  "title": "Dotonbori Glico Sign",
+  "source": "famelack",
+  "country": "JP",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
   "id": "nNK_Ks6XAfU",
   "title": "Downtown Cadiz Main Street",
   "source": "famelack",
@@ -3635,18 +3630,6 @@
    "matched": "cadiz",
    "place": "Cadiz, Ohio, US",
    "confidence": 0
-  }
- },
- {
-  "id": "RQvL67g8ry4",
-  "title": "Downtown Circle Montauk",
-  "source": "famelack",
-  "country": "US",
-  "reason": "ambiguous:montauk|circle",
-  "best": {
-   "matched": "montauk",
-   "place": "Montauk, New York, US",
-   "confidence": 0.68
   }
  },
  {
@@ -3755,7 +3738,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "wmUeW2ztMbA",
+  "id": "gGNhWtbgRhY",
   "title": "Dřevěnice",
   "source": "famelack",
   "country": "CZ",
@@ -3781,7 +3764,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "LkitaunIuXs",
+  "id": "t8WhR9v-I5o",
   "title": "Drniš Panorama",
   "source": "famelack",
   "country": "HR",
@@ -4004,7 +3987,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "TmALEXcYC0U",
+  "id": "HLRrSxAbfi0",
   "title": "East 34th Street Ferry Landing",
   "source": "famelack",
   "country": "US",
@@ -4119,7 +4102,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "vukolcrIkzc",
+  "id": "PGzLtvTrDQE",
   "title": "Elbcam Grauerort Fortress",
   "source": "famelack",
   "country": "DE",
@@ -4562,13 +4545,6 @@
   }
  },
  {
-  "id": "7vNt6dkNt6I",
-  "title": "Fude Rd, Xihu Township",
-  "source": "famelack",
-  "country": "TW",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "cNW2nytVkfs",
   "title": "Fuego Volcano Eruption Cam",
   "source": "famelack",
@@ -4583,7 +4559,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "x8X7w79f_VQ",
+  "id": "kdUftZQoewU",
   "title": "Furball Farm Cat Sanctuary",
   "source": "famelack",
   "country": "US",
@@ -4604,7 +4580,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "hi9pFPEwCOk",
+  "id": "4tbXmvL35Wk",
   "title": "Galeão International Airport",
   "source": "famelack",
   "country": "BR",
@@ -4759,13 +4735,6 @@
   }
  },
  {
-  "id": "V6Fn5deRPeM",
-  "title": "Georgica Jetty",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "3bc9QzqjCF8",
   "title": "Germany Now",
   "source": "famelack",
@@ -4846,7 +4815,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "kxAOp8LBmvQ",
+  "id": "J_320lhUuLA",
   "title": "Goio-Ên & Uruguay River",
   "source": "famelack",
   "country": "BR",
@@ -4874,7 +4843,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "SqaedTd9w6I",
+  "id": "Gj4N0uZFCRs",
   "title": "Goldy's Farm Arena",
   "source": "famelack",
   "country": "US",
@@ -4898,13 +4867,6 @@
    "place": "Gorreto, Liguria, IT",
    "confidence": 0.643
   }
- },
- {
-  "id": "shNgEojhTK4",
-  "title": "Grace Bay Beach from Villa Renaissance",
-  "source": "famelack",
-  "country": "TC",
-  "reason": "no-gazetteer-match-in-country"
  },
  {
   "id": "672cUSe69J0",
@@ -4982,7 +4944,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "qBZjFicSWhg",
+  "id": "ut-uMBdSBIY",
   "title": "Grant County Courthouse",
   "source": "famelack",
   "country": "US",
@@ -5010,7 +4972,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "EpgKwbXXy-Q",
+  "id": "hf2DSS2vhDA",
   "title": "Grauerort Fortress",
   "source": "famelack",
   "country": "DE",
@@ -5076,7 +5038,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "Bb3iUWASZug",
+  "id": "MLe9GSWmOVo",
   "title": "Greater Rochester Sky Eye Panorama",
   "source": "famelack",
   "country": "US",
@@ -5264,13 +5226,6 @@
   "title": "Ha Ling Peak Over the Drake Inn",
   "source": "famelack",
   "country": "CA",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "BADzwd9b0RU",
-  "title": "Hafjell Alpinsenter",
-  "source": "famelack",
-  "country": "NO",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -5550,13 +5505,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "E2JvPKohPEM",
-  "title": "Higgins Beach",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "2-atLqwL-vc",
   "title": "High Cliff Marina, Sherwood",
   "source": "famelack",
@@ -5651,17 +5599,24 @@
   }
  },
  {
-  "id": "z_preQ7Gzpo",
+  "id": "iV9-RSGOIY0",
   "title": "Holy Cave of Covadonga",
   "source": "famelack",
   "country": "ES",
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "a92oM7hNto0",
+  "id": "AqiT1EUAIog",
   "title": "Holy Dormition Pochaiv Lavra",
   "source": "famelack",
   "country": "UA",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "Fwr8lBTaBtE",
+  "title": "Hong Kong Skyline",
+  "source": "famelack",
+  "country": "CN",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -5844,13 +5799,6 @@
   }
  },
  {
-  "id": "5boZ1Vw95OU",
-  "title": "Hyatt Ziva Beach",
-  "source": "famelack",
-  "country": "MX",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "IcyhthCLRGc",
   "title": "Hyland Hills Ski",
   "source": "famelack",
@@ -5869,13 +5817,6 @@
   "title": "Iceland Seismic Tremor Monitor",
   "source": "famelack",
   "country": "IS",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "DgrpMwwG7c0",
-  "title": "Illinois Railway Museum",
-  "source": "famelack",
-  "country": "US",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -5907,7 +5848,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "U9KvisO9mKc",
+  "id": "9qGrJh0NbD4",
   "title": "Illinois Railway Museum Spaulding",
   "source": "famelack",
   "country": "US",
@@ -5949,7 +5890,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "Mc-9S29g180",
+  "id": "lqIcRSNnOSQ",
   "title": "International Space Station",
   "source": "famelack",
   "country": "US",
@@ -6048,13 +5989,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "jG0uYl5S44E",
-  "title": "Jack's Camp Kalahari Waterhole",
-  "source": "famelack",
-  "country": "BW",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "aAXhT5FOoWk",
   "title": "Jackson Town Street Scene",
   "source": "famelack",
@@ -6071,13 +6005,6 @@
   "title": "Jamsil Bridge",
   "source": "famelack",
   "country": "KR",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "BvBQMzWtc3I",
-  "title": "Jane Eatery Agdao",
-  "source": "famelack",
-  "country": "PH",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -6130,6 +6057,13 @@
   "title": "Jezersko Valley",
   "source": "famelack",
   "country": "SI",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "fvvp2vetvzI",
+  "title": "JFK ATC Feed",
+  "source": "famelack",
+  "country": "US",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -6203,20 +6137,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "SLbSOmAazhg",
-  "title": "JR Chuo Line Kumano Gongen Crossing",
-  "source": "famelack",
-  "country": "JP",
-  "reason": "misplaced"
- },
- {
-  "id": "9YpQONYzX_A",
-  "title": "JR Chuo Line Trains",
-  "source": "famelack",
-  "country": "JP",
-  "reason": "misplaced"
- },
- {
   "id": "WhNoqKDlx8Y",
   "title": "JR Motoyawata Station North Exit Taxi Stand",
   "source": "famelack",
@@ -6280,6 +6200,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "VBb-yNFHi2c",
+  "title": "Kamakurakokomae Station Enoshima Coast View",
+  "source": "famelack",
+  "country": "JP",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
   "id": "n0y1ZOwrDQI",
   "title": "Kambaku Waterhole",
   "source": "famelack",
@@ -6291,13 +6218,6 @@
   "title": "Kamenjak Polje Bay",
   "source": "famelack",
   "country": "HR",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "IdDorfgnATw",
-  "title": "Kamfers Dam Flamingo",
-  "source": "famelack",
-  "country": "ZA",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -6604,7 +6524,7 @@
   }
  },
  {
-  "id": "hUD70Vurnv8",
+  "id": "9gDMWeqy0U0",
   "title": "Kishamichi Promenade",
   "source": "famelack",
   "country": "JP",
@@ -6615,13 +6535,6 @@
   "title": "Kissinger Hütte Feuerberg",
   "source": "famelack",
   "country": "DE",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "1na-ORGC1P8",
-  "title": "Kitashinchi Hontori Darling Building",
-  "source": "famelack",
-  "country": "JP",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -6712,7 +6625,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "cgO4gWvgx8g",
+  "id": "pawJL_P0_VI",
   "title": "Kohoku Parking Area on the Tomei Expressway",
   "source": "famelack",
   "country": "JP",
@@ -7149,7 +7062,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "xx_phz4U_Xo",
+  "id": "DbnTyrFHBgM",
   "title": "LAX Airport Arrivals",
   "source": "famelack",
   "country": "US",
@@ -7196,7 +7109,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "taPUv8ooVCA",
+  "id": "jERKslx1zwQ",
   "title": "Le Morne",
   "source": "famelack",
   "country": "MU",
@@ -7356,31 +7269,10 @@
   }
  },
  {
-  "id": "G4zh-sQCj0I",
-  "title": "Lido Beach",
-  "source": "famelack",
-  "country": "IL",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "K8Fl1Bm365M",
   "title": "Lido Pool Complex",
   "source": "famelack",
   "country": "PT",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "zNvNY9xf9T4",
-  "title": "Lime Out Floating Taco Bar, Coral Bay",
-  "source": "famelack",
-  "country": "VI",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "nSJxrl07Gyg",
-  "title": "Lime Out St. Thomas",
-  "source": "famelack",
-  "country": "VI",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -7495,6 +7387,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "AWJi0LgyA28",
+  "title": "Live Aviary Bird Cam",
+  "source": "famelack",
+  "country": "US",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
   "id": "JxAeRK743fg",
   "title": "Live Traffic Lebanon",
   "source": "famelack",
@@ -7589,7 +7488,7 @@
   }
  },
  {
-  "id": "MdvYWiKNhG0",
+  "id": "RTobggJdBhQ",
   "title": "Loon Mountain & Pemigewasset Wilderness",
   "source": "famelack",
   "country": "US",
@@ -7641,7 +7540,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "MH0_mPt-VXE",
+  "id": "iZRbml7fnXI",
   "title": "Louis Armstrong Airport Plane Spotting",
   "source": "famelack",
   "country": "US",
@@ -7707,6 +7606,18 @@
   "source": "famelack",
   "country": "TW",
   "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "zeIuLrefeSA",
+  "title": "Lužná u Rakovníka Railway Station",
+  "source": "famelack",
+  "country": "CZ",
+  "reason": "below-threshold",
+  "best": {
+   "matched": "luzna",
+   "place": "Lužná, Central Bohemia, CZ",
+   "confidence": 0.593
+  }
  },
  {
   "id": "6kX0K9u3NTQ",
@@ -7881,6 +7792,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "qHSAOT2Si18",
+  "title": "Mahatun Plaza Café & Ploenchit Street",
+  "source": "famelack",
+  "country": "TH",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
   "id": "5ioOZfE7ENs",
   "title": "Maho Bay HD",
   "source": "famelack",
@@ -7902,7 +7820,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "hlJ6o2SRtjY",
+  "id": "XDoKSM369-4",
   "title": "Maho Beach Plane Spotting",
   "source": "famelack",
   "country": "SX",
@@ -8003,6 +7921,13 @@
   }
  },
  {
+  "id": "uz7EnXT_MLw",
+  "title": "Mamaia Hotel Malibu Beach",
+  "source": "famelack",
+  "country": "RO",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
   "id": "loHbMM9JfCs",
   "title": "Mambo Beach",
   "source": "famelack",
@@ -8071,7 +7996,7 @@
   }
  },
  {
-  "id": "BEHwTBqq3vM",
+  "id": "KSgCCJzud7c",
   "title": "Manchester Peregrine Falcon Nest 1",
   "source": "famelack",
   "country": "US",
@@ -8142,13 +8067,6 @@
  {
   "id": "spyttB6YiaU",
   "title": "Margaritaville Resort Pool & Beach Club",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "RLIRtD89O7g",
-  "title": "Marginal Way Clifftop Ocean Panorama",
   "source": "famelack",
   "country": "US",
   "reason": "no-gazetteer-match-in-country"
@@ -8290,7 +8208,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "UpezrvfAl-o",
+  "id": "eBs8Ywvvz_Q",
   "title": "Marunuma Kogen Sky Terrace",
   "source": "famelack",
   "country": "JP",
@@ -8351,6 +8269,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "Vaxx4-bADzg",
+  "title": "Masjid al-Haram Kaaba",
+  "source": "famelack",
+  "country": "SA",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
   "id": "wHM7u1GCD7M",
   "title": "Mason Lake Boat Launch",
   "source": "famelack",
@@ -8398,7 +8323,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "aMPYLWAKmSM",
+  "id": "YTloKzGNyzs",
   "title": "Mayon Volcano",
   "source": "famelack",
   "country": "PH",
@@ -8419,13 +8344,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "pJFDQ_wP4mk",
-  "title": "McLear’s Cottage Colony, Black Lake",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "EqnyST2s53I",
   "title": "Meco Beach",
   "source": "famelack",
@@ -8443,13 +8361,6 @@
    "place": "Mehamn, Finnmark, NO",
    "confidence": 0.607
   }
- },
- {
-  "id": "E0NZeyAL0IA",
-  "title": "Mei Ami Beach",
-  "source": "famelack",
-  "country": "IL",
-  "reason": "no-gazetteer-match-in-country"
  },
  {
   "id": "QBgn5a3k_T0",
@@ -8688,7 +8599,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "82QKb8eLLvo",
+  "id": "q7BULhEj0D4",
   "title": "Mississippi River at Newport",
   "source": "famelack",
   "country": "US",
@@ -8759,7 +8670,7 @@
   }
  },
  {
-  "id": "Yd5Ig4FWApg",
+  "id": "fSMf7uqsD3U",
   "title": "Montedarena Beach Weather",
   "source": "famelack",
   "country": "IT",
@@ -8860,13 +8771,6 @@
   "reason": "misplaced"
  },
  {
-  "id": "TttAUtCLN7M",
-  "title": "Morosini Lions Fountain",
-  "source": "famelack",
-  "country": "GR",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "S4iSIeDPAek",
   "title": "Motley Train Cam: BNSF Brainerd Sub",
   "source": "famelack",
@@ -8935,7 +8839,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "g7Le4p8jyTU",
+  "id": "2raya-ESaig",
   "title": "Mount Pleasant Coffee Depot Railcam",
   "source": "famelack",
   "country": "US",
@@ -8957,13 +8861,6 @@
    "place": "Mount Pleasant, South Carolina, US",
    "confidence": 0
   }
- },
- {
-  "id": "OBbR2PoDLT8",
-  "title": "Mount Southington Ski Area",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
  },
  {
   "id": "cL2zQrbW3vg",
@@ -9032,27 +8929,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "r13CcUjD6nY",
-  "title": "Mountain High East Summit",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "M1moemQxJNU",
-  "title": "Mountain High North Lodge",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "zrvEvsMoS4U",
-  "title": "Mountain High Upper Chisolm",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "YcQT1a6K1Mo",
   "title": "Mountain High West Base",
   "source": "famelack",
@@ -9116,7 +8992,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "wWm-kbryDDQ",
+  "id": "XaBPc-sQjQA",
   "title": "MSP Airport",
   "source": "famelack",
   "country": "US",
@@ -9158,7 +9034,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "r_2F1Nw_0F0",
+  "id": "F8YAQ3pbeDg",
   "title": "Mt. Moiwa Summit Observation Deck",
   "source": "famelack",
   "country": "JP",
@@ -9229,6 +9105,18 @@
   }
  },
  {
+  "id": "1Cpl6fHD8Fc",
+  "title": "Nakagawa Ward Office Parking Lot",
+  "source": "famelack",
+  "country": "JP",
+  "reason": "ambiguous-name:nakagawa",
+  "best": {
+   "matched": "nakagawa",
+   "place": "Nakagawa, Fukushima, JP",
+   "confidence": 0
+  }
+ },
+ {
   "id": "QGvjAPzImR8",
   "title": "Naledi Lodge Cat Eye",
   "source": "famelack",
@@ -9296,6 +9184,13 @@
   "title": "Nanfangao Second Fishing Port",
   "source": "famelack",
   "country": "TW",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "LWZrMfVJ-_I",
+  "title": "Napili Bay Beach",
+  "source": "famelack",
+  "country": "US",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -9374,14 +9269,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "-f4m0xQSCwc",
-  "title": "Necedah Railcam",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "MCz0RSL0PcM",
+  "id": "_sa7lcxBl9o",
   "title": "Neptune Luxury Resort, Mastichari",
   "source": "famelack",
   "country": "GR",
@@ -9661,6 +9549,18 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "lin8TLZfuks",
+  "title": "North View, Haus des Meeres",
+  "source": "famelack",
+  "country": "AT",
+  "reason": "below-threshold",
+  "best": {
+   "matched": "haus",
+   "place": "Haus, Styria, AT",
+   "confidence": 0.536
+  }
+ },
+ {
   "id": "Mm_zVDDUeNA",
   "title": "Northern Royal Albatross Nest",
   "source": "famelack",
@@ -9704,22 +9604,8 @@
   }
  },
  {
-  "id": "z_5NCwXPSqM",
-  "title": "Norway Multi-Cam",
-  "source": "famelack",
-  "country": "NO",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "xYqhMHETOgI",
   "title": "Norway Now",
-  "source": "famelack",
-  "country": "NO",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "YWgtXpmqZL4",
-  "title": "Norway Summer Parks",
   "source": "famelack",
   "country": "NO",
   "reason": "no-gazetteer-match-in-country"
@@ -9732,7 +9618,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "lwhrsP9R0DM",
+  "id": "YgG3IqmL0TI",
   "title": "Notre-Dame & Seine River",
   "source": "famelack",
   "country": "FR",
@@ -9767,7 +9653,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "rOtdFWnxmto",
+  "id": "hOFkFow_PTo",
   "title": "Obor Square",
   "source": "famelack",
   "country": "RO",
@@ -10024,7 +9910,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "BQY5LAmDEVM",
+  "id": "kZOLq66XX4o",
   "title": "Orbeli Street",
   "source": "famelack",
   "country": "AM",
@@ -10066,7 +9952,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "fMusDk2TSjM",
+  "id": "tZOnHOpBJfg",
   "title": "Osaka Umeda",
   "source": "famelack",
   "country": "JP",
@@ -10087,13 +9973,6 @@
  {
   "id": "ilfxEpk51oI",
   "title": "Osprey Nest Cam at Rutland Water",
-  "source": "famelack",
-  "country": "GB",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "EbA5WQane08",
-  "title": "Osprey Nest Loch of the Lowes",
   "source": "famelack",
   "country": "GB",
   "reason": "no-gazetteer-match-in-country"
@@ -10123,13 +10002,6 @@
    "place": "Ōuchi, Miyagi, JP",
    "confidence": 0.628
   }
- },
- {
-  "id": "2bOT0QUOzp4",
-  "title": "Our Lady Star & St. John Paul II Sanctuary",
-  "source": "famelack",
-  "country": "PL",
-  "reason": "no-gazetteer-match-in-country"
  },
  {
   "id": "yV3h4e7oOsg",
@@ -10231,13 +10103,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "8BUWBZZzJEo",
-  "title": "Paguera Tora Beach, Mallorca",
-  "source": "famelack",
-  "country": "ES",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "CjtIYbmVfck",
   "title": "Palace Bridge",
   "source": "famelack",
@@ -10259,7 +10124,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "ycB3u3Eledc",
+  "id": "oqAlAEdMdLI",
   "title": "Palm Springs Air Museum",
   "source": "famelack",
   "country": "US",
@@ -10736,7 +10601,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "xoROrAXAUWw",
+  "id": "632vtLRCeXQ",
   "title": "Pescul Ski Civetta",
   "source": "famelack",
   "country": "IT",
@@ -10927,7 +10792,7 @@
   }
  },
  {
-  "id": "DwAmChKBPr8",
+  "id": "kyinoji2axA",
   "title": "Playa de Las Canteras",
   "source": "famelack",
   "country": "ES",
@@ -10960,8 +10825,8 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "Bxl-_snqXs4",
-  "title": "Plaza Cuitláhuac",
+  "id": "pi7hhhgeyrY",
+  "title": "Playacar Beach on the Riviera Maya",
   "source": "famelack",
   "country": "MX",
   "reason": "no-gazetteer-match-in-country"
@@ -11090,8 +10955,8 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "MqVlAR3L2Q4",
-  "title": "Port d'Andratx House of Sunset",
+  "id": "jnC6rcsFJjQ",
+  "title": "Port d'Andratx La Mola",
   "source": "famelack",
   "country": "ES",
   "reason": "no-gazetteer-match-in-country"
@@ -11125,10 +10990,10 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "m1R-LmvVt30",
-  "title": "PortMiami Cruise Ships & Skyline",
+  "id": "m8WaRdmmvtw",
+  "title": "Port St Laurent du Var",
   "source": "famelack",
-  "country": "US",
+  "country": "FR",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -11151,7 +11016,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "TCmWi0sbApw",
+  "id": "NOp-ylNLU0I",
   "title": "Pozo Izquierdo Beach",
   "source": "famelack",
   "country": "ES",
@@ -11415,7 +11280,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "H_hHDQvNT2Y",
+  "id": "oZcJcXP72aQ",
   "title": "Raccoon Saloon Back Door",
   "source": "famelack",
   "country": "US",
@@ -11569,14 +11434,14 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "tLp3lmZtW08",
+  "id": "Uvml1iXdVQM",
   "title": "Raccoon Saloon Porch",
   "source": "famelack",
   "country": "US",
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "A1n2XXJMVAs",
+  "id": "N9gZ5l7SjKk",
   "title": "Raccoon Saloon Road View",
   "source": "famelack",
   "country": "US",
@@ -11643,6 +11508,13 @@
   "title": "Ramat Hanadiv Lesser Kestrel Nest",
   "source": "famelack",
   "country": "IL",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "89qXEBuEDf0",
+  "title": "Rancho La Onza Hillside",
+  "source": "famelack",
+  "country": "MX",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -11860,13 +11732,6 @@
   "title": "Riet Vell Bird Reserve",
   "source": "famelack",
   "country": "ES",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "djzZICZ6Stw",
-  "title": "Rifugio Burigone Mountain Refuge",
-  "source": "famelack",
-  "country": "IT",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -12334,7 +12199,7 @@
   }
  },
  {
-  "id": "CQMWHcGNsto",
+  "id": "CAb2AjJNTHo",
   "title": "San Joaquín Town Square & Bell Tower",
   "source": "famelack",
   "country": "MX",
@@ -12384,24 +12249,10 @@
   }
  },
  {
-  "id": "yvOgzH9pHwE",
+  "id": "JiOF837gWss",
   "title": "Sandestin Beach",
   "source": "famelack",
   "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "W1Fax_IG548",
-  "title": "Sandestin Beach at Southwinds",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "H9NWoXR3MuM",
-  "title": "Sandön Bird Life",
-  "source": "famelack",
-  "country": "SE",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -12457,18 +12308,6 @@
   "source": "famelack",
   "country": "FI",
   "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "TQW3IqKsUzc",
-  "title": "Santa Maria Weather",
-  "source": "famelack",
-  "country": "BR",
-  "reason": "ambiguous-name:santa maria",
-  "best": {
-   "matched": "santa maria",
-   "place": "Santa Maria, Rio Grande do Sul, BR",
-   "confidence": 0
-  }
  },
  {
   "id": "xiQC5Qbi3qE",
@@ -12663,36 +12502,8 @@
   "reason": "misplaced"
  },
  {
-  "id": "F5yLGZp5nsA",
-  "title": "Seal Island Black Guillemot Nest",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "EqVCjIa5brY",
   "title": "Seal Island Puffin Boulder Berm",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "5bkDe6LryCo",
-  "title": "Seal Island Puffin Burrow Exterior",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "Ziu0WsWAukE",
-  "title": "Seal Island Puffin Burrow Willie & Millie",
-  "source": "famelack",
-  "country": "US",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "daFe_ygulPY",
-  "title": "Seal Island Puffin Loafing Ledge",
   "source": "famelack",
   "country": "US",
   "reason": "no-gazetteer-match-in-country"
@@ -13082,13 +12893,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "6HpLtHE4hE4",
-  "title": "Šilo Lučica",
-  "source": "famelack",
-  "country": "HR",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "pYTnkhLvNsU",
   "title": "Silver Lake Sand Dunes",
   "source": "famelack",
@@ -13144,13 +12948,6 @@
   "source": "famelack",
   "country": "SX",
   "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "wf5mPSE2w9c",
-  "title": "Singh Sabha Washington",
-  "source": "famelack",
-  "country": "US",
-  "reason": "misplaced"
  },
  {
   "id": "sF5hFDGN20Y",
@@ -13534,7 +13331,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "tTcaAGn1jyM",
+  "id": "d9ymQ-xBGn8",
   "title": "Soi Buakhao Bar Strip",
   "source": "famelack",
   "country": "TH",
@@ -13839,20 +13636,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "BnLcCs_NYUM",
-  "title": "Spotlight Baltic Sea Compilation",
-  "source": "famelack",
-  "country": "DE",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "aYtgGjMDagw",
-  "title": "Spotlight Germany Webcam Tour",
-  "source": "famelack",
-  "country": "DE",
-  "reason": "misplaced"
- },
- {
   "id": "3UzgSRYzDEQ",
   "title": "Spotted Horse Ranch on the Hoback River",
   "source": "famelack",
@@ -13898,7 +13681,7 @@
   }
  },
  {
-  "id": "b983minxX5Q",
+  "id": "Zpj4WGUUtFc",
   "title": "Squirrel and Wildlife Feeder",
   "source": "famelack",
   "country": "US",
@@ -14227,6 +14010,18 @@
   }
  },
  {
+  "id": "Ir7PRptC27w",
+  "title": "Sturgis Lazelle Street",
+  "source": "famelack",
+  "country": "US",
+  "reason": "ambiguous-name:sturgis",
+  "best": {
+   "matched": "sturgis",
+   "place": "Sturgis, Michigan, US",
+   "confidence": 0
+  }
+ },
+ {
   "id": "uu82CI54eJU",
   "title": "Sturgis Main Street",
   "source": "famelack",
@@ -14451,6 +14246,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "zqVnJDJIBgA",
+  "title": "Swim Cafe Beach & Seafront",
+  "source": "famelack",
+  "country": "GB",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
   "id": "enYFXf8u7Lc",
   "title": "Swiss Alps Panorama",
   "source": "famelack",
@@ -14514,7 +14316,7 @@
   "reason": "misplaced"
  },
  {
-  "id": "fTh5ssC1z-c",
+  "id": "wiVzU1mcCTA",
   "title": "Tamariu Beach",
   "source": "famelack",
   "country": "ES",
@@ -14523,6 +14325,13 @@
  {
   "id": "yn_8QwCWsyI",
   "title": "Tamsui District Traffic Cams",
+  "source": "famelack",
+  "country": "TW",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "6TYQs_K3uvM",
+  "title": "Tamsui Ferry Pier",
   "source": "famelack",
   "country": "TW",
   "reason": "no-gazetteer-match-in-country"
@@ -14750,13 +14559,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "bm_-L6felME",
-  "title": "The Landing Beach Bar Cane Bay",
-  "source": "famelack",
-  "country": "VI",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "r_mablBOcz0",
   "title": "The Royal Haciendas Phase 1",
   "source": "famelack",
@@ -14879,18 +14681,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "c3UWX9HNoOA",
-  "title": "Tinos Ferry Port and Harbor",
-  "source": "famelack",
-  "country": "GR",
-  "reason": "below-threshold",
-  "best": {
-   "matched": "tinos",
-   "place": "Tínos, South Aegean, GR",
-   "confidence": 0.619
-  }
- },
- {
   "id": "7jxSXfdK0Jg",
   "title": "TinyKittens Bramble",
   "source": "famelack",
@@ -14905,7 +14695,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "gekuAKeK4Y0",
+  "id": "83Zw6lUa9Wc",
   "title": "TJ Sokol Nová Ves nad Popelkou Football Field",
   "source": "famelack",
   "country": "CZ",
@@ -14924,7 +14714,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "dWuaeZ-ggcU",
+  "id": "ErUOGtBXhgY",
   "title": "Tobalaba Financial District",
   "source": "famelack",
   "country": "CL",
@@ -14940,18 +14730,6 @@
  {
   "id": "_qN4aao5kWc",
   "title": "Tofino Harbour Sea Kayaking",
-  "source": "famelack",
-  "country": "CA",
-  "reason": "below-threshold",
-  "best": {
-   "matched": "tofino",
-   "place": "Tofino, British Columbia, CA",
-   "confidence": 0.636
-  }
- },
- {
-  "id": "JZ3UV60ykqc",
-  "title": "Tofino Long Beach",
   "source": "famelack",
   "country": "CA",
   "reason": "below-threshold",
@@ -15232,6 +15010,13 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
+  "id": "nzahvkroIvg",
+  "title": "Trpejca, Lake Ohrid",
+  "source": "famelack",
+  "country": "MK",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
   "id": "tJStk98-8KA",
   "title": "Trutnovský Kostel JZ",
   "source": "famelack",
@@ -15285,6 +15070,13 @@
   "title": "Twin Pan Wildlife Waterhole Hide Cam",
   "source": "famelack",
   "country": "BW",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "N_bKPGmlwMY",
+  "title": "Two Friends Patio",
+  "source": "famelack",
+  "country": "US",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -15386,7 +15178,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "AgJmFOT-6cc",
+  "id": "ALJRFvWOR9E",
   "title": "Underwater Fish",
   "source": "famelack",
   "country": "MV",
@@ -15576,7 +15368,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "Sx2r_KKz7VA",
+  "id": "tIoIQdQ82n8",
   "title": "Val d'Isère",
   "source": "famelack",
   "country": "FR",
@@ -15602,18 +15394,6 @@
   "source": "famelack",
   "country": "IT",
   "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "f28mwT2qFnQ",
-  "title": "Valdez South Boat Harbor & Marina",
-  "source": "famelack",
-  "country": "US",
-  "reason": "below-threshold",
-  "best": {
-   "matched": "valdez",
-   "place": "Valdez, Alaska, US",
-   "confidence": 0.649
-  }
  },
  {
   "id": "n3Sxm7m-378",
@@ -15822,7 +15602,7 @@
   }
  },
  {
-  "id": "qN7Ch3_aFL0",
+  "id": "HLCSEoHuH_o",
   "title": "Viracopos International Airport",
   "source": "famelack",
   "country": "BR",
@@ -15836,7 +15616,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "tNOjOvLkfQM",
+  "id": "deNLpaO6qXc",
   "title": "Volcán de Fuego",
   "source": "famelack",
   "country": "GT",
@@ -16008,6 +15788,20 @@
   "title": "Wassenaarse Slag Beach",
   "source": "famelack",
   "country": "NL",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "gNsQznBP7ec",
+  "title": "Wasserkuppe Panorama East",
+  "source": "famelack",
+  "country": "DE",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "YUKf-_iZyU4",
+  "title": "Wasserkuppe Rhön Panorama West",
+  "source": "famelack",
+  "country": "DE",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -16184,7 +15978,7 @@
   }
  },
  {
-  "id": "P7a9C2-Bk-4",
+  "id": "rqUc3Dys_s4",
   "title": "Westfield Papermill Field",
   "source": "famelack",
   "country": "US",
@@ -16459,7 +16253,7 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "W24eYydw9Qw",
+  "id": "54IhBEtQK8g",
   "title": "Wissant Beach",
   "source": "famelack",
   "country": "FR",
@@ -16500,6 +16294,18 @@
   "best": {
    "matched": "woodbine",
    "place": "Woodbine, New Jersey, US",
+   "confidence": 0
+  }
+ },
+ {
+  "id": "k2LK6EwdlBI",
+  "title": "Woodland Park",
+  "source": "famelack",
+  "country": "US",
+  "reason": "ambiguous-name:woodland park",
+  "best": {
+   "matched": "woodland park",
+   "place": "Woodland Park, New Jersey, US",
    "confidence": 0
   }
  },
@@ -16734,6 +16540,13 @@
   }
  },
  {
+  "id": "Z9Q9akr7QSE",
+  "title": "Zaimokuza Beach and Yuigahama Beach",
+  "source": "famelack",
+  "country": "JP",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
   "id": "tIkzqrljpB4",
   "title": "Zambezi River",
   "source": "famelack",
@@ -16886,13 +16699,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "7vjpHM3uYHs",
-  "title": "Zvulun Beach",
-  "source": "famelack",
-  "country": "IL",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "E_4y8jgvSRA",
   "title": "Þorbjörn Volcano View B",
   "source": "famelack",
@@ -16954,13 +16760,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "oYF1yEIwQqo",
-  "title": "Stadtmitte von der Süd-Dakota Brücke aus",
-  "source": "camlisted",
-  "country": "DE",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "AY__GkQN3WA",
   "title": "Blick auf St. Peter und Paul / Oberstraße",
   "source": "camlisted",
@@ -16998,13 +16797,6 @@
   "title": "【LIVE】体感型動物園ｉＺｏｏゾウガメ牧場【室内】",
   "source": "camlisted",
   "country": "JP",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "Tu6hjlUq2Bs",
-  "title": "24/7 Multiple Cameras in Israel, Iran,  Kuwait and Middle East  with news updates in chat",
-  "source": "camlisted",
-  "country": "IL",
   "reason": "no-gazetteer-match-in-country"
  },
  {
@@ -17488,18 +17280,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "_MeFJIAcgSI",
-  "title": "BCEMA Sky Cams",
-  "source": "camlisted",
-  "country": "US",
-  "reason": "ambiguous-name:bedford",
-  "best": {
-   "matched": "bedford",
-   "place": "Bedford, Texas, US",
-   "confidence": 0
-  }
- },
- {
   "id": "bhR-dAIkEnk",
   "title": "Salamandra Lyžiarske Stredisko - Webkamera",
   "source": "camlisted",
@@ -17523,13 +17303,6 @@
  {
   "id": "y59VkvOsz6s",
   "title": "Gilestone Osprey Cup Cam",
-  "source": "camlisted",
-  "country": "GB",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
-  "id": "a7Aocq3fybM",
-  "title": "Loch Doon Ospreys",
   "source": "camlisted",
   "country": "GB",
   "reason": "no-gazetteer-match-in-country"
@@ -18550,13 +18323,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "YyCjzb0kWfY",
-  "title": "APACE - 26015",
-  "source": "camlisted",
-  "country": "ID",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "OB38pbnrNPI",
   "title": "LIVE PEMANTAUAN CCTV TAMAN KOTA",
   "source": "camlisted",
@@ -18590,13 +18356,6 @@
   "reason": "no-gazetteer-match-in-country"
  },
  {
-  "id": "gwUwOto2gJg",
-  "title": "LIVE PEMANTAUAN CCTV PANTAI WEDIOMBO",
-  "source": "camlisted",
-  "country": "ID",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "WtwqvHWdlJU",
   "title": "PEMANTAUAN CCTV LALULINTAS SD TROWONO 1",
   "source": "camlisted",
@@ -18614,13 +18373,6 @@
    "place": "Ngawen, Central Java, ID",
    "confidence": 0.607
   }
- },
- {
-  "id": "iQ5xSuXgLqE",
-  "title": "LIVE PEMANTAUAN CCTV LALULINTAS SIMPANG TIGA BUNDER",
-  "source": "camlisted",
-  "country": "ID",
-  "reason": "no-gazetteer-match-in-country"
  },
  {
   "id": "xXSKmVeK1k0",
@@ -18869,13 +18621,6 @@
   }
  },
  {
-  "id": "w6WZmF0zUac",
-  "title": "Bahamas 4K Drone Footage | Exuma Swimming Pigs & The Most Beautiful Beaches in the World",
-  "source": "camlisted",
-  "country": "BS",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "U4Y1ACxP-hg",
   "title": "Madeira, Portugal 🇵🇹 in 4K UHD - Portugal's Paradise | Cinematic Drone Footage",
   "source": "camlisted",
@@ -18916,13 +18661,6 @@
   }
  },
  {
-  "id": "AbBuSNMWBlQ",
-  "title": "Ukraine Live - 24/7 Multiple Live Cameras of Ukraine with News Updates",
-  "source": "camlisted",
-  "country": "UA",
-  "reason": "no-gazetteer-match-in-country"
- },
- {
   "id": "xA7txncoo6o",
   "title": "Ocean Sunset NO ADS (Live 24/7). Tropical Beach & Ocean Sounds. Félicité Island, Seychelles",
   "source": "camlisted",
@@ -18959,6 +18697,25 @@
    "matched": "gora",
    "place": "Góra, Lower Silesia, PL",
    "confidence": 0.589
+  }
+ },
+ {
+  "id": "_5UEYcQRGBo",
+  "title": "초록빛 기운이 넘치는 평화로운 공원, 피아노 연주곡",
+  "source": "camlisted",
+  "country": "KR",
+  "reason": "no-gazetteer-match-in-country"
+ },
+ {
+  "id": "geIlSasuNio",
+  "title": "🔴 LIVE | Seoul Seongsu Walking Tour 🇰🇷 | Seongsu Live TV | Korea Night walks |건대, 성수동 거리 라이브 TV",
+  "source": "camlisted",
+  "country": "KR",
+  "reason": "below-threshold",
+  "best": {
+   "matched": "seongsu",
+   "place": "Seongsu, Jeollabuk-do, KR",
+   "confidence": 0.643
   }
  }
 ]
