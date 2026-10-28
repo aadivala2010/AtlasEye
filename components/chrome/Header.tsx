@@ -1,6 +1,6 @@
 'use client';
 
-import type { Ref } from 'react';
+import { useEffect, useRef, useState, type Ref } from 'react';
 import type { Stream } from '@/lib/stream';
 import type { Sky } from '@/lib/sky';
 import Search, { type SearchHandle } from './Search';
@@ -16,10 +16,9 @@ const LAYERS: { id: Layer; label: string; title: string }[] = [
   { id: 'satellites', label: 'Satellites', title: 'Everything in orbit, live (CelesTrak); click one to follow it' },
   { id: 'events', label: 'Earth', title: 'Earthquakes, fires, storms, eruptions and ice, live; click one for a dossier' },
   { id: 'radio', label: 'Radio', title: 'Live radio stations worldwide (Radio Browser); click one to listen' },
-  { id: 'dossier', label: 'Dossier', title: 'Click anywhere on the globe for a dossier of that spot' },
 ];
 
-/** A panel or mode rather than a layer: Pulse, Time, Wall, Tour. */
+/** A panel rather than a map layer. */
 export interface Tool { id: string; label: string; title: string; on: boolean; count?: number | null; key: string }
 
 interface Props {
@@ -28,6 +27,7 @@ interface Props {
   layers: Layers;
   counts: Partial<Record<Layer, number | null>>;
   onToggleLayer(l: Layer): void;
+  onEarthEvents(): void;
   onPick(s: Stream): void;
   onRandom(): void;
   snapshots: boolean;
@@ -43,34 +43,67 @@ const CHIP = 'flex h-6 shrink-0 items-center gap-1.5 rounded-[2px] border px-2 f
 const chipState = (on: boolean) => (on ? 'border-strong bg-raised text-primary hover:border-accent-muted' : 'border-subtle text-tertiary hover:text-secondary');
 
 export default function Header(p: Props) {
+  const [cameraMenu, setCameraMenu] = useState<{ left: number; top: number } | null>(null);
+  const menu = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLElement | null>(null);
+  const openCameras = (button: HTMLElement) => {
+    const rect = button.getBoundingClientRect();
+    trigger.current = button;
+    setCameraMenu({ left: Math.max(8, Math.min(rect.left, window.innerWidth - 288)), top: rect.bottom + 6 });
+  };
+  useEffect(() => {
+    if (!cameraMenu) return;
+    menu.current?.querySelector<HTMLButtonElement>('button')?.focus();
+    const away = (e: PointerEvent) => { if (!menu.current?.contains(e.target as Node)) setCameraMenu(null); };
+    const key = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setCameraMenu(null); trigger.current?.focus(); }
+    };
+    const dismiss = () => setCameraMenu(null);
+    document.addEventListener('pointerdown', away);
+    document.addEventListener('keydown', key, true);
+    window.addEventListener('resize', dismiss);
+    return () => {
+      document.removeEventListener('pointerdown', away);
+      document.removeEventListener('keydown', key, true);
+      window.removeEventListener('resize', dismiss);
+    };
+  }, [cameraMenu]);
   const chips = (
     <div className="no-scrollbar flex min-w-0 items-center gap-1 overflow-x-auto" role="group" aria-label="Layers">
       {LAYERS.map(({ id, label, title }) => {
         const on = p.layers[id];
         const n = p.counts[id];
         return (
-          <button key={id} type="button" aria-pressed={on} title={title} onClick={() => p.onToggleLayer(id)} className={`${CHIP} ${chipState(on)}`}>
+          <div key={id} className="flex shrink-0 items-center">
+          <button type="button" aria-pressed={on} title={`${title}${id === 'cameras' ? '; right-click for snapshots' : id === 'events' ? '; right-click for all events' : ''}`}
+            onContextMenu={id === 'cameras' || id === 'events' ? (e) => { e.preventDefault(); if (id === 'cameras') openCameras(e.currentTarget); else p.onEarthEvents(); } : undefined}
+            onKeyDown={(e) => {
+              if ((e.key === 'F10' && e.shiftKey) || e.key === 'ContextMenu') {
+                if (id === 'cameras' || id === 'events') { e.preventDefault(); if (id === 'cameras') openCameras(e.currentTarget); else p.onEarthEvents(); }
+              }
+            }}
+            onClick={() => p.onToggleLayer(id)} className={`${CHIP} ${chipState(on)}`}>
             <span className={`h-1.5 w-1.5 rounded-full ${on ? LAYER_DOT[id] : 'bg-strong'}`} />
             {label}
             {n != null && <span className="text-tertiary">{n.toLocaleString('en-US')}</span>}
           </button>
+          {(id === 'cameras' || id === 'events') && <button type="button"
+            aria-label={id === 'cameras' ? 'Camera options' : 'Show all Earth events'}
+            title={id === 'cameras' ? 'Camera options (also right-click Cameras)' : 'All Earth events (also right-click Earth)'}
+            aria-expanded={id === 'cameras' ? !!cameraMenu : undefined}
+            aria-haspopup={id === 'cameras' ? 'dialog' : undefined}
+            onClick={(e) => { if (id === 'cameras') openCameras(e.currentTarget); else p.onEarthEvents(); }}
+            className="flex h-6 w-6 items-center justify-center rounded-[2px] text-tertiary hover:bg-hover hover:text-primary">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" aria-hidden="true"><path d="m2 4 3 3 3-3" /></svg>
+          </button>}
+          </div>
         );
       })}
-      {p.layers.cameras && (
-        <>
-          <span className="mx-1 h-4 w-px shrink-0 bg-strong" aria-hidden />
-          <button
-            type="button"
-            aria-pressed={p.snapshots}
-            onClick={p.onToggleSnapshots}
-            title="Still images from traffic and weather cameras, refreshed every few seconds to minutes"
-            className={`${CHIP} ${chipState(p.snapshots)}`}
-          >
-            Snapshots
-            <span className="text-tertiary">{p.snapshotCount.toLocaleString('en-US')}</span>
-          </button>
-        </>
-      )}
+      <span className="mx-1 h-4 w-px shrink-0 bg-strong" aria-hidden />
+      <button type="button" aria-pressed={p.layers.dossier} onClick={() => p.onToggleLayer('dossier')}
+        title="Click anywhere on the globe for a dossier of that spot" className={`${CHIP} ${chipState(p.layers.dossier)}`}>
+        Dossier
+      </button>
       <span className="mx-1 h-4 w-px shrink-0 bg-strong" aria-hidden />
       {p.tools.map((t) => (
         <button key={t.id} type="button" aria-pressed={t.on} title={`${t.title} (${t.key})`} onClick={() => p.onTool(t.id)} className={`${CHIP} ${chipState(t.on)}`}>
@@ -105,6 +138,17 @@ export default function Header(p: Props) {
         </div>
       </div>
       <div className="border-t border-subtle px-4 py-1.5 md:hidden">{chips}</div>
+      {cameraMenu && <div ref={menu} role="dialog" aria-label="Camera options" style={cameraMenu}
+        className="fixed z-50 w-[280px] rounded-[4px] border border-strong bg-panel p-3 shadow-xl">
+        <div className="label mb-2">Cameras</div>
+        <button type="button" role="switch" aria-checked={p.snapshots} onClick={p.onToggleSnapshots}
+          className="flex min-h-10 w-full items-center gap-3 rounded-[2px] px-2 text-left hover:bg-hover">
+          <span aria-hidden="true" className={`h-3 w-3 shrink-0 rounded-[2px] border ${p.snapshots ? 'border-accent bg-accent' : 'border-strong'}`} />
+          <span className="flex-1 text-sm text-primary">Snapshots</span>
+          <span className="font-mono text-[11px] text-secondary">{p.snapshotCount.toLocaleString('en-US')}</span>
+        </button>
+        <p className="mt-1 px-2 text-[11px] leading-4 text-secondary">Include still images from traffic and weather cameras.</p>
+      </div>}
     </header>
   );
 }

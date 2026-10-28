@@ -15,7 +15,7 @@ const GIBS = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best';
 const EUMETSAT = 'https://view.eumetsat.int/geoserver/wms?service=WMS&version=1.3.0&request=GetMap&styles=&crs=EPSG:3857'
   + '&width=256&height=256&format=image/png&transparent=true';
 
-export type SenseId = 'ir' | 'rain' | 'radar' | 'sst' | 'heatwave' | 'smoke' | 'snow' | 'ice' | 'co';
+export type SenseId = 'rain' | 'snow' | 'smoke';
 
 export interface Sky {
   /** Clouds as the geostationary ring sees them now: five satellites, a new frame every 10–15 min. */
@@ -171,6 +171,23 @@ function geoUrl(g: Geo, time: string, z: number, x: number, y: number): string {
   return `${EUMETSAT}&layers=${g.wms}&bbox=${tileBbox(z, x, y)}${when}`;
 }
 
+/** Conservative coverage test: never fetch a satellite image outside its visible disk. */
+export function geoTileVisible(satellite: number, z: number, x: number, y: number): boolean {
+  const n = 2 ** z;
+  const north = Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n)));
+  const south = Math.atan(Math.sinh(Math.PI * (1 - 2 * (y + 1) / n)));
+  const closestLat = south <= 0 && north >= 0 ? 0 : Math.min(Math.abs(north), Math.abs(south));
+  const west = 2 * Math.PI * x / n - Math.PI;
+  const east = 2 * Math.PI * (x + 1) / n - Math.PI;
+  const nadir = GEO[satellite].lon * RAD;
+  let separation = Math.PI;
+  for (const wrap of [-2 * Math.PI, 0, 2 * Math.PI]) {
+    const lon = nadir + wrap;
+    separation = Math.min(separation, Math.max(west - lon, lon - east, 0));
+  }
+  return Math.cos(closestLat) * Math.cos(separation) > COS_EDGE;
+}
+
 /**
  * `live://<satellite>/<clouds|ir>/<time>/<z>/<x>/<y>` — one satellite's infrared, blended with its
  * neighbours by viewing angle. `clouds` turns it into white cloud (moonlit grey on the night side)
@@ -183,6 +200,7 @@ const loadLive: AddProtocolAction = async ({ url }, { signal }) => {
   const i = GEO.findIndex((g) => g.id === id);
   const g = GEO[i];
   if (!g) throw new Error(`unknown satellite ${id}`);
+  if (!geoTileVisible(i, z, x, y)) return { data: await createImageBitmap(new ImageData(1, 1)) };
   const img = await pixels(geoUrl(g, time, z, x, y), signal);
   const { width: w, height: h, data: px } = img;
   const { lat, lon } = tileAxes(z, x, y, w);
@@ -352,15 +370,9 @@ interface Sense {
 const legend = (name: string) => `https://gibs.earthdata.nasa.gov/legends/${name}_H.svg`;
 
 export const SENSES: Record<SenseId, Sense> = {
-  ir: { label: 'Infrared', note: 'Cloud-top temperature from the geostationary ring. Colours are the coldest, tallest storm tops.', legend: legend('Clean_Longwave_Infrared_Window_Band') },
   rain: { label: 'Rain', note: 'Satellite rain rate everywhere, oceans included (NASA IMERG, ~6 h behind).', legend: legend('GPM_Precipitation_Rate'), gibs: { layer: 'IMERG_Precipitation_Rate_30min', tms: 'GoogleMapsCompatible_Level6', step: 30 } },
-  radar: { label: 'Radar', note: 'Ground weather radar every 10 min, where countries run it (RainViewer).' },
-  sst: { label: 'Sea temperature', note: 'Sea-surface temperature, daily (GHRSST MUR).', legend: legend('GHRSST_Sea_Surface_Temperature'), gibs: { layer: 'GHRSST_L4_MUR_Sea_Surface_Temperature', tms: 'GoogleMapsCompatible_Level7' } },
-  heatwave: { label: 'Marine heatwaves', note: 'How far the sea is from its normal temperature for the date.', legend: legend('GHRSST_Sea_Surface_Temperature_Anomalies'), gibs: { layer: 'GHRSST_L4_MUR_Sea_Surface_Temperature_Anomalies', tms: 'GoogleMapsCompatible_Level7' } },
   smoke: { label: 'Smoke & dust', note: 'Aerosol optical depth: smoke, dust and haze in the air (MODIS, daily).', legend: legend('MODIS_Combined_Value_Added_AOD'), gibs: { layer: 'MODIS_Combined_Value_Added_AOD', tms: 'GoogleMapsCompatible_Level6' } },
   snow: { label: 'Snow', note: 'Snow cover seen from orbit (MODIS, daily; clouds hide the ground).', legend: legend('MODIS_NDSI_Snow_Cover'), gibs: { layer: 'MODIS_Terra_L3_NDSI_Snow_Cover_Daily', tms: 'GoogleMapsCompatible_Level8' } },
-  ice: { label: 'Sea ice', note: 'Sea-ice concentration, daily (GHRSST MUR).', legend: legend('GHRSST_Sea_Ice_Concentration'), gibs: { layer: 'GHRSST_L4_MUR_Sea_Ice_Concentration', tms: 'GoogleMapsCompatible_Level7' } },
-  co: { label: 'Carbon monoxide', note: 'Carbon monoxide at 500 hPa, the trail of fires and cities (AIRS, daily).', legend: legend('AIRS_Carbon_Monoxide_Volume_Mixing_Ratio'), gibs: { layer: 'AIRS_L2_Carbon_Monoxide_500hPa_Volume_Mixing_Ratio_Day', tms: 'GoogleMapsCompatible_Level6' } },
 };
 
 const zoomOf = (tms: string) => Number(tms.match(/Level(\d+)$/)![1]);
@@ -370,25 +382,22 @@ const zoomOf = (tms: string) => Number(tms.match(/Level(\d+)$/)![1]);
 export const fadeBy = (from: number, to: number, max = 1): ExpressionSpecification =>
   ['interpolate', ['linear'], ['zoom'], from, max, to, 0];
 
-export interface Overlay { id: string; maxzoom: number; opacity: ExpressionSpecification | number; attribution: string }
+export interface Overlay { id: string; maxzoom: number; fadeOutZoom?: number; opacity: ExpressionSpecification | number; attribution: string }
 
 const NASA = '<a href="https://worldview.earthdata.nasa.gov" target="_blank" rel="noopener noreferrer">NASA EOSDIS GIBS</a>';
 const EUM = '© <a href="https://view.eumetsat.int" target="_blank" rel="noopener noreferrer">EUMETSAT</a>';
 
 export const OVERLAYS: Overlay[] = [
   // Faded out by the zoom GIBS runs out of detail at, so close-in views keep Esri's sharpness.
-  { id: 'clouds', maxzoom: 8, opacity: ['interpolate', ['linear'], ['zoom'], 2, 0.62, 5, 0.5, 7.5, 0], attribution: NASA },
-  { id: 'night', maxzoom: 8, opacity: fadeBy(8, 11), attribution: NASA },
-  ...GEO.map((g) => ({ id: `live-${g.id}`, maxzoom: 6, opacity: fadeBy(5.5, 8), attribution: 'gibs' in g ? NASA : EUM })),
+  { id: 'clouds', maxzoom: 8, fadeOutZoom: 7.5, opacity: ['interpolate', ['linear'], ['zoom'], 2, 0.62, 5, 0.5, 7.5, 0], attribution: NASA },
+  { id: 'night', maxzoom: 8, fadeOutZoom: 11, opacity: fadeBy(8, 11), attribution: NASA },
+  ...GEO.map((g) => ({ id: `live-${g.id}`, maxzoom: 6, fadeOutZoom: 8, opacity: fadeBy(5.5, 8), attribution: 'gibs' in g ? NASA : EUM })),
   ...(Object.entries(SENSES) as [SenseId, Sense][]).filter(([, s]) => s.gibs)
-    .map(([id, s]) => ({ id: `sense-${id}`, maxzoom: zoomOf(s.gibs!.tms), opacity: fadeBy(zoomOf(s.gibs!.tms) + 1, zoomOf(s.gibs!.tms) + 3, 0.8), attribution: NASA })),
-  { id: 'sense-radar', maxzoom: 7, opacity: fadeBy(9, 11, 0.8), attribution: '<a href="https://www.rainviewer.com" target="_blank" rel="noopener noreferrer">RainViewer</a>' },
-  { id: 'aurora', maxzoom: 5, opacity: fadeBy(6, 8), attribution: 'NOAA SWPC' },
+    .map(([id, s]) => ({ id: `sense-${id}`, maxzoom: zoomOf(s.gibs!.tms), fadeOutZoom: zoomOf(s.gibs!.tms) + 3, opacity: fadeBy(zoomOf(s.gibs!.tms) + 1, zoomOf(s.gibs!.tms) + 3, 0.8), attribution: NASA })),
+  { id: 'aurora', maxzoom: 5, fadeOutZoom: 8, opacity: fadeBy(6, 8), attribution: 'NOAA SWPC' },
   { id: 'lightning', maxzoom: 9, opacity: 1, attribution: EUM },
 ];
 export const OVERLAY_IDS = new Set(OVERLAYS.map((o) => o.id));
-
-export interface Radar { host: string; frames: { time: number; path: string }[] }
 
 export interface When {
   /** The moment on screen: null = now. */
@@ -397,7 +406,6 @@ export interface When {
   now: number;
   /** Latest GIBS frame per geostationary satellite. */
   frames: Record<string, string> | null;
-  radar: Radar | null;
   /** Version of the loaded aurora grid; 0 = none yet. */
   aurora: number;
 }
@@ -421,7 +429,7 @@ export function skyTiles(sky: Sky, w: When): Record<string, string[] | null> {
 
   out.night = sky.night ? [`night://${floorTo(at, 5)}/{z}/{x}/{y}`] : null;
 
-  const ringMode = sky.sense === 'ir' ? 'ir' : sky.live ? 'clouds' : null;
+  const ringMode = sky.live ? 'clouds' : null;
   for (const g of GEO) {
     let time: string | null = null;
     if (ringMode && live) time = 'gibs' in g ? w.frames?.[g.id] ?? null : `latest-${floorTo(w.now, 10)}`;
@@ -431,15 +439,9 @@ export function skyTiles(sky: Sky, w: When): Record<string, string[] | null> {
 
   for (const [id, s] of Object.entries(SENSES) as [SenseId, Sense][]) {
     if (!s.gibs) continue;
-    const time = w.t === null ? 'default' : s.gibs.step ? gibsTime(floorTo(at, s.gibs.step)) : isoDay(at);
+    const time = s.gibs.step ? (w.t === null ? 'default' : gibsTime(floorTo(at, s.gibs.step))) : day;
     out[`sense-${id}`] = sky.sense === id ? [`${GIBS}/${s.gibs.layer}/default/${time}/${s.gibs.tms}/{z}/{y}/{x}.png`] : null;
   }
-
-  // Radar keeps ~2 h of frames: the nearest one at or before the moment, if it's within 15 min.
-  const frame = w.radar?.frames.filter((f) => f.time * 1000 <= at + 60_000).at(-1);
-  out['sense-radar'] = sky.sense === 'radar' && w.radar && frame && at - frame.time * 1000 < 15 * 60_000
-    ? [`${w.radar.host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`]
-    : null;
 
   // OVATION is a nowcast: no past to show.
   out.aurora = sky.aurora && w.aurora && live ? [`aurora://${w.aurora}/{z}/{x}/{y}`] : null;
@@ -491,27 +493,6 @@ export function useGeoFrames(on: boolean): Record<string, string> | null {
     return () => { ctrl.abort(); clearTimeout(timer); };
   }, [on]);
   return frames;
-}
-
-/** RainViewer's list of radar frames (the last ~2 h, every 10 min). */
-export function useRadar(on: boolean): Radar | null {
-  const [radar, setRadar] = useState<Radar | null>(null);
-  useEffect(() => {
-    if (!on) return;
-    const ctrl = new AbortController();
-    let timer = 0;
-    const load = async () => {
-      try {
-        const j = (await (await fetch('https://api.rainviewer.com/public/weather-maps.json', { signal: ctrl.signal })).json()) as
-          { host: string; radar: { past: { time: number; path: string }[] } };
-        setRadar({ host: j.host, frames: j.radar.past });
-      } catch { /* keep the last list */ }
-      if (!ctrl.signal.aborted) timer = window.setTimeout(load, 5 * 60_000);
-    };
-    void load();
-    return () => { ctrl.abort(); clearTimeout(timer); };
-  }, [on]);
-  return radar;
 }
 
 /** Loads the OVATION aurora grid for the `aurora://` tiles; returns its version (0 until loaded). */

@@ -9,7 +9,7 @@ import type { Stream } from '@/lib/stream';
 import { distanceKm } from '@/lib/geo';
 import { subsolarPoint, sunAltitude } from '@/lib/solar';
 import {
-  OVERLAYS, OVERLAY_IDS, SHADE_COORDS, SKY_BLEND, SKY_DAY, SKY_NIGHT, SKY_OFF, TERRAIN, drawShade, fadeBy, registerSky, skyTiles, useAurora, useClock, useGeoFrames, useRadar, type Sky,
+  OVERLAYS, OVERLAY_IDS, SHADE_COORDS, SKY_BLEND, SKY_DAY, SKY_NIGHT, SKY_OFF, TERRAIN, drawShade, fadeBy, registerSky, skyTiles, useAurora, useClock, useGeoFrames, type Sky,
 } from '@/lib/sky';
 import { readout } from '@/lib/readout';
 import { formatAlt, project, type Flight } from '@/lib/flights';
@@ -23,13 +23,7 @@ export interface GlobeHandle {
   /** `travel` arcs out and back in across the planet (random, search); `near` is a short glide. */
   flyToStream(stream: Stream, mode: 'near' | 'travel'): void;
   flyTo(lon: number, lat: number, mode: 'near' | 'travel'): void;
-  /** Centre of the view, for fetching what's around it. */
-  center(): { lat: number; lon: number } | null;
   stopRotation(): void;
-  /** Whether every tile in view has arrived (the time machine waits on it before stepping). */
-  loaded(): boolean;
-  /** The streams on screen: on the facing hemisphere and, once zoomed in, inside the viewport. */
-  visible(list: Stream[]): Stream[];
 }
 
 interface Props {
@@ -62,8 +56,6 @@ interface Props {
   follow: boolean;
   onSatellite(id: number): void;
   onUnfollow(): void;
-  /** A hand on the globe (drag, pinch, wheel): ends following and the autopilot. */
-  onTouch(): void;
   /** Radio stations (null = the radio layer is off); the one on air is ringed. */
   stations: Station[] | null;
   radioId: string | null;
@@ -169,7 +161,7 @@ interface Base { source: VectorSourceSpecification; glyphs: string; font: string
 async function loadBase(): Promise<Base | null> {
   for (const url of BASE_STYLES) {
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
       if (!res.ok) continue;
       const style = (await res.json()) as StyleSpecification;
       const source = Object.values(style.sources).find((s): s is VectorSourceSpecification => s.type === 'vector');
@@ -201,6 +193,8 @@ function buildStyle(base: Base | null): StyleSpecification {
     // Every sky overlay, hidden until switched on: a hidden layer's tiles are never fetched.
     ...OVERLAYS.map((o): LayerSpecification => ({
       id: o.id, type: 'raster', source: o.id, layout: { visibility: 'none' },
+      // Zero opacity still fetches tiles; a layer zoom limit stops invisible weather work.
+      maxzoom: o.fadeOutZoom,
       paint: { 'raster-opacity': o.opacity, 'raster-fade-duration': 300 },
     })),
   ];
@@ -363,6 +357,7 @@ export default function GlobeView(props: Props) {
   const placeHalo = (map: MLMap) => {
     const el = halo.current;
     if (!el) return;
+    if (map.getZoom() >= 5) { el.style.opacity = '0'; return; }
     const c = map.getCenter();
     const mid = map.project(c);
     const bearing = c.lat > 0 ? Math.PI : 0; // walk toward the equator side, away from pole clipping
@@ -405,7 +400,10 @@ export default function GlobeView(props: Props) {
       const c = map.getCenter();
       map.setSky(want ? { ...(sunAltitude(c.lat, c.lng, subsolarPoint(new Date())) < -6 ? SKY_NIGHT : SKY_DAY), ...SKY_BLEND } : SKY_OFF);
     }
-    if (map.getLayer('buildings')) map.setLayoutProperty('buildings', 'visibility', on ? 'visible' : 'none');
+    const visibility = on ? 'visible' : 'none';
+    if (map.getLayer('buildings') && map.getLayoutProperty('buildings', 'visibility') !== visibility) {
+      map.setLayoutProperty('buildings', 'visibility', visibility);
+    }
     if (z < 4 && map.getBearing() !== 0 && !map.isMoving()) map.easeTo({ bearing: 0, duration: 400 });
   };
   const mapRef = useRef<MLMap | null>(null);
@@ -471,6 +469,7 @@ export default function GlobeView(props: Props) {
     let minuteTimer = 0;
     let planeTimer = 0;
     let satTimer = 0;
+    let pending = 0;
     let map: MLMap | null = null;
 
     (async () => {
@@ -483,6 +482,8 @@ export default function GlobeView(props: Props) {
       await document.fonts.load(`500 10px ${mono}`).catch(() => undefined);
 
       const zoom = initialCamera?.zoom ?? fitZoom(el);
+      const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
+      const modest = navigator.hardwareConcurrency <= 4 || (memory !== undefined && memory <= 4);
       registerSky(ml);
       map = new ml.Map({
         container: el,
@@ -495,6 +496,11 @@ export default function GlobeView(props: Props) {
         attributionControl: false,
         dragRotate: false, // enabled once zoomed in, by apply3d
         fadeDuration: 0,
+        // Bound GPU fill and tile memory on integrated graphics, while keeping CSS text sharp.
+        pixelRatio: Math.min(window.devicePixelRatio || 1, modest ? 1 : 1.5),
+        maxTileCacheSize: modest ? 64 : 128,
+        // Keep coarse imagery arriving underneath detailed tiles during a zoom.
+        cancelPendingTileRequestsWhileZooming: false,
       });
       map.touchZoomRotate.disableRotation();
       // Imagery tiles over open ocean, outside a satellite's disk or past a layer's newest date fail;
@@ -640,7 +646,7 @@ export default function GlobeView(props: Props) {
         drawShade(shadeCanvas.current, Date.now());
         map.addSource('shade', { type: 'canvas', canvas: shadeCanvas.current, coordinates: SHADE_COORDS, animate: false });
         map.addLayer({
-          id: 'shade', type: 'raster', source: 'shade', layout: { visibility: 'none' },
+          id: 'shade', type: 'raster', source: 'shade', maxzoom: 11, layout: { visibility: 'none' },
           paint: { 'raster-opacity': fadeBy(8, 11), 'raster-fade-duration': 0 },
         }, 'night');
 
@@ -648,18 +654,18 @@ export default function GlobeView(props: Props) {
         setReady(true);
       });
 
-      // Night-side pins follow the sun, once a minute.
+      // Night-side pins follow the sun every five minutes, without constantly rebuilding clusters.
       minuteTimer = window.setInterval(() => {
-        if (!map?.getSource('streams')) return;
+        if (document.hidden || !map?.getSource('streams')) return;
         map.getSource<GeoJSONSource>('streams')?.setData(pinData(streamsRef.current, sweepFrom.current));
-      }, 60_000);
+      }, 300_000);
 
-      // Aircraft glide between 10 s polls: dead-reckoned once a second.
+      // Aircraft move between polls; give dragging and background tabs priority over these updates.
       planeTimer = window.setInterval(() => {
-        if (flightsRef.current.length) map?.getSource<GeoJSONSource>('planes')?.setData(planeData(flightsRef.current, Date.now()));
-      }, 1000);
+        if (!document.hidden && !map?.isMoving() && flightsRef.current.length) map?.getSource<GeoJSONSource>('planes')?.setData(planeData(flightsRef.current, Date.now()));
+      }, modest ? 2000 : 1000);
       // Satellites by SGP4 every 2 s (~30 ms for all of them); Starlink moves ~15 km in that time.
-      satTimer = window.setInterval(() => { if (map && satsRef.current.length) drawSats(map); }, 2000);
+      satTimer = window.setInterval(() => { if (!document.hidden && map && satsRef.current.length) drawSats(map); }, modest ? 4000 : 2000);
 
       // ── interaction ──
       let hoverCluster: number | string | undefined;
@@ -724,9 +730,9 @@ export default function GlobeView(props: Props) {
         if (map?.queryRenderedFeatures(e.point, { layers: ['planes', 'pins', 'clusters'] }).length) return;
         if (id !== undefined) cb.current.onSatellite(Number(id));
       });
-      // Any hand on the globe ends following, and the tour.
+      // Any hand on the globe ends following.
       for (const ev of ['mousedown', 'touchstart', 'wheel'] as const) {
-        map.on(ev, () => { cb.current.onTouch(); if (cb.current.follow) cb.current.onUnfollow(); });
+        map.on(ev, () => { if (cb.current.follow) cb.current.onUnfollow(); });
       }
       // A quake or event opens the dossier on the spot: weather, nearby cameras, aircraft, history.
       for (const layer of ['quakes', 'events']) {
@@ -753,11 +759,12 @@ export default function GlobeView(props: Props) {
 
       // ── auto-rotation: until the first touch, never again ──
       const stop = () => { rotating.current = false; cancelAnimationFrame(raf); };
-      if (rotate) {
+      if (rotate && !modest) {
         rotating.current = true;
         let last = performance.now();
         const spin = (t: number) => {
           if (!rotating.current || !map) return;
+          if (document.hidden || t - last < 33) { if (document.hidden) last = t; raf = requestAnimationFrame(spin); return; }
           const c = map.getCenter();
           map.setCenter([c.lng - (t - last) * 0.0025, c.lat]);
           last = t;
@@ -768,13 +775,17 @@ export default function GlobeView(props: Props) {
       for (const ev of ['mousedown', 'touchstart', 'wheel'] as const) map.on(ev, stop);
 
       // ── readouts ──
-      let pending = 0;
+      let lastCount = -Infinity;
       const countInView = () => {
         pending = 0;
         if (!map) return;
         placeHalo(map);
         sharpenPoles(map);
         apply3d(map);
+        // The status count can update four times a second; scanning 60k cameras every frame stalls dragging.
+        const now = performance.now();
+        if (now - lastCount < 250) return;
+        lastCount = now;
         const c = map.getCenter();
         const bounds = map.getBounds();
         const zoom = map.getZoom();
@@ -790,7 +801,10 @@ export default function GlobeView(props: Props) {
       };
       map.on('move', () => { if (!pending) pending = requestAnimationFrame(countInView); });
       map.on('moveend', () => {
-        if (!map || rotating.current) return;
+        if (!map) return;
+        if (!rotating.current) lastCount = -Infinity;
+        countInView();
+        if (rotating.current) return;
         const c = map.getCenter();
         cb.current.onCamera({ lon: c.lng, lat: c.lat, zoom: map.getZoom() });
       });
@@ -802,6 +816,7 @@ export default function GlobeView(props: Props) {
     return () => {
       cancelled = true;
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(pending);
       clearInterval(minuteTimer);
       clearInterval(planeTimer);
       clearInterval(satTimer);
@@ -824,8 +839,7 @@ export default function GlobeView(props: Props) {
 
   // ── sky: each overlay's tiles for this moment; hidden layers fetch nothing ─
   const now = useClock(5 * 60_000);
-  const frames = useGeoFrames(ready && (sky.live || sky.sense === 'ir'));
-  const radar = useRadar(ready && sky.sense === 'radar');
+  const frames = useGeoFrames(ready && sky.live);
   const aurora = useAurora(ready && sky.aurora);
   const applied = useRef<Record<string, string>>({});
   const shadeCanvas = useRef<HTMLCanvasElement | null>(null);
@@ -847,7 +861,7 @@ export default function GlobeView(props: Props) {
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map) return;
-    const want = skyTiles(sky, { t: time, now, frames, radar, aurora });
+    const want = skyTiles(sky, { t: time, now, frames, aurora });
     for (const { id } of OVERLAYS) {
       const tiles = want[id];
       // Tiles first: a layer made visible with its placeholder URL would request it.
@@ -855,9 +869,10 @@ export default function GlobeView(props: Props) {
         map.getSource<RasterTileSource>(id)?.setTiles(tiles);
         applied.current[id] = tiles[0];
       }
-      map.setLayoutProperty(id, 'visibility', tiles ? 'visible' : 'none');
+      const visibility = tiles ? 'visible' : 'none';
+      if (map.getLayoutProperty(id, 'visibility') !== visibility) map.setLayoutProperty(id, 'visibility', visibility);
     }
-  }, [ready, sky, time, now, frames, radar, aurora]);
+  }, [ready, sky, time, now, frames, aurora]);
 
   // ── aircraft ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -991,20 +1006,6 @@ export default function GlobeView(props: Props) {
       const map = mapRef.current;
       if (map) fly(map, lon, lat, mode);
       else pendingFly.current = [lon, lat, mode];
-    },
-    center() {
-      const c = mapRef.current?.getCenter();
-      return c ? { lat: c.lat, lon: c.lng } : null;
-    },
-    loaded() { return mapRef.current?.areTilesLoaded() ?? true; },
-    visible(list) {
-      const map = mapRef.current;
-      if (!map) return [];
-      const c = map.getCenter();
-      const b = map.getBounds();
-      const zoom = map.getZoom();
-      return list.filter((s) => (zoom <= 3 || b.contains([s.longitude, s.latitude]))
-        && distanceKm(c.lat, c.lng, s.latitude, s.longitude) <= 9000);
     },
   }), []);
 

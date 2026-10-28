@@ -4,7 +4,7 @@ A live window onto anywhere on Earth. A 3D satellite globe scattered with ~60,00
 cameras in 89 countries and on every continent — spin it, click a point, and watch what is happening
 there right now. Over it: the clouds as five geostationary satellites see them now, the night side's
 city lights, every satellite in orbit, every aircraft, earthquake, fire and storm as it happens, ~7,900
-live radio stations, and a time machine back to 2000.
+and live radio stations.
 
 No accounts. No API keys. No tracking. A few small server routes, all caching proxies.
 
@@ -120,15 +120,12 @@ Everything below is keyless and fetched straight from the browser (CORS), except
 
 | | What | From |
 |---|---|---|
-| **Sky** (cloud button) | **Live clouds**: infrared from GOES-18, GOES-19, Meteosat-12, Meteosat-9 and Himawari-9, a frame every 10–15 min (~25–60 min behind). **Night side** with city lights. The **daily pass** (true colour). **Aurora**. **Lightning** (Europe, Africa, Atlantic). One **sense** at a time: infrared, rain, radar, sea temperature, marine heatwaves, smoke & dust, snow, sea ice, carbon monoxide — each with NASA's legend. **3D terrain** | NASA GIBS, EUMETSAT, RainViewer, NOAA SWPC |
+| **Sky** (cloud button) | **Live clouds**: infrared from GOES-18, GOES-19, Meteosat-12, Meteosat-9 and Himawari-9, a frame every 10–15 min (~25–60 min behind). **Night side** with city lights. The **daily pass** (true colour). **Aurora**. **Lightning** (Europe, Africa, Atlantic). One **sense** at a time: rain, snow, smoke & dust — each with NASA's legend. **3D terrain** | NASA GIBS, EUMETSAT, NOAA SWPC |
 | **Earth** (on by default) | M2.5+ earthquakes of the last day, rings for the last hour; every fire of the last 24 h; storms with their tracks, wildfires, volcanoes, ice | USGS, NASA FIRMS (`/api/fires`), NASA EONET |
 | **Pulse** (P) | The notable things on Earth now, most urgent first: M4.5+ quakes, 7700 squawks, storms and eruptions, launches in the next day, geomagnetic storms. Optional background browser alerts for critical ones | the Earth feeds, adsb.lol, The Space Devs, NOAA SWPC |
 | **Satellites** | All ~16,600 active objects (~11,000 Starlink) by SGP4 every 2 s; click one for its ground track, footprint and a following camera. The ISS plays its own live video | CelesTrak (`/api/satellites`), satellite.js |
-| **Time** (T) | Scrub, step or play the planet back to 24 Feb 2000: the geostationary frames (weeks back), the night side, the senses, the day's true colour, quakes and events from their archives. The moment rides in the URL (`?t=`) | as above |
 | **Dossier** | Click anywhere: local time, sun and moon, weather, air, sea, street-level photos, Wikipedia, cameras, aircraft, satellites overhead and the next ISS pass, quakes nearby, local radio | Open-Meteo, Wikipedia, Panoramax, USGS, adsb.lol |
 | **Radio** | ~7,900 live stations with a place on the map; a radio button on every camera plays the one nearest it | Radio Browser |
-| **Wall** (W) | A grid of live feeds: in view, one per country, or wherever the sun is rising or setting | the catalog |
-| **Tour** (A) | Autopilot: follow the sunrise (or sunset) around the world, or visit the Pulse, a hop every 40 s | the catalog, the Pulse |
 
 - **Every pixel of the live clouds comes from the satellite with the straightest view of it.** The five
   sources are drawn bottom to top, and each gives way to one beneath it wherever that one's nadir is
@@ -143,9 +140,6 @@ Everything below is keyless and fetched straight from the browser (CORS), except
   layer they have one, and it moves. Music loops that only call themselves "ISS" are skipped.
 - **Radio is HTTPS-only** (an https page can't play http audio), not HLS, last check OK, one station per
   stream; a Radio Browser outage keeps last week's list.
-- **What doesn't reach back in time** — flights, fires, launches, the aurora, the Pulse's squawks — steps
-  aside in the time machine rather than showing today's data on another day. Satellites follow the
-  clock for a week either way of their elements.
 - **Not here, and why:** ships worldwide need a key (aisstream.io) — keyless AIS only covers the Baltic;
   lightning outside Meteosat's view has no keyless live source; GDELT's geo API is gone; an animated
   global wind field needs GRIB2 decoding on a schedule.
@@ -254,7 +248,7 @@ fixed with a rule, a stopword or an override — but automatic matching is not p
   OpenStreetMap borders and place names from OpenFreeMap (CARTO fallback) drawn on top. EOX
   Sentinel-2 cloudless 2016 was dropped: its orbit-swath seams showed as stripes across continents.
 - **The daily pass is real imagery,** not a model: NASA GIBS VIIRS (NOAA-20) corrected-reflectance true
-  colour (MODIS Terra for days before 2018), keyless, for **yesterday UTC** (or the time machine's day) — the most recent *complete* global composite, and what NASA
+  colour (MODIS Terra for days before 2018), keyless, for **yesterday UTC** — the most recent *complete* global composite, and what NASA
   Worldview itself opens on. GIBS's `default` (latest date that exists) is the day still being flown:
   a polar orbiter has only swathed part of the globe so far, the rest of that day's tiles come back
   empty, and the boundary lands as a hard seam down the middle of the planet. Just after UTC midnight
@@ -291,10 +285,10 @@ fixed with a rule, a stopword or an override — but automatic matching is not p
 app/                page, /about, error + 404 screens; api/ flights, fires, satellites
 components/globe/   GlobeView (map, pins, clusters, sky, Earth layer, orbits, radio, 3D, rim light), Starfield
 components/stream/  StreamPanel, Player (+ unavailable state), Clocks
-components/chrome/  Header, SkyMenu, TimeBar, TourBar, Search, StatusBar, icons
-components/…        flight/ (cockpit), dossier/, pulse/, satellite/, radio/, wall/
+components/chrome/  Header, SkyMenu, Search, StatusBar, icons
+components/…        flight/ (cockpit), dossier/, pulse/, satellite/, radio/
 lib/                stream types, geo, solar (sun, moon), time, readout store, sky (overlays + tile protocols),
-                    events (quakes, EONET, launches, Pulse), fires, satellites (SGP4), radio, wall
+                    events (quakes, EONET, launches, Pulse), fires, satellites (SGP4), radio
 scripts/            import-catalog, import-extras (ISS feeds, radio), agencies, geocode, stopwords, build-gazetteer, selftest
 data/               overrides.json, excluded.json, gazetteer/, upstream/ snapshots
 public/data/        streams.json, rejected.json, iss.json, radio.json
@@ -303,6 +297,17 @@ public/data/        streams.json, rejected.json, iss.json, radio.json
 ## Keyboard
 
 `R` random · `←` `→` walk outward through the nearest streams · `/` search · `Esc` close ·
-`F` fullscreen · `M` mute · `P` pulse · `T` time machine · `W` wall · `A` tour (autopilot)
+`F` fullscreen · `M` mute · `P` pulse
 
 Attribution and full license texts: [`ATTRIBUTION.md`](ATTRIBUTION.md).
+
+## Controls and rendering
+
+Cameras (including snapshots), Flights and Earth open enabled. Right-click Cameras for the Snapshots toggle;
+right-click Earth for every event counted on its button. The adjacent arrows also open these controls on touchscreens
+and with the keyboard. Dossier has its own toolbar section. Time, Wall and Tour have been removed.
+
+Rendering caps canvas pixel density and cached tiles, retains coarse imagery while zooming, skips cloud requests
+outside each satellite's coverage, and updates the visible-camera count at most four times a second during movement.
+Devices reporting four or fewer CPU threads or 4 GB RAM use a 1× canvas and slower flight/orbit updates, without automatic rotation.
+Daily snow and aerosol imagery use the latest completed composite day; real cloud-obscured or unobserved areas remain data gaps.

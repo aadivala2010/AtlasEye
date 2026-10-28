@@ -6,14 +6,12 @@ import { moonPhase, subsolarPoint, sunAltitude } from '../lib/solar';
 import { fillNoData } from '../lib/clouds';
 import { cloudsDate, zonedClock } from '../lib/time';
 import { parseFlights, project } from '../lib/flights';
-import { parseEonet, pulseItems, type Quake } from '../lib/events';
+import { earthItems, parseEonet, pulseItems, type Quake } from '../lib/events';
 import { binFires } from '../lib/fires';
 import { pickStations, tidyTitle, type RawStation } from './import-extras';
 import { nearestStations } from '../lib/radio';
-import { MAX_YOUTUBE, pickWall, sunPhase } from '../lib/wall';
-import type { Stream } from '../lib/stream';
 import { elevation, footprintKm, groundTrack, groupOf, nextPass, parseTle, periodMin, subpoint } from '../lib/satellites';
-import { GEO, SKY_DEFAULT, cloudiness, daylight, geoWeight, skyTiles, tileAxes, tileBbox } from '../lib/sky';
+import { GEO, SENSES, SKY_DEFAULT, cloudiness, daylight, geoWeight, geoTileVisible, skyTiles, tileAxes, tileBbox } from '../lib/sky';
 
 const g = loadGazetteer();
 const place = (title: string, country?: string) => {
@@ -158,12 +156,12 @@ assert.equal(cloudsDate(Date.UTC(2026, 0, 1, 12, 0)), '2025-12-31'); // across a
   assert.ok(Math.abs(ax.lat[0] / RAD - 66.513) < 0.01 && Math.abs(ax.lon[0] / RAD + 90) < 1e-9);
   // Time: live shows the newest frames; the past shows that day's composite, MODIS before VIIRS flew.
   const now = Date.UTC(2026, 8, 29, 2, 30);
-  const live = skyTiles(SKY_DEFAULT, { t: null, now, frames: { 'goes-east': '2026-09-29T02:00:00Z' }, radar: null, aurora: 0 });
+  const live = skyTiles(SKY_DEFAULT, { t: null, now, frames: { 'goes-east': '2026-09-29T02:00:00Z' }, aurora: 0 });
   assert.equal(live['live-goes-east']?.[0], 'live://goes-east/clouds/2026-09-29T02:00:00Z/{z}/{x}/{y}');
   assert.equal(live['live-goes-west'], null); // its newest frame isn't known yet
   assert.match(live['live-mtg']![0], /^live:\/\/mtg\/clouds\/latest-\d+\//);
   assert.equal(live.clouds, null);
-  const past = skyTiles(SKY_DEFAULT, { t: Date.UTC(2005, 6, 1, 12), now, frames: null, radar: null, aurora: 0 });
+  const past = skyTiles(SKY_DEFAULT, { t: Date.UTC(2005, 6, 1, 12), now, frames: null, aurora: 0 });
   assert.match(past.clouds![0], /MODIS_Terra_CorrectedReflectance_TrueColor\/default\/2005-07-01\//);
   assert.equal(past['live-goes-east']?.[0], 'live://goes-east/clouds/2005-07-01T12:00:00Z/{z}/{x}/{y}');
   assert.equal(past.night?.[0], `night://${Date.UTC(2005, 6, 1, 12)}/{z}/{x}/{y}`);
@@ -242,23 +240,6 @@ assert.equal(cloudsDate(Date.UTC(2026, 0, 1, 12, 0)), '2025-12-31'); // across a
   assert.equal(tidyTitle('🔴 Live Now: 24/7 NASA Live Stream of Earth from Space (ISS)'), 'NASA Live Stream of Earth from Space (ISS)');
 }
 
-// Wall: never more than four YouTube embeds, one camera per country around the world.
-{
-  const mk = (i: number, kind: Stream['kind'], country: string): Stream => ({
-    id: `w${i}`, kind, name: `w${i}`, latitude: 0, longitude: i, place: `P${i}`, country, timezone: 'UTC',
-    category: 'city', source: 'famelack', geocode: 'gazetteer', confidence: 0.8, addedAt: '',
-  });
-  const pool = [...Array.from({ length: 10 }, (_, i) => mk(i, 'youtube', `C${i}`)), mk(20, 'hls', 'C0'), mk(21, 'snapshot', 'X1'), mk(22, 'mjpeg', 'X2')];
-  let seed = 7;
-  const picks = pickWall(pool, 9, true, () => ((seed = (seed * 9301 + 49297) % 233280) / 233280));
-  assert.ok(picks.filter((s) => s.kind === 'youtube').length <= MAX_YOUTUBE);
-  assert.equal(new Set(picks.map((s) => s.country)).size, picks.length);
-  assert.ok(picks.length >= 6 && picks.length <= 7, `wall of ${picks.length}`);
-  // Equinox at 0°E: the sun is rising just after 06:00 UTC, setting just after 18:00, and at noon neither.
-  const at = (h: number, m: number) => sunPhase({ latitude: 0, longitude: 0 }, Date.UTC(2026, 2, 20, h, m));
-  assert.deepEqual([at(6, 0), at(18, 0), at(12, 0)], ['rise', 'set', null]);
-}
-
 // Camera names: operator codes become road + direction + place words; shouted names are tamed.
 assert.equal(cameraName('1068N_75_N/O_GoldenGate_M107', 'I-75', 'Northbound'), 'I-75 Northbound · Golden Gate');
 assert.equal(cameraName('CCTV10-US74-271.3E_ANSONVILLE', 'US-74', 'Eastbound'), 'US-74 Eastbound · Ansonville');
@@ -279,5 +260,32 @@ assert.ok(distanceKm(ltLat, ltLon, 54.6872, 25.2797) < 15, `LKS-94 ${ltLat} ${lt
 assert.deepEqual([...blockedSources(new Map([
   ['refused', { probed: 40, failed: 38 }], ['some-dead', { probed: 40, failed: 12 }], ['tiny', { probed: 5, failed: 5 }],
 ]))], ['refused']);
+
+
+// Earth's menu and counter include every loaded record, including ones Pulse omits.
+{
+  const q = { id: 'small', mag: 2.5, place: 'Test', depth: 3, lat: 1, lon: 2, at: 100, url: '', tsunami: false };
+  const e = { id: 'open', title: 'Ongoing storm', category: 'severeStorms', at: 1, lat: 3, lon: 4, track: [] };
+  const items = earthItems({ quakes: [q], events: [e] });
+  assert.equal(items.length, 2);
+  assert.deepEqual(items.map(x => x.id), ['q:small', 'v:open']);
+  assert.equal(earthItems({ quakes: null, events: null }).length, 0);
+  assert.deepEqual(Object.keys(SENSES).sort(), ['rain', 'smoke', 'snow']);
+}
+
+// Coverage culling must retain every tile with any visible satellite pixels, including the dateline.
+for (let i = 0; i < GEO.length; i++) {
+  assert.equal(geoTileVisible(i, 0, 0, 0), true);
+  let skipped = 0;
+  for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+    const visible = geoTileVisible(i, 4, x, y);
+    if (!visible) skipped++;
+    const axes = tileAxes(4, x, y, 8);
+    for (const lat of axes.lat) for (const lon of axes.lon) {
+      if (Math.cos(lat) * Math.cos(lon - GEO[i].lon * Math.PI / 180) > Math.cos(76 * Math.PI / 180)) assert.ok(visible);
+    }
+  }
+  assert.ok(skipped > 100, `satellite ${i}: skipped ${skipped} of 256 tiles`);
+}
 
 console.log('✔ selftest passed');

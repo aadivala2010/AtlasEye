@@ -6,6 +6,7 @@ import { IconButton } from '@/components/stream/StreamPanel';
 import { IconClose } from '@/components/chrome/icons';
 
 interface Props {
+  mode?: 'pulse' | 'earth';
   items: PulseItem[];
   loading: boolean;
   notify: boolean;
@@ -30,7 +31,7 @@ export function relTime(at: number, now: number): string {
 }
 
 /** Everything notable happening on Earth right now, most urgent first. */
-export default function PulsePanel({ items, loading, notify, onNotify, onPick, onOpen, onClose }: Props) {
+export default function PulsePanel({ mode = 'pulse', items, loading, notify, onNotify, onPick, onOpen, onClose }: Props) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const t = window.setInterval(() => setNow(Date.now()), 30_000);
@@ -52,17 +53,17 @@ export default function PulsePanel({ items, loading, notify, onNotify, onPick, o
       <div className="flex h-9 shrink-0 items-center justify-between border-b border-subtle px-4">
         <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.08em] text-secondary">
           <span className="live-dot h-1.5 w-1.5 rounded-full bg-emergency" />
-          Pulse
-          <span className="text-tertiary">/ live on Earth</span>
+          {mode === 'earth' ? 'Earth' : 'Pulse'}
+          <span className="text-tertiary">/ {mode === 'earth' ? `${items.length} active events` : 'live on Earth'}</span>
         </div>
         <IconButton label="Close panel (Esc)" onClick={onClose}><IconClose /></IconButton>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <div className="flex items-center justify-between gap-3 px-4 pt-3">
-          <p className="text-[12px] leading-5 text-secondary">Earthquakes, emergencies, storms, eruptions, launches and space weather, as they happen.</p>
+          <p className="text-[12px] leading-5 text-secondary">{mode === 'earth' ? 'Every earthquake and open event counted on Earth. Select an event to locate it, or open its local dossier.' : 'Earthquakes, emergencies, storms, eruptions, launches and space weather, as they happen.'}</p>
         </div>
-        <div className="px-4 pt-2">
+        {mode === 'pulse' && <div className="px-4 pt-2">
           <button
             type="button"
             onClick={toggleNotify}
@@ -74,12 +75,12 @@ export default function PulsePanel({ items, loading, notify, onNotify, onPick, o
           >
             {permission === 'unsupported' ? 'Alerts unsupported' : permission === 'denied' ? 'Alerts blocked' : notify ? 'Alerting in background' : 'Alert me in background'}
           </button>
-        </div>
+        </div>}
 
         <ul className="mt-3 flex flex-col border-t border-subtle px-2 py-2">
           {items.length === 0 && (
             <li className="px-2 py-2 font-mono text-[11px] text-tertiary">
-              {loading ? <span className="ellipsis">listening</span> : 'Quiet on Earth: nothing notable in the last day'}
+              {loading ? <span className="ellipsis">loading events</span> : mode === 'earth' ? 'No active events reported' : 'Quiet on Earth: nothing notable in the last day'}
             </li>
           )}
           {items.map((it) => (
@@ -114,7 +115,7 @@ export default function PulsePanel({ items, loading, notify, onNotify, onPick, o
       </div>
 
       <footer className="shrink-0 border-t border-subtle px-4 py-2 font-mono text-[10px] text-tertiary">
-        USGS · NASA EONET · adsb.lol · The Space Devs · NOAA SWPC
+        {mode === 'earth' ? 'USGS · NASA EONET' : 'USGS · NASA EONET · adsb.lol · The Space Devs · NOAA SWPC'}
       </footer>
     </div>
   );

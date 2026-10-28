@@ -182,31 +182,34 @@ export interface PulseItem {
 
 const SQUAWKS: Record<string, string> = { '7500': 'unlawful interference', '7600': 'radio failure', '7700': 'general emergency' };
 
-/** The notable things on Earth right now, most urgent first, then nearest in time. */
-export function pulseItems(p: Planet, now: number): PulseItem[] {
-  const items: PulseItem[] = [];
-  for (const q of p.quakes ?? []) {
-    if (q.mag < 4.5 || now - q.at > 86400_000) continue;
-    items.push({
+/** Exactly the records counted by Earth, including smaller quakes and older open events. */
+export function earthItems(p: Pick<Planet, 'quakes' | 'events'>): PulseItem[] {
+  return [
+    ...(p.quakes ?? []).map((q): PulseItem => ({
       id: `q:${q.id}`, kind: 'quake', level: q.tsunami || q.mag >= 6.5 ? 2 : q.mag >= 5.5 ? 1 : 0,
       title: `M${q.mag.toFixed(1)} earthquake`, detail: `${q.place} · ${Math.round(q.depth)} km deep${q.tsunami ? ' · tsunami flag' : ''}`,
       at: q.at, lat: q.lat, lon: q.lon,
-    });
-  }
+    })),
+    ...(p.events ?? []).map((e): PulseItem => ({
+      id: `v:${e.id}`, kind: 'event', level: e.category === 'severeStorms' || e.category === 'volcanoes' ? 1 : 0,
+      title: e.title, detail: [EVENT_LABELS[e.category] ?? e.category, e.magnitude].filter(Boolean).join(' · '),
+      at: e.at, lat: e.lat, lon: e.lon,
+    })),
+  ].sort((a, b) => b.at - a.at);
+}
+
+/** The notable things on Earth right now, most urgent first, then nearest in time. */
+export function pulseItems(p: Planet, now: number): PulseItem[] {
+  const items = earthItems({
+    quakes: p.quakes?.filter((q) => q.mag >= 4.5 && now - q.at <= 86400_000) ?? null,
+    events: p.events?.filter((e) => now - e.at <= 3 * 86400_000) ?? null,
+  });
   for (const f of p.emergencies ?? []) {
     if (!f.emergency) continue;
     items.push({
       id: `e:${f.hex}`, kind: 'emergency', level: 2, title: `${f.callsign} squawking ${f.squawk ?? 'emergency'}`,
       detail: [f.type, f.ground ? 'on the ground' : `${Math.round(f.alt).toLocaleString('en-US')} ft`, SQUAWKS[f.squawk ?? '']].filter(Boolean).join(' · '),
       at: f.at, lat: f.lat, lon: f.lon, hex: f.hex,
-    });
-  }
-  for (const e of p.events ?? []) {
-    if (now - e.at > 3 * 86400_000) continue;
-    items.push({
-      id: `v:${e.id}`, kind: 'event', level: e.category === 'severeStorms' || e.category === 'volcanoes' ? 1 : 0,
-      title: e.title, detail: [EVENT_LABELS[e.category] ?? e.category, e.magnitude].filter(Boolean).join(' · '),
-      at: e.at, lat: e.lat, lon: e.lon,
     });
   }
   for (const l of p.launches ?? []) {
