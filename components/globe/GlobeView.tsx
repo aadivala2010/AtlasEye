@@ -398,7 +398,11 @@ export default function GlobeView(props: Props) {
     if (want !== has) {
       map.setTerrain(want ? { source: 'dem', exaggeration: 1.4 } : null);
       const c = map.getCenter();
-      map.setSky(want ? { ...(sunAltitude(c.lat, c.lng, subsolarPoint(new Date())) < -6 ? SKY_NIGHT : SKY_DAY), ...SKY_BLEND } : SKY_OFF);
+      const colors = sunAltitude(c.lat, c.lng, subsolarPoint(new Date())) < -6 ? SKY_NIGHT : SKY_DAY;
+      map.setSky(want ? {
+        ...colors, ...SKY_BLEND,
+        'horizon-color': colors['sky-color'], 'fog-color': colors['sky-color'], 'fog-ground-blend': 1,
+      } : SKY_OFF);
     }
     const visibility = on ? 'visible' : 'none';
     if (map.getLayer('buildings') && map.getLayoutProperty('buildings', 'visibility') !== visibility) {
