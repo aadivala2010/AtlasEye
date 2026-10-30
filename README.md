@@ -311,3 +311,7 @@ Rendering caps canvas pixel density and cached tiles, retains coarse imagery whi
 outside each satellite's coverage, and updates the visible-camera count at most four times a second during movement.
 Devices reporting four or fewer CPU threads or 4 GB RAM use a 1× canvas and slower flight/orbit updates, without automatic rotation.
 Daily snow and aerosol imagery use the latest completed composite day; real cloud-obscured or unobserved areas remain data gaps.
+
+Airports: enable the **Airports** layer to highlight OpenStreetMap airports, with names and IATA/ICAO codes.
+Click a marker to select it, then **Explore airport** for an overhead view. Runways and airport areas are
+highlighted at closer zooms. Coverage depends on the existing OpenMapTiles basemap; no extra API key is required.

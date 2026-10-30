@@ -7,12 +7,13 @@ import Search, { type SearchHandle } from './Search';
 import SkyMenu from './SkyMenu';
 import { IconEye, IconRandom } from './icons';
 
-export type Layer = 'cameras' | 'flights' | 'satellites' | 'events' | 'radio' | 'dossier';
+export type Layer = 'cameras' | 'flights' | 'airports' | 'satellites' | 'events' | 'radio' | 'dossier';
 export type Layers = Record<Layer, boolean>;
 
 const LAYERS: { id: Layer; label: string; title: string }[] = [
   { id: 'cameras', label: 'Cameras', title: 'Public live cameras' },
   { id: 'flights', label: 'Flights', title: 'Live aircraft (ADS-B) around the view; click one for the cockpit view' },
+  { id: 'airports', label: 'Airports', title: 'Highlight airports and runways; zoom in and click an airport to explore' },
   { id: 'satellites', label: 'Satellites', title: 'Everything in orbit, live (CelesTrak); click one to follow it' },
   { id: 'events', label: 'Earth', title: 'Earthquakes, fires, storms, eruptions and ice, live; click one for a dossier' },
   { id: 'radio', label: 'Radio', title: 'Live radio stations worldwide (Radio Browser); click one to listen' },
@@ -153,4 +154,4 @@ export default function Header(p: Props) {
   );
 }
 
-const LAYER_DOT: Record<Layer, string> = { cameras: 'bg-live', flights: 'bg-flight', satellites: 'bg-sat', events: 'bg-quake', radio: 'bg-radio', dossier: 'bg-accent' };
+const LAYER_DOT: Record<Layer, string> = { cameras: 'bg-live', flights: 'bg-flight', airports: 'bg-accent', satellites: 'bg-sat', events: 'bg-quake', radio: 'bg-radio', dossier: 'bg-accent' };

@@ -33,6 +33,7 @@ interface Props {
   focus: { lat: number; lon: number } | null;
   flights: Flight[] | null;
   flightId: string | null;
+  airports: boolean;
   /** Dossier mode: a click on empty globe opens a dossier there. */
   dossier: boolean;
   initialCamera: Camera | null;
@@ -202,6 +203,34 @@ function buildStyle(base: Base | null): StyleSpecification {
     const src = { source: 'omt' } as const;
     layers.push(
       {
+        id: 'airport-areas', type: 'fill', ...src, 'source-layer': 'aeroway', minzoom: 10,
+        layout: { visibility: 'none' },
+        filter: ['in', ['get', 'class'], ['literal', ['aerodrome', 'runway', 'taxiway', 'apron']]],
+        paint: { 'fill-color': C.accent, 'fill-opacity': 0.22 },
+      },
+      {
+        id: 'airport-runways', type: 'line', ...src, 'source-layer': 'aeroway', minzoom: 10,
+        layout: { visibility: 'none' }, filter: ['==', ['get', 'class'], 'runway'],
+        paint: { 'line-color': C.accent, 'line-opacity': 0.9, 'line-width': 2 },
+      },
+      {
+        id: 'airports', type: 'circle', ...src, 'source-layer': 'aerodrome_label', minzoom: 5,
+        layout: { visibility: 'none' },
+        paint: {
+          'circle-color': C.accent, 'circle-radius': ['interpolate', ['linear'], ['zoom'], 5, 4, 12, 7],
+          'circle-stroke-color': C.void, 'circle-stroke-width': 2,
+        },
+      },
+      {
+        id: 'airport-labels', type: 'symbol', ...src, 'source-layer': 'aerodrome_label', minzoom: 7,
+        layout: {
+          visibility: 'none', 'text-font': base.font, 'text-size': 11,
+          'text-field': ['coalesce', ['get', 'name:en'], ['get', 'name'], ['get', 'icao'], 'Airport'],
+          'text-anchor': 'top', 'text-offset': [0, 1],
+        },
+        paint: { 'text-color': C.accent, 'text-halo-color': C.void, 'text-halo-width': 1.5 },
+      },
+      {
         // Shown with 3D terrain (the Sky menu), from street level up.
         id: 'buildings', type: 'fill-extrusion', ...src, 'source-layer': 'building', minzoom: 14, layout: { visibility: 'none' },
         paint: {
@@ -302,7 +331,7 @@ const eventData = (events: EarthEvent[] | null | undefined) => ({
 });
 
 /** Layers a click or hover can land on, topmost first. */
-const HIT_LAYERS = ['planes', 'pins', 'clusters', 'radio', 'sats', 'quakes', 'events'];
+const HIT_LAYERS = ['planes', 'pins', 'clusters', 'radio', 'sats', 'quakes', 'events', 'airports', 'airport-labels'];
 
 /** Satellites are placed at the moment on screen, while their elements still mean something there. */
 const satTime = (time: number | null) => (time === null ? Date.now() : Math.abs(time - Date.now()) < 7 * 86400_000 ? time : null);
@@ -310,6 +339,8 @@ const satTime = (time: number | null) => (time === null ? Date.now() : Math.abs(
 /** Opacity for the sweep at progress p (0→1), using each pin's / cluster's earliest rank. */
 const reveal = (p: number): ExpressionSpecification =>
   ['min', 1, ['max', 0, ['*', 8, ['-', p, ['coalesce', ['get', 'minRank'], ['get', 'rank'], 0]]]]];
+
+const AIRPORT_LAYERS = ['airport-areas', 'airport-runways', 'airports', 'airport-labels'];
 
 const SWEEP_LAYERS: [string, string[]][] = [
   ['cluster-glow', []],
@@ -320,6 +351,8 @@ const SWEEP_LAYERS: [string, string[]][] = [
 
 export default function GlobeView(props: Props) {
   const { ref, streams, focus, flights, flightId, initialCamera, reducedMotion, rotate, intro, bottomInset, sky, time, planet, sats, satId, follow } = props;
+  const [airportsAvailable, setAirportsAvailable] = useState<boolean | null>(null);
+  const [airport, setAirport] = useState<{ name: string; code: string; kind: string; lon: number; lat: number } | null>(null);
   const container = useRef<HTMLDivElement>(null);
   const hoverLabel = useRef<HTMLDivElement>(null);
   const halo = useRef<HTMLDivElement>(null);
@@ -481,6 +514,7 @@ export default function GlobeView(props: Props) {
       const el = container.current;
       if (cancelled || !el) return;
       setMlLib(ml);
+      setAirportsAvailable(!!base);
 
       const mono = getComputedStyle(document.documentElement).getPropertyValue('--font-geist-mono').trim() || 'monospace';
       await document.fonts.load(`500 10px ${mono}`).catch(() => undefined);
@@ -654,6 +688,12 @@ export default function GlobeView(props: Props) {
           paint: { 'raster-opacity': fadeBy(8, 11), 'raster-fade-duration': 0 },
         }, 'night');
 
+        map.addSource('airport-selection', { type: 'geojson', data: EMPTY });
+        map.addLayer({
+          id: 'airport-selection', type: 'circle', source: 'airport-selection',
+          paint: { 'circle-radius': 13, 'circle-color': C.accent, 'circle-opacity': 0.15,
+            'circle-stroke-color': C.accent, 'circle-stroke-width': 3 },
+        });
         styled.current = true;
         setReady(true);
       });
@@ -683,7 +723,7 @@ export default function GlobeView(props: Props) {
       map.on('mousemove', (e) => {
         if (!map) return;
         readout.set({ cursor: { lat: e.lngLat.lat, lon: e.lngLat.lng } });
-        const hit = map.getLayer('planes') ? map.queryRenderedFeatures(e.point, { layers: HIT_LAYERS })[0] : undefined;
+        const hit = map.getLayer('planes') ? map.queryRenderedFeatures(e.point, { layers: HIT_LAYERS.filter((id) => map!.getLayer(id)) })[0] : undefined;
         map.getCanvas().style.cursor = hit ? 'pointer' : cb.current.dossier ? 'crosshair' : '';
         setClusterHover(hit?.layer.id === 'clusters' ? hit.id : undefined);
         const label = hoverLabel.current;
@@ -694,7 +734,9 @@ export default function GlobeView(props: Props) {
         const ev = hit?.layer.id === 'events' ? hit.properties : undefined;
         const sat = hit?.layer.id === 'sats' ? hit.properties : undefined;
         const fm = hit?.layer.id === 'radio' ? hit.properties : undefined;
-        const text = s ? [s.name, `${s.place} · ${s.country}`]
+        const ap = hit && ['airports', 'airport-labels'].includes(hit.layer.id) ? hit.properties : undefined;
+        const text = ap ? [String(ap['name:en'] || ap.name || 'Airport'), [ap.iata, ap.icao, ap.class].filter(Boolean).join(' · ')]
+          : s ? [s.name, `${s.place} · ${s.country}`]
           : f ? [f.callsign, `${f.type ?? '—'} · ${formatAlt(f)} · ${Math.round(f.gs)} kt`]
           : q ? [`M${Number(q.mag).toFixed(1)} earthquake`, `${q.place} · ${ago(Number(q.age))}`]
           : ev ? [String(ev.title), String(ev.category)]
@@ -714,6 +756,17 @@ export default function GlobeView(props: Props) {
         readout.set({ cursor: null });
         setClusterHover(undefined);
         if (hoverLabel.current) hoverLabel.current.style.opacity = '0';
+      });
+
+      for (const layer of base ? ['airports', 'airport-labels'] : []) map.on('click', layer, (e) => {
+        if (!map || !cb.current.airports) return;
+        const feature = e.features?.[0];
+        if (feature?.geometry.type !== 'Point') return;
+        const p = feature.properties;
+        let lon = feature.geometry.coordinates[0];
+        while (Math.abs(e.lngLat.lng - lon) > 180) lon += e.lngLat.lng > lon ? 360 : -360;
+        setAirport({ name: String(p['name:en'] || p.name || 'Airport'), code: [p.iata, p.icao].filter(Boolean).join(' / '),
+          kind: String(p.class || 'Airport'), lon, lat: feature.geometry.coordinates[1] });
       });
 
       map.on('click', 'pins', (e) => {
@@ -749,7 +802,7 @@ export default function GlobeView(props: Props) {
       }
       map.on('click', (e) => {
         if (!map || !cb.current.dossier) return;
-        if (map.queryRenderedFeatures(e.point, { layers: HIT_LAYERS }).length) return;
+        if (map.queryRenderedFeatures(e.point, { layers: HIT_LAYERS.filter((id) => map!.getLayer(id)) }).length) return;
         cb.current.onDossier(e.lngLat.lat, e.lngLat.lng);
       });
       map.on('click', 'clusters', async (e) => {
@@ -877,6 +930,25 @@ export default function GlobeView(props: Props) {
       if (map.getLayoutProperty(id, 'visibility') !== visibility) map.setLayoutProperty(id, 'visibility', visibility);
     }
   }, [ready, sky, time, now, frames, aurora]);
+
+  useEffect(() => {
+    if (!airport) return;
+    const clear = (e: KeyboardEvent) => { if (e.key === 'Escape') setAirport(null); };
+    document.addEventListener('keydown', clear);
+    return () => document.removeEventListener('keydown', clear);
+  }, [airport]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!props.airports) setAirport(null);
+    if (!ready || !map) return;
+    for (const id of AIRPORT_LAYERS) {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', props.airports ? 'visible' : 'none');
+    }
+    map.getSource<GeoJSONSource>('airport-selection')?.setData(props.airports && airport ? {
+      type: 'FeatureCollection', features: [pt(airport.lon, airport.lat, {})],
+    } : EMPTY);
+  }, [ready, props.airports, airport]);
 
   // ── aircraft ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1018,6 +1090,32 @@ export default function GlobeView(props: Props) {
       {/* maplibre forces position:relative on its container, so size it with h/w, not inset. */}
       <div ref={halo} className="pointer-events-none absolute left-0 top-0 rounded-full opacity-0" aria-hidden />
       <div ref={container} className="relative h-full w-full" />
+      {props.airports && (
+        <div className="absolute right-3 top-3 z-10 w-64 max-w-[calc(100%-24px)] rounded-[4px] border border-accent-muted bg-panel/95 p-3 shadow-xl">
+          {airport ? <>
+            <div className="flex items-start gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="font-mono text-[11px] uppercase text-accent" aria-live="polite">{airport.code || 'Airport'}</div>
+                <h2 className="mt-1 text-sm font-medium text-primary">{airport.name}</h2>
+              </div>
+              <button type="button" onClick={() => setAirport(null)} aria-label="Clear highlighted airport"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded text-secondary hover:bg-hover hover:text-primary">×</button>
+            </div>
+            <p className="mt-2 text-xs capitalize text-secondary">{airport.kind === 'Airport' ? 'Airport' : `${airport.kind} airport`}</p>
+            <button type="button" className="mt-3 min-h-10 w-full rounded-[2px] border border-accent-muted bg-accent-glow text-xs text-accent hover:bg-accent/20"
+              onClick={() => {
+                const map = mapRef.current;
+                if (!map) return;
+                rotating.current = false;
+                map.flyTo({ center: [airport.lon, airport.lat], zoom: 13, pitch: 0, bearing: 0,
+                  duration: reducedMotion ? 0 : 900, padding: { top: 0, left: 0, right: 0, bottom: bottomInset } });
+              }}>Explore airport</button>
+          </> : <>
+            <div className="font-mono text-[11px] uppercase text-accent">{airportsAvailable === false ? 'Airports unavailable' : airportsAvailable === null ? 'Loading airports' : 'Airports highlighted'}</div>
+            <p className="mt-1 text-xs leading-5 text-secondary">{airportsAvailable === false ? 'The airport map tiles could not load. Reload the page to try again.' : 'Zoom in to see airports. Click a marker to select one; zoom closer for runway highlights.'}</p>
+          </>}
+        </div>
+      )}
       <div
         ref={hoverLabel}
         className="pointer-events-none absolute left-0 top-0 z-10 max-w-64 rounded-[2px] border border-strong bg-panel/95 px-2 py-1 opacity-0 transition-opacity duration-200"

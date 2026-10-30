@@ -72,7 +72,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const [layers, setLayers] = useState<Layers>({ cameras: true, flights: true, satellites: false, events: true, radio: false, dossier: false });
+  const [layers, setLayers] = useState<Layers>({ cameras: true, flights: true, airports: false, satellites: false, events: true, radio: false, dossier: false });
   const [other, setOther] = useState<Focus | null>(null);
   const [snapshots, setSnapshots] = useState(true);
   const [sky, setSky] = useState<Sky>(SKY_DEFAULT);
@@ -360,6 +360,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
               focus={selected ? { lat: selected.latitude, lon: selected.longitude } : other?.kind === 'dossier' ? other : (other?.kind === 'pulse' || other?.kind === 'earth') ? other.at ?? null : null}
               flights={(layers.flights || tracked) ? flights : null}
               flightId={tracked?.hex ?? null}
+              airports={layers.airports}
               dossier={layers.dossier}
               initialCamera={boot.camera}
               reducedMotion={boot.reducedMotion}
