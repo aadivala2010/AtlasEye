@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
+import { useEffect, useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react';
 import type {
   CanvasSource, ExpressionSpecification, GeoJSONSource, LayerSpecification, Map as MLMap, Marker,
   RasterTileSource, StyleSpecification, VectorSourceSpecification,
 } from 'maplibre-gl';
+import AirportTraffic from './AirportTraffic';
+import type { Airport } from '@/lib/airport-traffic';
 import type { Stream } from '@/lib/stream';
 import { distanceKm } from '@/lib/geo';
 import { subsolarPoint, sunAltitude } from '@/lib/solar';
@@ -62,7 +64,7 @@ interface Props {
   radioId: string | null;
   onRadio(id: string): void;
   onSelect(id: string): void;
-  onFlight(hex: string): void;
+  onFlight(flight: Flight): void;
   onDossier(lat: number, lon: number): void;
   onCamera(camera: Camera): void;
 }
@@ -351,8 +353,15 @@ const SWEEP_LAYERS: [string, string[]][] = [
 
 export default function GlobeView(props: Props) {
   const { ref, streams, focus, flights, flightId, initialCamera, reducedMotion, rotate, intro, bottomInset, sky, time, planet, sats, satId, follow } = props;
-  const [airportsAvailable, setAirportsAvailable] = useState<boolean | null>(null);
-  const [airport, setAirport] = useState<{ name: string; code: string; kind: string; lon: number; lat: number } | null>(null);
+  const [airport, setAirport] = useState<Airport | null>(null);
+  const [airportFlights, setAirportFlights] = useState<Flight[]>([]);
+  const visibleFlights = useMemo(() => {
+    const all = new Map((flights ?? []).map((f) => [f.hex, f]));
+    if (props.airports && airport) for (const f of airportFlights) {
+      if (!all.has(f.hex) || all.get(f.hex)!.at < f.at) all.set(f.hex, f);
+    }
+    return [...all.values()];
+  }, [flights, props.airports, airport, airportFlights]);
   const container = useRef<HTMLDivElement>(null);
   const hoverLabel = useRef<HTMLDivElement>(null);
   const halo = useRef<HTMLDivElement>(null);
@@ -514,7 +523,6 @@ export default function GlobeView(props: Props) {
       const el = container.current;
       if (cancelled || !el) return;
       setMlLib(ml);
-      setAirportsAvailable(!!base);
 
       const mono = getComputedStyle(document.documentElement).getPropertyValue('--font-geist-mono').trim() || 'monospace';
       await document.fonts.load(`500 10px ${mono}`).catch(() => undefined);
@@ -765,6 +773,7 @@ export default function GlobeView(props: Props) {
         const p = feature.properties;
         let lon = feature.geometry.coordinates[0];
         while (Math.abs(e.lngLat.lng - lon) > 180) lon += e.lngLat.lng > lon ? 360 : -360;
+        setAirportFlights([]);
         setAirport({ name: String(p['name:en'] || p.name || 'Airport'), code: [p.iata, p.icao].filter(Boolean).join(' / '),
           kind: String(p.class || 'Airport'), lon, lat: feature.geometry.coordinates[1] });
       });
@@ -775,7 +784,8 @@ export default function GlobeView(props: Props) {
       });
       map.on('click', 'planes', (e) => {
         const hex = e.features?.[0]?.properties.hex;
-        if (typeof hex === 'string') cb.current.onFlight(hex);
+        const flight = flightsRef.current.find((f) => f.hex === hex);
+        if (flight) cb.current.onFlight(flight);
       });
       map.on('click', 'radio', (e) => {
         const id = e.features?.[0]?.properties.id;
@@ -954,9 +964,9 @@ export default function GlobeView(props: Props) {
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map) return;
-    flightsRef.current = flights ?? [];
+    flightsRef.current = visibleFlights;
     map.getSource<GeoJSONSource>('planes')?.setData(planeData(flightsRef.current, Date.now()));
-  }, [ready, flights]);
+  }, [ready, visibleFlights]);
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map) return;
@@ -1090,9 +1100,8 @@ export default function GlobeView(props: Props) {
       {/* maplibre forces position:relative on its container, so size it with h/w, not inset. */}
       <div ref={halo} className="pointer-events-none absolute left-0 top-0 rounded-full opacity-0" aria-hidden />
       <div ref={container} className="relative h-full w-full" />
-      {props.airports && (
-        <div className="absolute right-3 top-3 z-10 w-64 max-w-[calc(100%-24px)] rounded-[4px] border border-accent-muted bg-panel/95 p-3 shadow-xl">
-          {airport ? <>
+      {props.airports && airport && (
+        <div className="absolute right-3 top-3 z-10 max-h-[calc(100%-24px)] w-72 max-w-[calc(100%-24px)] overflow-y-auto overscroll-contain rounded-[4px] border border-accent-muted bg-panel/95 p-3 shadow-xl">
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1">
                 <div className="font-mono text-[11px] uppercase text-accent" aria-live="polite">{airport.code || 'Airport'}</div>
@@ -1110,10 +1119,17 @@ export default function GlobeView(props: Props) {
                 map.flyTo({ center: [airport.lon, airport.lat], zoom: 13, pitch: 0, bearing: 0,
                   duration: reducedMotion ? 0 : 900, padding: { top: 0, left: 0, right: 0, bottom: bottomInset } });
               }}>Explore airport</button>
-          </> : <>
-            <div className="font-mono text-[11px] uppercase text-accent">{airportsAvailable === false ? 'Airports unavailable' : airportsAvailable === null ? 'Loading airports' : 'Airports highlighted'}</div>
-            <p className="mt-1 text-xs leading-5 text-secondary">{airportsAvailable === false ? 'The airport map tiles could not load. Reload the page to try again.' : 'Zoom in to see airports. Click a marker to select one; zoom closer for runway highlights.'}</p>
-          </>}
+            <button type="button" className="mt-1 min-h-10 w-full rounded-[2px] border border-subtle text-xs text-secondary hover:bg-hover"
+              onClick={() => {
+                const span = 25 / 60;
+                const width = span / Math.max(0.05, Math.cos(airport.lat * Math.PI / 180));
+                rotating.current = false;
+                mapRef.current?.fitBounds([[airport.lon - width, Math.max(-85, airport.lat - span)],
+                  [airport.lon + width, Math.min(85, airport.lat + span)]], {
+                  pitch: 0, bearing: 0, padding: 40, duration: reducedMotion ? 0 : 900,
+                });
+              }}>View nearby airspace</button>
+            <AirportTraffic key={`${airport.lon},${airport.lat}`} airport={airport} onTraffic={setAirportFlights} onTrack={props.onFlight} />
         </div>
       )}
       <div

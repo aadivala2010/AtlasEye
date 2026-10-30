@@ -1,5 +1,6 @@
 /** `npm test` — assert-based checks for the parts that are easy to break silently. */
 import assert from 'node:assert/strict';
+import { airportTraffic } from '../lib/airport-traffic';
 import { distanceKm, geocode, loadGazetteer, nearestPlace, unflipLongitudes } from './geocode';
 import { blockedSources, cameraName, titleCase, tmInverse } from './agencies';
 import { moonPhase, subsolarPoint, sunAltitude } from '../lib/solar';
@@ -286,6 +287,26 @@ for (let i = 0; i < GEO.length; i++) {
     }
   }
   assert.ok(skipped > 100, `satellite ${i}: skipped ${skipped} of 256 tiles`);
+}
+
+// Airport radar uses fresh nearby positions; direction is not a destination claim.
+{
+  const now = 1_000_000;
+  const airport = { name: 'Test airport', code: 'TEST', kind: 'public', lat: 0, lon: 0 };
+  const base = { ...f, at: now, ground: false, gs: 120, lat: 0.1, lon: 0, alt: 3000 };
+  const traffic = airportTraffic(airport, [
+    { ...base, hex: 'toward', track: 180 }, { ...base, hex: 'away', track: 0 },
+    { ...base, hex: 'ground', ground: true, lat: 0.01, gs: 0 },
+    { ...base, hex: 'old', at: now - 90_001 }, { ...base, hex: 'distant', lat: 1 },
+    { ...base, hex: 'other-ground', ground: true, gs: 0 },
+  ], now);
+  assert.equal(traffic.length, 3);
+  assert.equal(traffic.find((t) => t.flight.hex === 'toward')?.movement, 'Toward airport');
+  assert.equal(traffic.find((t) => t.flight.hex === 'away')?.movement, 'Away from airport');
+  assert.equal(traffic[0].movement, 'Ground nearby');
+  const acrossDateLine = airportTraffic({ ...airport, lon: 179.99 }, [{ ...base, lat: 0, lon: -179.99 }], now);
+  assert.equal(acrossDateLine.length, 1);
+  assert.ok(Math.abs(acrossDateLine[0].x) < 0.1);
 }
 
 console.log('✔ selftest passed');

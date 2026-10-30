@@ -315,3 +315,8 @@ Daily snow and aerosol imagery use the latest completed composite day; real clou
 Airports: enable the **Airports** layer to highlight OpenStreetMap airports, with names and IATA/ICAO codes.
 Click a marker to select it, then **Explore airport** for an overhead view. Runways and airport areas are
 highlighted at closer zooms. Coverage depends on the existing OpenMapTiles basemap; no extra API key is required.
+
+Selecting an airport opens a 25 nm traffic radar with a local ADS-B refresh every 10 seconds.
+Filter movement toward/away from the airport or ground signals within 3 nm; select a callsign for its cockpit.
+Movement labels describe proximity and direction, not confirmed routes. Signals older than 90 seconds are hidden.
+The airport layer has no persistent notification when no airport is selected.

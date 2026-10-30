@@ -135,7 +135,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   const tracked = other?.kind === 'flight' ? other.flight : null;
   const { flights, error: flightError } = useFlights(layers.flights || !!tracked, () =>
     tracked ? project(tracked, Date.now()) : null, 5, true);
-  const liveTracked = tracked ? flights?.find((f) => f.hex === tracked.hex) : undefined;
+  const liveTracked = tracked ? flights?.find((f) => f.hex === tracked.hex) ?? (Date.now() - tracked.at < 30_000 ? tracked : undefined) : undefined;
   // Remember the latest fix, so the panel keeps the aircraft if it drops out of a poll.
   useEffect(() => {
     if (liveTracked) setOther((o) => (o?.kind === 'flight' && o.flight.hex === liveTracked.hex ? { kind: 'flight', flight: liveTracked } : o));
@@ -382,10 +382,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
                 const s = catalog?.streams.find((x) => x.id === id);
                 if (s) select(s, 'near');
               }}
-              onFlight={(hex) => {
-                const f = flights?.find((x) => x.hex === hex);
-                if (f) openFlight(f);
-              }}
+              onFlight={openFlight}
               onDossier={openDossier}
               onCamera={onCamera}
             />
