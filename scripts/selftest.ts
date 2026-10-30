@@ -157,12 +157,12 @@ assert.equal(cloudsDate(Date.UTC(2026, 0, 1, 12, 0)), '2025-12-31'); // across a
   assert.ok(Math.abs(ax.lat[0] / RAD - 66.513) < 0.01 && Math.abs(ax.lon[0] / RAD + 90) < 1e-9);
   // Time: live shows the newest frames; the past shows that day's composite, MODIS before VIIRS flew.
   const now = Date.UTC(2026, 8, 29, 2, 30);
-  const live = skyTiles(SKY_DEFAULT, { t: null, now, frames: { 'goes-east': '2026-09-29T02:00:00Z' }, aurora: 0 });
+  const live = skyTiles({ ...SKY_DEFAULT, live: true }, { t: null, now, frames: { 'goes-east': '2026-09-29T02:00:00Z' }, aurora: 0 });
   assert.equal(live['live-goes-east']?.[0], 'live://goes-east/clouds/2026-09-29T02:00:00Z/{z}/{x}/{y}');
   assert.equal(live['live-goes-west'], null); // its newest frame isn't known yet
   assert.match(live['live-mtg']![0], /^live:\/\/mtg\/clouds\/latest-\d+\//);
   assert.equal(live.clouds, null);
-  const past = skyTiles(SKY_DEFAULT, { t: Date.UTC(2005, 6, 1, 12), now, frames: null, aurora: 0 });
+  const past = skyTiles({ ...SKY_DEFAULT, live: true }, { t: Date.UTC(2005, 6, 1, 12), now, frames: null, aurora: 0 });
   assert.match(past.clouds![0], /MODIS_Terra_CorrectedReflectance_TrueColor\/default\/2005-07-01\//);
   assert.equal(past['live-goes-east']?.[0], 'live://goes-east/clouds/2005-07-01T12:00:00Z/{z}/{x}/{y}');
   assert.equal(past.night?.[0], `night://${Date.UTC(2005, 6, 1, 12)}/{z}/{x}/{y}`);

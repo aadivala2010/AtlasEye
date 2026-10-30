@@ -41,7 +41,7 @@ export const SKY_BLEND = { 'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.8, '
 /** No sky at all: what MapLibre itself falls back to (the starfield shows around the globe). */
 export const SKY_OFF = { 'sky-color': 'transparent', 'horizon-color': 'transparent', 'fog-color': 'transparent', 'fog-ground-blend': 1, 'atmosphere-blend': 0 };
 
-export const SKY_DEFAULT: Sky = { live: true, clouds: false, night: true, aurora: false, lightning: false, sense: null, terrain: true };
+export const SKY_DEFAULT: Sky = { live: false, clouds: false, night: true, aurora: false, lightning: false, sense: null, terrain: true };
 
 // ── the geostationary ring ─────────────────────────────────────────────────
 
