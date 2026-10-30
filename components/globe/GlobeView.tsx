@@ -8,7 +8,7 @@ import type {
 import AirportTraffic from './AirportTraffic';
 import type { Airport } from '@/lib/airport-traffic';
 import type { Stream } from '@/lib/stream';
-import { distanceKm } from '@/lib/geo';
+import { unitVector } from '@/lib/geo';
 import { subsolarPoint, sunAltitude } from '@/lib/solar';
 import {
   OVERLAYS, OVERLAY_IDS, SHADE_COORDS, SKY_BLEND, SKY_DAY, SKY_NIGHT, SKY_OFF, TERRAIN, drawShade, fadeBy, registerSky, skyTiles, useAurora, useClock, useGeoFrames, type Sky,
@@ -182,6 +182,7 @@ async function loadBase(): Promise<Base | null> {
  */
 export const SATELLITE = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 const SATELLITE_MAXZOOM = 19;
+const MIN_VIEW_DOT = Math.cos(9000 / 6371);
 /** Deepest level Esri still has real imagery for in the polar tile rows; at z4 they are flat filler. */
 const POLAR_Z = 3;
 
@@ -191,7 +192,7 @@ function buildStyle(base: Base | null): StyleSpecification {
     { id: 'space-fill', type: 'background', paint: { 'background-color': C.ocean } },
     {
       id: 'satellite', type: 'raster', source: 'satellite',
-      paint: { 'raster-fade-duration': 200, 'raster-contrast': 0.08, 'raster-saturation': 0.05 },
+      paint: { 'raster-fade-duration': 500, 'raster-contrast': 0.08, 'raster-saturation': 0.05 },
     },
     // Every sky overlay, hidden until switched on: a hidden layer's tiles are never fetched.
     ...OVERLAYS.map((o): LayerSpecification => ({
@@ -457,6 +458,7 @@ export default function GlobeView(props: Props) {
   const markerRef = useRef<Marker | null>(null);
   const rotating = useRef(false);
   const streamsRef = useRef<Stream[]>([]);
+  const streamVectors = useRef(new Float32Array(0));
   const flightsRef = useRef<Flight[]>([]);
   const sweepFrom = useRef(0);
   const cb = useRef(props);
@@ -544,7 +546,7 @@ export default function GlobeView(props: Props) {
         fadeDuration: 0,
         // Bound GPU fill and tile memory on integrated graphics, while keeping CSS text sharp.
         pixelRatio: Math.min(window.devicePixelRatio || 1, modest ? 1 : 1.5),
-        maxTileCacheSize: modest ? 64 : 128,
+        maxTileCacheSize: modest ? 96 : 192,
         // Keep coarse imagery arriving underneath detailed tiles during a zoom.
         cancelPendingTileRequestsWhileZooming: false,
       });
@@ -856,12 +858,15 @@ export default function GlobeView(props: Props) {
         const c = map.getCenter();
         const bounds = map.getBounds();
         const zoom = map.getZoom();
+        const [x, y, z] = unitVector(c.lat, c.lng);
         let n = 0;
-        for (const s of streamsRef.current) {
+        for (let i = 0; i < streamsRef.current.length; i++) {
+          const s = streamsRef.current[i];
           // On a globe, "in view" = on the visible hemisphere and inside the viewport bounds
           // (bounds first: it's the cheap test, and rejects almost everything once zoomed in).
           if (zoom > 3 && !bounds.contains([s.longitude, s.latitude])) continue;
-          if (distanceKm(c.lat, c.lng, s.latitude, s.longitude) > 9000) continue;
+          const j = i * 3;
+          if (x * streamVectors.current[j] + y * streamVectors.current[j + 1] + z * streamVectors.current[j + 2] < MIN_VIEW_DOT) continue;
           n++;
         }
         readout.set({ inView: n, zoom });
@@ -900,6 +905,14 @@ export default function GlobeView(props: Props) {
     const map = mapRef.current;
     if (!ready || !map || !streams) return;
     streamsRef.current = streams;
+    const vectors = new Float32Array(streams.length * 3);
+    streams.forEach((s, i) => {
+      const [x, y, z] = unitVector(s.latitude, s.longitude);
+      vectors[i * 3] = x;
+      vectors[i * 3 + 1] = y;
+      vectors[i * 3 + 2] = z;
+    });
+    streamVectors.current = vectors;
     map.getSource<GeoJSONSource>('streams')?.setData(pinData(streams, sweepFrom.current));
     map.once('idle', () => map.fire('move'));
   }, [ready, streams]);

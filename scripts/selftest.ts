@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import { airportTraffic } from '../lib/airport-traffic';
 import { distanceKm, geocode, loadGazetteer, nearestPlace, unflipLongitudes } from './geocode';
+import { distanceKm as globeDistanceKm, unitVector } from '../lib/geo';
 import { blockedSources, cameraName, titleCase, tmInverse } from './agencies';
 import { moonPhase, subsolarPoint, sunAltitude } from '../lib/solar';
 import { fillNoData } from '../lib/clouds';
@@ -15,6 +16,15 @@ import { elevation, footprintKm, groundTrack, groupOf, nextPass, parseTle, perio
 import { GEO, SENSES, SKY_DEFAULT, cloudiness, daylight, geoWeight, geoTileVisible, skyTiles, tileAxes, tileBbox } from '../lib/sky';
 
 const g = loadGazetteer();
+// The fast globe visibility check agrees with the existing distance check across the date line and poles.
+for (const [a, b] of [
+  [[20, 120], [20, -120]], [[80, 170], [80, -170]], [[0, 0], [0, 90]], [[-45, -75], [45, 105]],
+] as [number[], number[]][]) {
+  const u = unitVector(a[0], a[1]);
+  const v = unitVector(b[0], b[1]);
+  assert.equal(u[0] * v[0] + u[1] * v[1] + u[2] * v[2] >= Math.cos(9000 / 6371),
+    globeDistanceKm(a[0], a[1], b[0], b[1]) <= 9000);
+}
 const place = (title: string, country?: string) => {
   const r = geocode(g, { title }, country);
   return r.ok ? `${r.hit.place.name}, ${r.hit.place.country}` : `REJECT ${r.reason.split(':')[0]}`;

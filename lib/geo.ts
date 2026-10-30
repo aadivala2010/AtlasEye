@@ -8,6 +8,14 @@ export function distanceKm(aLat: number, aLon: number, bLat: number, bLon: numbe
   return 12742 * Math.asin(Math.sqrt(h));
 }
 
+/** Unit sphere coordinates let the globe test many camera positions without repeated trigonometry. */
+export function unitVector(lat: number, lon: number): [number, number, number] {
+  const latitude = lat * RAD;
+  const longitude = lon * RAD;
+  const cosLat = Math.cos(latitude);
+  return [cosLat * Math.cos(longitude), cosLat * Math.sin(longitude), Math.sin(latitude)];
+}
+
 /** Streams ordered by distance from `origin`, origin first. */
 export function byDistanceFrom(origin: Stream, streams: Stream[]): Stream[] {
   return streams
