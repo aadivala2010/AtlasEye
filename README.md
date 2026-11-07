@@ -297,7 +297,7 @@ public/data/        streams.json, rejected.json, iss.json, radio.json
 ## Keyboard
 
 `R` random · `←` `→` walk outward through the nearest streams · `/` search · `Esc` close ·
-`F` fullscreen · `M` mute · `P` pulse
+`F` fullscreen · `M` mute · `P` pulse · `E` Explore
 
 Attribution and full license texts: [`ATTRIBUTION.md`](ATTRIBUTION.md).
 
@@ -320,3 +320,21 @@ Selecting an airport opens a 25 nm traffic radar with a local ADS-B refresh ever
 Filter movement toward/away from the airport or ground signals within 3 nm; select a callsign for its cockpit.
 Movement labels describe proximity and direction, not confirmed routes. Signals older than 90 seconds are hidden.
 The airport layer has no persistent notification when no airport is selected.
+
+## Explore
+
+Open **Explore** in the toolbar, or use a Dossier's save, compare or share buttons.
+
+- **Universal search:** search loaded cameras, aircraft (callsign, registration or hex), satellites (name or NORAD ID), and events. Enter decimal `latitude, longitude` to go directly; press Enter or the search button for cities and landmarks via Photon/OpenStreetMap.
+- **Places and watch zones:** save up to 50 named places with 10–2,000 km radii. Circles and current nearby event counts use the same live event feeds as Earth and Pulse.
+- **Personal alerts:** choose event categories, minimum severity and a saved watch zone. Only new matching events notify, while this tab remains open in the background. Browser permission is required; sleeping or closed browsers cannot deliver alerts. Filters persist locally; notifications must be enabled each visit.
+- **Share a scene:** copy a URL containing the camera position, zoom, bearing, pitch, enabled layers, sky settings and selected camera, aircraft, satellite, event or Dossier. Legacy camera links still work. Live objects can move or disappear; these links do not freeze the feeds. Saved places and imported files are excluded.
+- **Source health:** see the last successful response, expected refresh interval, delays and failures for sources fetched this visit. Response time is distinct from observation time. Transient polling failures retain the last good response.
+- **Weather risks:** official NWS warnings for the U.S. and territories, NHC/CPHC forecast tracks and cones for the Atlantic/eastern/central Pacific, and the latest RainViewer radar composite. Missing coverage does not indicate clear weather; warning records without polygons remain in the list. Existing EUMETSAT lightning stays in Sky.
+- **Imagery comparison:** compare two dates of NASA MODIS Terra true-colour imagery around the selected place with a swipe divider. Available from February 2000; cloud cover, polar night and incomplete imagery can hide the surface. This does not rewind cameras or live feeds.
+- **Aircraft trails:** the selected aircraft accumulates received positions for up to 30 minutes/180 samples in this visit. Gaps over two minutes and dateline crossings are disconnected. No invented history or extrapolated points are added to the trail.
+- **Local overlays:** import GeoJSON, KML or CSV (`latitude`, `longitude`, optional `name`). Up to five files, each 5 MB/5,000 features/50,000 coordinates. Only WGS84 geometry and names are retained; scripts, styles and network links are not loaded. Files disappear on reload.
+- **Map tools:** measure distance or area by tapping the globe or entering vertices, undo/clear measurements, copy coordinates, and export the selected location/event as GeoJSON. Measurements use a spherical Earth and are approximate.
+
+Saved places and alert filters use browser local storage. No account, API key or new package is required.
+Run `npm test`, `npm run typecheck`, and `npm run build` for validation; stop the development server before building so Next.js does not share its output directory with another process.

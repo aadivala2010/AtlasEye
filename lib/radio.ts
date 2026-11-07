@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { distanceKm } from './geo';
+import { sourceFetch } from './sources';
 
 /** One live radio station with a place on the map (Radio Browser, HTTPS streams only). */
 export interface Station {
@@ -36,7 +37,7 @@ export function useRadio(on: boolean): Station[] | null {
   useEffect(() => {
     if (!wanted) return;
     const ctrl = new AbortController();
-    fetch('/data/radio.json', { signal: ctrl.signal })
+    sourceFetch('Radio Browser catalog', 0, '/data/radio.json', { signal: ctrl.signal })
       .then((r) => r.json() as Promise<RadioCatalog>)
       .then((c) => setStations(c.stations))
       .catch(() => undefined);

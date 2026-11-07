@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { parseFlights, type Flight } from './flights';
 import { subsolarPoint } from './solar';
 import type { Fires } from './fires';
+import { useFeed } from './sources';
 
 /** What is happening on Earth: earthquakes, fires, storms, eruptions, ice, launches, space weather, emergencies. */
 
@@ -113,25 +114,8 @@ export const parseLaunches = (j: LaunchJson): Launch[] => j.results.flatMap((r) 
 
 /** Fetch `url` (JSON) now and every `ms` while it's non-null; a new url drops the old data. */
 function usePoll<T>(url: string | null, ms: number, parse: (j: never) => T): T | null {
-  const [data, setData] = useState<T | null>(null);
-  const parseRef = useRef(parse);
-  parseRef.current = parse;
-  useEffect(() => {
-    setData(null);
-    if (!url) return;
-    const ctrl = new AbortController();
-    let timer = 0;
-    const tick = async () => {
-      try {
-        const r = await fetch(url, { signal: ctrl.signal });
-        if (r.ok) setData(parseRef.current((await r.json()) as never));
-      } catch { /* keep the last answer; try again next tick */ }
-      if (!ctrl.signal.aborted && ms) timer = window.setTimeout(tick, ms);
-    };
-    void tick();
-    return () => { ctrl.abort(); clearTimeout(timer); };
-  }, [url, ms]);
-  return data;
+  const id = !url ? 'Inactive' : url.includes('earthquake') ? 'USGS earthquakes' : url.includes('eonet') ? 'NASA EONET' : url.includes('/fires') ? 'NASA FIRMS fires' : url.includes('launches') ? 'The Space Devs launches' : url.includes('swpc') ? 'NOAA space weather' : 'ADS-B emergencies';
+  return useFeed(id, url, ms, parse);
 }
 
 const USGS = 'https://earthquake.usgs.gov';
@@ -234,20 +218,27 @@ export function pulseItems(p: Planet, now: number): PulseItem[] {
 }
 
 /**
- * A browser notification for each new critical item while the tab is in the background. Everything
- * present on the first load counts as already seen, so opening the page doesn't set off a volley.
+ * Notify for new matching items in a background tab. Seed each feed independently so a slow first
+ * response does not turn old events into new alerts.
  */
-export function useNotify(items: PulseItem[], on: boolean) {
+export function useNotify(items: PulseItem[], on: boolean, matches: (item: PulseItem) => boolean, planet: Planet) {
   const seen = useRef<Set<string> | null>(null);
+  const enabled = useRef(false);
+  const initialized = useRef(new Set<PulseItem['kind']>());
   useEffect(() => {
-    if (!items.length) return;
-    if (!seen.current) { seen.current = new Set(items.map((i) => i.id)); return; }
+    const ready = (Object.entries({ quake: planet.quakes, event: planet.events, launch: planet.launches, emergency: planet.emergencies, aurora: planet.kp })
+      .filter(([, value]) => value !== null).map(([kind]) => kind)) as PulseItem['kind'][];
+    if (!on || !enabled.current || !seen.current) {
+      enabled.current = on; seen.current = new Set(items.map((i) => i.id)); initialized.current = new Set(ready); return;
+    }
     for (const it of items) {
       if (seen.current.has(it.id)) continue;
       seen.current.add(it.id);
-      if (on && it.level === 2 && document.hidden && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      if (initialized.current.has(it.kind) && matches(it) && document.hidden && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
         try { new Notification(it.title, { body: it.detail, tag: it.id }); } catch { /* some browsers only notify from a service worker */ }
       }
     }
-  }, [items, on]);
+    ready.forEach((kind) => initialized.current.add(kind));
+    if (seen.current.size > 5000) seen.current = new Set(items.map((i) => i.id));
+  }, [items, on, matches, planet]);
 }

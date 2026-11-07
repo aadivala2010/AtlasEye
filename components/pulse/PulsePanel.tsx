@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { PulseItem } from '@/lib/events';
 import { IconButton } from '@/components/stream/StreamPanel';
 import { IconClose } from '@/components/chrome/icons';
@@ -8,9 +8,11 @@ import { IconClose } from '@/components/chrome/icons';
 interface Props {
   mode?: 'pulse' | 'earth';
   items: PulseItem[];
+  selectedId?: string;
   loading: boolean;
   notify: boolean;
   onNotify(on: boolean): void;
+  onSettings(): void;
   /** Fly to it (and keep the list open). */
   onPick(item: PulseItem): void;
   /** Open what it's about: the aircraft, or a dossier on the spot. */
@@ -31,7 +33,10 @@ export function relTime(at: number, now: number): string {
 }
 
 /** Everything notable happening on Earth right now, most urgent first. */
-export default function PulsePanel({ mode = 'pulse', items, loading, notify, onNotify, onPick, onOpen, onClose }: Props) {
+export default function PulsePanel({ mode = 'pulse', items, selectedId, loading, notify, onNotify, onSettings, onPick, onOpen, onClose }: Props) {
+  const selectedRow = useRef<HTMLLIElement>(null);
+  const found = items.some((it) => it.id === selectedId);
+  useEffect(() => { selectedRow.current?.scrollIntoView({ block: 'nearest' }); }, [selectedId, found]);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const t = window.setInterval(() => setNow(Date.now()), 30_000);
@@ -71,22 +76,25 @@ export default function PulsePanel({ mode = 'pulse', items, loading, notify, onN
             aria-pressed={notify}
             className={`h-7 rounded-[2px] border px-2 font-mono text-[10px] uppercase tracking-[0.08em] transition-colors duration-200 ease-atlas disabled:opacity-50 ${
               notify ? 'border-accent-muted bg-accent-glow text-accent' : 'border-subtle text-secondary hover:text-primary'}`}
-            title="A browser notification for each new critical event while this tab is in the background"
+            title="Notify for events matching your alert settings while this tab is in the background"
           >
             {permission === 'unsupported' ? 'Alerts unsupported' : permission === 'denied' ? 'Alerts blocked' : notify ? 'Alerting in background' : 'Alert me in background'}
           </button>
+          <button type="button" className="ml-2 min-h-11 text-xs text-accent" onClick={onSettings}>Alert settings</button>
         </div>}
 
         <ul className="mt-3 flex flex-col border-t border-subtle px-2 py-2">
+          {selectedId && !found && !loading && <li className="p-2 text-xs text-secondary">The shared event is no longer in the active feeds. Its map location is still available.</li>}
           {items.length === 0 && (
             <li className="px-2 py-2 font-mono text-[11px] text-tertiary">
               {loading ? <span className="ellipsis">loading events</span> : mode === 'earth' ? 'No active events reported' : 'Quiet on Earth: nothing notable in the last day'}
             </li>
           )}
           {items.map((it) => (
-            <li key={it.id} className="group flex items-stretch gap-1">
+            <li key={it.id} ref={it.id === selectedId ? selectedRow : undefined} className={`group flex items-stretch gap-1 ${it.id === selectedId ? 'bg-accent-glow' : ''}`}>
               <button
                 type="button"
+                aria-pressed={it.id === selectedId}
                 onClick={() => onPick(it)}
                 className="flex min-w-0 flex-1 items-start gap-2.5 rounded-[2px] px-2 py-1.5 text-left transition-colors duration-200 ease-atlas hover:bg-hover"
               >

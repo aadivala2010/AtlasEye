@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { sourceFetch } from './sources';
 import { eciToGeodetic, gstime, propagate, twoline2satrec, type SatRec } from 'satellite.js';
 
 /** Everything in orbit CelesTrak lists as active (~16,600 objects, ~11,000 of them Starlink), by SGP4. */
@@ -162,7 +163,7 @@ export function useSatellites(on: boolean): Sat[] | null {
     (async () => {
       for (const url of ['/api/satellites', 'https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle']) {
         try {
-          const r = await fetch(url, { signal: ctrl.signal });
+          const r = await sourceFetch('CelesTrak orbital elements', 0, url, { signal: ctrl.signal });
           if (!r.ok) continue;
           const list = parseTle(await r.text());
           if (list.length) { setSats(list); return; }

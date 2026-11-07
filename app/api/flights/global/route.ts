@@ -16,10 +16,11 @@ export async function GET(req: Request) {
   const q = new URL(req.url).searchParams;
   const type = q.get('type') ?? '';
   const feed = q.get('feed') ?? '';
-  const path = feed ? FEEDS[feed] : (AIRLINER_TYPES as readonly string[]).includes(type) ? `type/${type}` : undefined;
+  const hex = q.get('hex');
+  const path = hex ? /^[a-f\d]{6}$/i.test(hex) ? `hex/${hex}` : undefined : feed ? FEEDS[feed] : (AIRLINER_TYPES as readonly string[]).includes(type) ? `type/${type}` : undefined;
   if (!path) return Response.json({ error: 'unknown feed' }, { status: 400 });
   // Emergencies are the point of the 7700 feed, so cache it far shorter than a type sweep.
-  const maxAge = feed ? 20 : 120;
+  const maxAge = feed || hex ? 20 : 120;
 
   for (let attempt = 0; attempt < 3; attempt++) {
     if (attempt) await new Promise((r) => setTimeout(r, 1200 * attempt));

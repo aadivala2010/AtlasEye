@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type Ref } from 'react';
 import type { Stream } from '@/lib/stream';
 import type { Sky } from '@/lib/sky';
-import Search, { type SearchHandle } from './Search';
+import Search, { type SearchData, type SearchHandle } from './Search';
 import SkyMenu from './SkyMenu';
 import { IconEye, IconRandom } from './icons';
 
@@ -25,6 +25,7 @@ export interface Tool { id: string; label: string; title: string; on: boolean; c
 interface Props {
   streams: Stream[];
   searchRef: Ref<SearchHandle>;
+  searchData: SearchData;
   layers: Layers;
   counts: Partial<Record<Layer, number | null>>;
   onToggleLayer(l: Layer): void;
@@ -106,7 +107,7 @@ export default function Header(p: Props) {
         Dossier
       </button>
       <span className="mx-1 h-4 w-px shrink-0 bg-strong" aria-hidden />
-      {p.tools.map((t) => (
+      {p.tools.filter((t) => t.id !== 'explore').map((t) => (
         <button key={t.id} type="button" aria-pressed={t.on} title={`${t.title} (${t.key})`} onClick={() => p.onTool(t.id)} className={`${CHIP} ${chipState(t.on)}`}>
           {t.label}
           {!!t.count && <span className="text-emergency">{t.count}</span>}
@@ -124,16 +125,20 @@ export default function Header(p: Props) {
         </a>
         <div className="hidden min-w-0 flex-1 md:block">{chips}</div>
         <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 md:flex-none">
+          <button type="button" data-open-explore aria-pressed={p.tools.find((t) => t.id === 'explore')?.on ?? false}
+            onClick={() => p.onTool('explore')} title="Explore: places, alerts and map tools (E)"
+            className="min-h-9 shrink-0 rounded border border-accent-muted bg-accent-glow px-2 text-xs text-accent">Explore</button>
           <SkyMenu sky={p.sky} onChange={p.onSky} />
-          <Search ref={p.searchRef} streams={p.streams} onPick={p.onPick} />
+          <Search ref={p.searchRef} streams={p.streams} data={p.searchData} />
           <button
             type="button"
             onClick={p.onRandom}
+            aria-label="Random stream"
             title="Random stream (R)"
             className="flex h-8 shrink-0 items-center gap-2 rounded-[2px] border border-accent-muted bg-accent-glow px-3 font-mono text-[11px] font-medium tracking-[0.08em] text-accent transition-[background-color,box-shadow] duration-200 ease-atlas hover:bg-accent/20 hover:shadow-[0_0_16px_var(--accent-glow)]"
           >
             <IconRandom width={14} height={14} />
-            RANDOM
+            <span className="max-sm:hidden">RANDOM</span>
             <span className="kbd border-accent-muted text-accent/70 max-md:hidden">R</span>
           </button>
         </div>

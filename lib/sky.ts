@@ -3,6 +3,7 @@ import type { AddProtocolAction, ExpressionSpecification } from 'maplibre-gl';
 import { fillNoData } from './clouds';
 import { subsolarPoint } from './solar';
 import { cloudsDate } from './time';
+import { sourceFetch } from './sources';
 
 /**
  * Everything drawn between the Esri imagery and the pins: clouds from the geostationary ring, the
@@ -481,7 +482,7 @@ export function useGeoFrames(on: boolean): Record<string, string> | null {
       await Promise.all(GEO.map(async (g) => {
         if (!('gibs' in g)) return;
         try {
-          const r = await fetch(`${GIBS}/1.0.0/${g.gibs}/default/GoogleMapsCompatible_Level6/all/${range}.xml`, { signal: ctrl.signal });
+          const r = await sourceFetch(`NASA cloud frames · ${g.id}`, 300000, `${GIBS}/1.0.0/${g.gibs}/default/GoogleMapsCompatible_Level6/all/${range}.xml`, { signal: ctrl.signal });
           const times = (await r.text()).match(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ/g);
           if (times) got[g.id] = times.sort().at(-1)!;
         } catch { /* keep the previous frame */ }
@@ -504,7 +505,7 @@ export function useAurora(on: boolean): number {
     let timer = 0;
     const load = async () => {
       try {
-        const j = (await (await fetch('https://services.swpc.noaa.gov/json/ovation_aurora_latest.json', { signal: ctrl.signal })).json()) as
+        const j = (await (await sourceFetch('NOAA aurora grid', 600000, 'https://services.swpc.noaa.gov/json/ovation_aurora_latest.json', { signal: ctrl.signal })).json()) as
           { coordinates: [number, number, number][] };
         const grid = new Float32Array(360 * 181);
         for (const [lon, lat, v] of j.coordinates) grid[(Math.round(lon) % 360) * 181 + Math.round(lat) + 90] = v;

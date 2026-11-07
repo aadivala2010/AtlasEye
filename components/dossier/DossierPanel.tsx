@@ -11,6 +11,8 @@ import { parseQuakes, type Quake } from '@/lib/events';
 import Clocks from '@/components/stream/Clocks';
 import { IconButton, Row } from '@/components/stream/StreamPanel';
 import { IconClose } from '@/components/chrome/icons';
+import type { ExploreTab } from '@/components/explore/ExplorePanel';
+import { sourceFetch } from '@/lib/sources';
 
 interface Props {
   lat: number;
@@ -25,6 +27,7 @@ interface Props {
   onPickSat(id: number): void;
   onPlay(s: Station): void;
   onClose(): void;
+  onExplore(tab: ExploreTab): void;
 }
 
 interface Weather {
@@ -54,7 +57,7 @@ function useJson<T>(url: string | null): { data: T | null; error: boolean } {
   useEffect(() => {
     if (!url) return;
     const ctrl = new AbortController();
-    fetch(url, { signal: ctrl.signal })
+    sourceFetch(`Dossier · ${new URL(url, window.location.origin).hostname === window.location.hostname ? 'NWS local warnings' : new URL(url).hostname}`, 0, url, { signal: ctrl.signal })
       .then((r) => (r.ok ? (r.json() as Promise<T>) : Promise.reject(new Error(String(r.status)))))
       .then((data) => setState({ data, error: false }))
       .catch(() => { if (!ctrl.signal.aborted) setState({ data: null, error: true }); });
@@ -68,7 +71,9 @@ function useJson<T>(url: string | null): { data: T | null; error: boolean } {
  * there (Wikipedia, street-level photos, cameras, radio), what's above it (aircraft, satellites)
  * and what's shaken it lately.
  */
-export default function DossierPanel({ lat, lon, streams, sats, stations, onPickStream, onPickFlight, onPickSat, onPlay, onClose }: Props) {
+export default function DossierPanel({ lat, lon, streams, sats, stations, onPickStream, onPickFlight, onPickSat, onPlay, onClose, onExplore }: Props) {
+  const [checkWarnings, setCheckWarnings] = useState(false);
+  const { data: warnings, error: warningError } = useJson<GeoJSON.FeatureCollection>(checkWarnings ? `/api/weather?lat=${lat.toFixed(3)}&lon=${lon.toFixed(3)}` : null);
   const ll = `latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}`;
   const { data: wx, error: wxError } = useJson<Weather>(
     `https://api.open-meteo.com/v1/forecast?${ll}&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,cloud_cover,visibility`
@@ -158,6 +163,19 @@ export default function DossierPanel({ lat, lon, streams, sats, stations, onPick
         </div>
 
         <div className="px-4 pt-4"><Clocks stream={{ timezone: zone, latitude: lat, longitude: lon }} /></div>
+        <div className="explore mx-4 mt-3 flex flex-wrap gap-2">
+          <button type="button" onClick={() => onExplore('places')}>Save place</button>
+          <button type="button" onClick={() => onExplore('imagery')}>Compare imagery</button>
+          <button type="button" onClick={() => onExplore('tools')}>Share / export</button>
+        </div>
+        <section className="explore-section mx-4 mt-4">
+          <h3>Local weather warnings</h3><p>Official NWS coverage: United States and territories.</p>
+          {!checkWarnings ? <button type="button" onClick={() => setCheckWarnings(true)}>Check U.S. warnings here</button>
+            : warningError ? <p role="status">Warning service unavailable. Check weather.gov for official advisories.</p>
+            : !warnings ? <p role="status">Checking warnings…</p>
+            : !warnings.features.length ? <p>No alerts returned for this point. Locations outside U.S. coverage are not assessed.</p>
+            : warnings.features.map((f, i) => <details key={String(f.id ?? i)}><summary>{String(f.properties?.event)} · {String(f.properties?.severity)}</summary><p>{String(f.properties?.headline ?? '')}</p><p className="whitespace-pre-line">{String(f.properties?.instruction ?? '')}</p><p>Expires: {String(f.properties?.expires)}</p></details>)}
+        </section>
 
         <dl className="mx-4 mt-4 grid grid-cols-[88px_1fr] gap-x-3 gap-y-1.5 border-t border-subtle pt-3">
           <Row label="Coords">{formatCoord(lat, lon)}</Row>

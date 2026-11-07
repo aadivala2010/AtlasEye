@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AIRLINER_TYPES } from './airliners';
+import { sourceFetch } from './sources';
 
 /** One aircraft from adsb.lol (readsb JSON), trimmed to what we draw. */
 export interface Flight {
@@ -67,7 +68,7 @@ export function parseFlights(ac: Raw[], now: number): Flight[] {
 }
 
 async function getFlights(url: string, signal?: AbortSignal): Promise<Flight[]> {
-  const r = await fetch(url, { signal });
+  const r = await sourceFetch(url.includes('/global') ? 'ADS-B worldwide sweep' : 'ADS-B local aircraft', url.includes('/global') ? 60000 : 10000, url, { signal });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   // `now` is when the snapshot was taken upstream: a CDN-cached copy keeps its true age.
   const j = (await r.json()) as { ac?: Raw[]; now?: number };

@@ -20,9 +20,10 @@ interface Props {
   live: boolean;
   onClose(): void;
   onLocate(): void;
+  trailCount: number;
 }
 
-export default function FlightPanel({ flight: f, live, onClose, onLocate }: Props) {
+export default function FlightPanel({ flight: f, live, onClose, onLocate, trailCount }: Props) {
   const cockpit = useRef<CockpitHandle>(null);
   return (
     <div className="flex h-full flex-col">
@@ -61,6 +62,7 @@ export default function FlightPanel({ flight: f, live, onClose, onLocate }: Prop
             {SQUAWK_MEANING[f.squawk ?? ''] && <span className="text-emergency"> · {SQUAWK_MEANING[f.squawk!]}</span>}
           </Row>
           <Row label="Coords">{formatCoord(f.lat, f.lon)}</Row>
+          <Row label="Trail">{trailCount} received positions · this visit only, up to 30 min. Gaps are not connected.</Row>
           <Row label="Source">
             <a href="https://adsb.lol" target="_blank" rel="noopener noreferrer" className="hover:text-accent">adsb.lol (ODbL)</a>
           </Row>

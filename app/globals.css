@@ -99,6 +99,20 @@ html, body {
 .maplibregl-canvas { outline: none; }
 .maplibregl-map { background: transparent !important; }
 
+.explore button, .explore-section button { min-height: 44px; padding: 8px 12px; border: 1px solid var(--border-strong); border-radius: 4px; background: var(--bg-raised); color: var(--text-primary); cursor: pointer; }
+.explore button:hover, .explore-section button:hover { background: var(--bg-hover); }
+.explore button[aria-pressed="true"] { border-color: var(--accent-muted); color: var(--accent); background: var(--accent-glow); }
+.explore button:disabled, .explore-section button:disabled { opacity: .5; cursor: default; }
+.explore-section { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; font-size: 13px; line-height: 1.5; }
+.explore-section h3 { color: var(--text-primary); font-size: 14px; font-weight: 600; }
+.explore-section p { color: var(--text-secondary); font-size: 12px; }
+.explore-section label { color: var(--text-secondary); }
+.explore-section input:not([type="checkbox"]):not([type="range"]), .explore-section select { display: block; width: 100%; min-height: 44px; padding: 8px; margin-top: 4px; border: 1px solid var(--border-strong); border-radius: 4px; background: var(--bg-raised); color: var(--text-primary); }
+.explore-section input[type="range"] { width: 100%; min-height: 32px; }
+.explore-section input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); }
+.explore-section a { color: var(--accent); }
+.explore-section summary { cursor: pointer; min-height: 44px; }
+
 /* The one selected-stream pulse. */
 .pulse {
   width: 9px;

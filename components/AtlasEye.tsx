@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Catalog, Stream } from '@/lib/stream';
 import { byDistanceFrom } from '@/lib/geo';
-import { project, useFlights, type Flight } from '@/lib/flights';
+import { parseFlights, project, useFlights, type Flight } from '@/lib/flights';
 import { useReadout } from '@/lib/readout';
 import { SKY_DEFAULT, type Sky } from '@/lib/sky';
 import { earthItems, pulseItems, useNotify, usePlanet, type PulseItem } from '@/lib/events';
@@ -20,16 +20,24 @@ import DossierPanel from './dossier/DossierPanel';
 import PulsePanel from './pulse/PulsePanel';
 import SatellitePanel from './satellite/SatellitePanel';
 import RadioBar from './radio/RadioBar';
+import ExplorePanel, { type ExplorePoint, type ExploreTab, type ImportedLayer } from './explore/ExplorePanel';
+import { appendFix, DEFAULT_FILTER, DEFAULT_LAYERS, matchesAlert, readPreferences, readScene, sceneQuery, WEATHER_OFF, wrapLon, type AlertFilter, type Fix, type MeasureMode, type Place, type Scene, type Target, type WeatherLayers } from '@/lib/explore';
+import { sourceFetch, useFeed } from '@/lib/sources';
+import { useRadar, useWarnings } from '@/lib/weather';
+import type { SearchResult } from './chrome/Search';
 
 /** What the side panel shows when it isn't a stream (streams keep their own id for the URL). */
 type Focus =
   | { kind: 'flight'; flight: Flight }
   | { kind: 'dossier'; lat: number; lon: number }
   /** The Pulse list; `at` is the item last flown to. */
-  | { kind: 'pulse' | 'earth'; at?: { lat: number; lon: number } }
-  | { kind: 'satellite'; id: number };
+  | { kind: 'pulse' | 'earth'; at?: { lat: number; lon: number }; eventId?: string }
+  | { kind: 'satellite'; id: number }
+  | { kind: 'flight-link'; hex: string }
+  | { kind: 'tools'; point: ExplorePoint; tab?: ExploreTab; target: Target | null; stream: string | null };
 
 interface Boot {
+  scene: Scene;
   camera: Camera | null;
   selectId: string | null;
   reducedMotion: boolean;
@@ -39,17 +47,15 @@ interface Boot {
 
 /** Read the shared-link state and motion preferences once, on the client. */
 function readBoot(): Boot {
-  const params = new URLSearchParams(window.location.search);
-  const [lon, lat, zoom] = (params.get('c') ?? '').split(',').map(Number);
-  const camera = [lon, lat, zoom].every(Number.isFinite) && Math.abs(lat) <= 90 ? { lon, lat, zoom } : null;
-  const selectId = params.get('s');
+  const scene = readScene(window.location.search);
+  const camera = scene.camera, selectId = scene.stream;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let intro = !reducedMotion && !selectId;
   try {
     if (sessionStorage.getItem('atlas-eye:intro')) intro = false;
     sessionStorage.setItem('atlas-eye:intro', '1');
   } catch { /* storage blocked: play it, it's harmless */ }
-  return { camera, selectId, reducedMotion, rotate: !reducedMotion && !camera && !selectId, intro };
+  return { scene, camera, selectId, reducedMotion, rotate: !reducedMotion && !camera && !selectId && !scene.target, intro: intro && !scene.target };
 }
 
 /**
@@ -72,7 +78,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const [layers, setLayers] = useState<Layers>({ cameras: true, flights: true, airports: false, satellites: false, events: true, radio: false, dossier: false });
+  const [layers, setLayers] = useState<Layers>(DEFAULT_LAYERS);
   const [other, setOther] = useState<Focus | null>(null);
   const [snapshots, setSnapshots] = useState(true);
   const [sky, setSky] = useState<Sky>(SKY_DEFAULT);
@@ -84,6 +90,17 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   const [isMobile, setIsMobile] = useState(false);
   const [sheet, setSheet] = useState(SHEET_PEEK);
   const [viewportH, setViewportH] = useState(800);
+  const [places, setPlaces] = useState<Place[]>([]);
+  const [filter, setFilter] = useState<AlertFilter>(DEFAULT_FILTER);
+  const [preferencesReady, setPreferencesReady] = useState(false), [storageError, setStorageError] = useState(false);
+  const [weather, setWeather] = useState<WeatherLayers>(WEATHER_OFF);
+  const [imports, setImports] = useState<ImportedLayer[]>([]);
+  const [measureMode, setMeasureMode] = useState<MeasureMode>('off');
+  const [measurePoints, setMeasurePoints] = useState<[number, number][]>([]);
+  const [searching, setSearching] = useState(false);
+  const [trail, setTrail] = useState<{ hex: string; fixes: Fix[] }>({ hex: '', fixes: [] });
+  const warnings = useWarnings(weather.alerts);
+  const radar = useRadar(weather.radar);
 
   const globe = useRef<GlobeHandle>(null);
   const search = useRef<SearchHandle>(null);
@@ -95,6 +112,14 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   useEffect(() => {
     const b = readBoot();
     camera.current = b.camera; // so the first URL write keeps a shared link's camera
+    setLayers(b.scene.layers); setSky(b.scene.sky); setSnapshots(b.scene.snapshots); setWeather(b.scene.weather); setFollow(b.scene.follow);
+    const target = b.scene.target;
+    if (target?.kind === 'flight') setOther({ kind: 'flight-link', hex: target.hex });
+    else if (target?.kind === 'earth' || target?.kind === 'pulse') setOther({ kind: target.kind, eventId: target.eventId, at: target.lat !== undefined && target.lon !== undefined ? { lat: target.lat, lon: target.lon } : undefined });
+    else if (target) setOther(target);
+    try { const prefs = readPreferences(localStorage.getItem('atlas-eye:preferences:v1')); setPlaces(prefs.places); setFilter(prefs.filter); }
+    catch { setStorageError(true); }
+    setPreferencesReady(true);
     setBoot(b);
     const mq = window.matchMedia('(max-width: 1023px)');
     const sync = () => { setIsMobile(mq.matches); setViewportH(window.innerHeight); };
@@ -104,11 +129,17 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
     return () => { mq.removeEventListener('change', sync); window.removeEventListener('resize', sync); };
   }, []);
 
+  useEffect(() => {
+    if (!preferencesReady) return;
+    try { localStorage.setItem('atlas-eye:preferences:v1', JSON.stringify({ places, filter })); }
+    catch { setStorageError(true); }
+  }, [places, filter, preferencesReady]);
+
   // ── catalog ────────────────────────────────────────────────────────────────
   useEffect(() => {
     const ctrl = new AbortController();
     setError(null);
-    fetch('/data/streams.json', { signal: ctrl.signal })
+    sourceFetch('Public camera catalog', 0, '/data/streams.json', { signal: ctrl.signal })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status} fetching /data/streams.json`);
         return r.json() as Promise<Catalog>;
@@ -133,25 +164,43 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   // ── flights: airliners worldwide; plus a 5 nm live poll around the aircraft in the cockpit, so it
   // updates every 10 s. (A wide live circle around the view would draw a visible disc of extra aircraft.)
   const tracked = other?.kind === 'flight' ? other.flight : null;
-  const { flights, error: flightError } = useFlights(layers.flights || !!tracked, () =>
+  const { flights, error: flightError } = useFlights(layers.flights || !!tracked || searching, () =>
     tracked ? project(tracked, Date.now()) : null, 5, true);
   const liveTracked = tracked ? flights?.find((f) => f.hex === tracked.hex) ?? (Date.now() - tracked.at < 30_000 ? tracked : undefined) : undefined;
   // Remember the latest fix, so the panel keeps the aircraft if it drops out of a poll.
   useEffect(() => {
     if (liveTracked) setOther((o) => (o?.kind === 'flight' && o.flight.hex === liveTracked.hex ? { kind: 'flight', flight: liveTracked } : o));
   }, [liveTracked]);
+  const sharedHex = other?.kind === 'flight-link' ? other.hex : null;
+  const sharedAircraft = useFeed('Shared aircraft', sharedHex ? `/api/flights/global?hex=${sharedHex}` : null, 10000,
+    (j: { ac: Parameters<typeof parseFlights>[0]; now: number }) => parseFlights(j.ac ?? [], j.now ?? Date.now()));
+  useEffect(() => { const f = sharedAircraft?.find((f) => f.hex === sharedHex); if (f) setOther({ kind: 'flight', flight: f }); }, [sharedAircraft, sharedHex]);
+  useEffect(() => {
+    if (!tracked) return;
+    setTrail((t) => ({ hex: tracked.hex, fixes: appendFix(t.hex === tracked.hex ? t.fixes : [], tracked, Date.now()) }));
+  }, [tracked]);
+  useEffect(() => {
+    const timer = setInterval(() => setTrail((t) => {
+      const fixes = t.fixes.filter((f) => Date.now() - f.at <= 30 * 60_000);
+      return fixes.length === t.fixes.length ? t : { ...t, fixes };
+    }), 30_000);
+    return () => clearInterval(timer);
+  }, []);
+  useEffect(() => { if (other?.kind !== 'tools') setMeasureMode('off'); }, [other?.kind]);
 
   // ── the planet: events on the globe, and the Pulse built from them ─────────
   const pulseOpen = other?.kind === 'pulse';
   const earthOpen = other?.kind === 'earth';
-  const planet = usePlanet(layers.events || pulseOpen || earthOpen || notify, null);
+  const planet = usePlanet(layers.events || pulseOpen || earthOpen || notify || searching || other?.kind === 'tools', null);
   const earth = useMemo(() => earthItems(planet), [planet.quakes, planet.events]);
   const pulse = useMemo(() => pulseItems(planet, Date.now()), [planet]);
-  useNotify(pulse, notify);
+  const allEvents = useMemo(() => [...new Map([...earth, ...pulse].map((e) => [e.id, e])).values()], [earth, pulse]);
+  const alertMatches = useCallback((item: PulseItem) => matchesAlert(item, filter, places), [filter, places]);
+  useNotify(allEvents, notify, alertMatches, planet);
 
   // ── orbit: loaded for the layer, an open satellite, or a dossier's "overhead now" ──
   const satId = other?.kind === 'satellite' ? other.id : null;
-  const sats = useSatellites(layers.satellites || satId !== null || other?.kind === 'dossier');
+  const sats = useSatellites(layers.satellites || satId !== null || other?.kind === 'dossier' || searching);
   const openSat = sats && satId !== null ? sats.find((x) => x.id === satId) ?? null : null;
 
   // ── radio: the layer, a camera's local station, the dossier's list ─────────
@@ -176,7 +225,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
     if (!keepWalk) walk.current = null;
     setOther(null);
     setSelectedId(s.id);
-    globe.current?.flyToStream(s, mode);
+    requestAnimationFrame(() => globe.current?.flyToStream(s, mode));
   }, []);
 
   const random = useCallback(() => {
@@ -197,14 +246,14 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
     select(w.list[i], 'near', true);
   }, [selected, streams, select]);
 
-  const close = useCallback(() => { setSelectedId(null); setOther(null); walk.current = null; setSheet(SHEET_PEEK); }, []);
+  const close = useCallback(() => { setSelectedId(null); setOther(null); setMeasureMode('off'); walk.current = null; setSheet(SHEET_PEEK); }, []);
 
   const openFlight = useCallback((f: Flight) => {
     setSelectedId(null);
     walk.current = null;
     setOther({ kind: 'flight', flight: f });
     const p = project(f, Date.now());
-    globe.current?.flyTo(p.lon, p.lat, 'near');
+    requestAnimationFrame(() => globe.current?.flyTo(p.lon, p.lat, 'near'));
   }, []);
   const openDossier = useCallback((lat: number, lon: number) => {
     setSelectedId(null);
@@ -223,7 +272,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
     setOther((o) => (o?.kind === 'pulse' ? null : { kind: 'pulse' }));
   }, []);
   const pickPulse = useCallback((it: PulseItem) => {
-    setOther((o) => ({ kind: o?.kind === 'earth' ? 'earth' : 'pulse', at: { lat: it.lat, lon: it.lon } }));
+    setOther((o) => ({ kind: o?.kind === 'earth' ? 'earth' : 'pulse', at: { lat: it.lat, lon: it.lon }, eventId: it.id }));
     globe.current?.flyTo(it.lon, it.lat, 'travel');
   }, []);
   const openPulse = useCallback((it: PulseItem) => {
@@ -246,22 +295,42 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
 
   // ── URL always reflects the selected stream and camera ─────────────────────
   const writeUrl = useCallback(() => {
-    const params = new URLSearchParams();
-    if (selectedId) params.set('s', selectedId);
-    const c = camera.current;
-    if (c) params.set('c', `${c.lon.toFixed(4)},${c.lat.toFixed(4)},${c.zoom.toFixed(2)}`);
-    const qs = params.toString();
-    window.history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname);
-  }, [selectedId]);
+    if (!restored.current) return;
+    const qs = sceneQuery({ camera: camera.current, stream: other?.kind === 'tools' ? other.stream : selectedId, target: focusTarget(other), layers, sky, snapshots, weather, follow });
+    if (window.location.search !== `?${qs}`) window.history.replaceState(null, '', `?${qs}`);
+  }, [selectedId, other, layers, sky, snapshots, weather, follow]);
   useEffect(() => { if (restored.current) writeUrl(); }, [writeUrl]);
   const onCamera = useCallback((c: Camera) => { camera.current = c; writeUrl(); }, [writeUrl]);
+  const openTools = (tab: ExploreTab = 'places', point?: ExplorePoint) => {
+    const c = globe.current?.getCamera() ?? camera.current ?? { lon: -30, lat: 20, zoom: 2 };
+    camera.current = c;
+    const event = other && 'eventId' in other ? allEvents.find((e) => e.id === other.eventId) : undefined;
+    const sat = openSat && subpoint(openSat, new Date());
+    const at = point ?? (other?.kind === 'tools' ? other.point : selected ? { lat: selected.latitude, lon: selected.longitude, name: selected.name }
+      : event ? { lat: event.lat, lon: event.lon, name: event.title, event }
+      : tracked ? { lat: tracked.lat, lon: tracked.lon, name: tracked.callsign }
+      : sat ? { lat: sat.lat, lon: sat.lon, name: openSat!.name }
+      : other?.kind === 'dossier' ? { lat: other.lat, lon: other.lon, name: 'Selected location' }
+      : { lat: c.lat, lon: wrapLon(c.lon), name: 'Map location' });
+    setOther({ kind: 'tools', point: at, tab, target: focusTarget(other), stream: other?.kind === 'tools' ? other.stream : selectedId });
+    setSelectedId(null); globe.current?.stopRotation();
+  };
+  const searchResult = (r: SearchResult) => {
+    if (r.kind === 'camera') { setLayers((l) => ({ ...l, cameras: true })); select(r.stream, 'travel'); }
+    else if (r.kind === 'flight') openFlight(r.flight);
+    else if (r.kind === 'satellite') openSatellite(r.satellite.id);
+    else if (r.kind === 'event') { setSelectedId(null); setOther({ kind: 'earth', eventId: r.event.id, at: r.event }); requestAnimationFrame(() => globe.current?.flyTo(r.event.lon, r.event.lat, 'travel')); }
+    else { openDossier(r.lat, r.lon); requestAnimationFrame(() => globe.current?.flyTo(r.lon, r.lat, 'travel')); }
+  };
+  const exploreAction = useRef(openTools);
+  exploreAction.current = openTools;
 
   // ── keyboard ───────────────────────────────────────────────────────────────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const t = e.target as HTMLElement | null;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
       const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
       const actions: Record<string, () => void> = {
         '/': () => search.current?.focus(),
@@ -272,6 +341,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
         f: () => player.current?.fullscreen(),
         m: () => setMuted((m) => !m),
         p: togglePulse,
+        e: () => exploreAction.current(),
       };
       const action = actions[key];
       if (!action) return;
@@ -317,18 +387,21 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
 
   const tools: Tool[] = [
     { id: 'pulse', label: 'Pulse', key: 'P', title: 'What is happening on Earth right now', on: pulseOpen, count: pulse.filter((i) => i.level > 0).length },
+    { id: 'explore', label: 'Explore', key: 'E', title: 'Saved places, alerts, weather, imagery and tools', on: other?.kind === 'tools' },
   ];
   const onTool = (id: string) => {
     globe.current?.stopRotation();
     if (id === 'pulse') togglePulse();
+    if (id === 'explore') openTools();
   };
   const bottomInset = panelOpen && isMobile ? Math.round(sheet * viewportH) : 0;
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-void">
       <Header
-        streams={streams ?? []}
+        streams={catalog?.streams ?? []}
         searchRef={search}
+        searchData={{ flights, sats, events: allEvents, onActive: setSearching, onResult: searchResult }}
         layers={layers}
         counts={{
           cameras: streams?.length ?? null,
@@ -356,6 +429,8 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
           {boot && (
             <GlobeView
               ref={globe}
+              explore={{ places, imports, trail: trail.fixes, measureMode, points: measurePoints, weather, warnings, radar,
+                onMeasurePoint: (lon, lat) => setMeasurePoints((ps) => ps.length < 100 ? [...ps, [wrapLon(lon), lat]] : ps) }}
               streams={streams}
               focus={selected ? { lat: selected.latitude, lon: selected.longitude } : other?.kind === 'dossier' ? other : (other?.kind === 'pulse' || other?.kind === 'earth') ? other.at ?? null : null}
               flights={(layers.flights || tracked) ? flights : null}
@@ -398,7 +473,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
 
         {panelOpen && (
           <aside
-            aria-label={other ? { flight: 'Flight', dossier: 'Dossier', pulse: 'Pulse', earth: 'Earth events', satellite: 'Satellite' }[other.kind] : 'Stream'}
+            aria-label={other ? { flight: 'Flight', dossier: 'Dossier', pulse: 'Pulse', earth: 'Earth events', satellite: 'Satellite', tools: 'Explore', 'flight-link': 'Shared aircraft' }[other.kind] : 'Stream'}
             style={isMobile ? { height: `${sheet * 100}dvh` } : undefined}
             className={`z-20 flex flex-col border-subtle bg-panel transition-[translate,opacity] duration-400 ease-atlas starting:opacity-0
               max-lg:absolute max-lg:inset-x-0 max-lg:bottom-0 max-lg:rounded-t-[4px] max-lg:border-t max-lg:shadow-[0_-16px_40px_rgba(0,0,0,0.55)] max-lg:starting:translate-y-8
@@ -412,11 +487,19 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
               <span className="h-1 w-9 rounded-full bg-strong" />
             </div>
             <div className="min-h-0 flex-1">
-              {other?.kind === 'flight' ? (
+              {other?.kind === 'tools' ? <ExplorePanel key={`${other.point.lat},${other.point.lon},${other.tab}`} point={other.point} initialTab={other.tab}
+                places={places} onPlaces={setPlaces} storageError={storageError} filter={filter} onFilter={setFilter} events={allEvents} notify={notify} onNotify={setNotify}
+                weather={weather} onWeather={setWeather} warnings={warnings} radar={radar} imports={imports} onImports={setImports}
+                measureMode={measureMode} points={measurePoints} onMeasure={setMeasureMode} onPoints={setMeasurePoints}
+                onGo={(lat, lon) => globe.current?.flyTo(lon, lat, 'travel')} onClose={close}
+                onShare={async () => { camera.current = globe.current?.getCamera() ?? camera.current; writeUrl(); try { await navigator.clipboard.writeText(window.location.href); return true; } catch { return false; } }} />
+              : other?.kind === 'flight-link' ? <div className="p-4 text-sm text-secondary"><p>{sharedAircraft ? 'This aircraft is not currently reporting a position. Retrying…' : 'Looking up the shared aircraft… If its feed is unavailable, the shared map position remains visible.'}</p><button type="button" className="mt-4 min-h-11 text-accent" onClick={close}>Close</button></div>
+              : other?.kind === 'flight' ? (
                 <FlightPanel
                   flight={other.flight}
                   live={!!liveTracked}
                   onClose={close}
+                  trailCount={trail.fixes.length}
                   onLocate={() => { const p = project(other.flight, Date.now()); globe.current?.flyTo(p.lon, p.lat, 'near'); }}
                 />
               ) : other?.kind === 'satellite' ? (
@@ -431,14 +514,16 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
                     onToggleMute={() => setMuted((m) => !m)}
                     onClose={close}
                   />
-                ) : <div className="grid h-full place-items-center font-mono text-[11px] text-tertiary"><span className="ellipsis">loading orbits</span></div>
+                ) : <div className="p-4 text-sm text-secondary"><p>{sats ? 'This satellite is not in the current catalog. The shared map position remains visible.' : 'Loading orbits… If the feed is unavailable, the shared map position remains visible.'}</p><button type="button" className="mt-4 min-h-11 text-accent" onClick={close}>Close</button></div>
               ) : (other?.kind === 'pulse' || other?.kind === 'earth') ? (
                 <PulsePanel
                   mode={other.kind}
+                  selectedId={other.eventId}
                   items={other.kind === 'earth' ? earth : pulse}
                   loading={!planet.quakes || !planet.events}
                   notify={notify}
                   onNotify={setNotify}
+                  onSettings={() => openTools('alerts')}
                   onPick={pickPulse}
                   onOpen={openPulse}
                   onClose={close}
@@ -456,6 +541,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
                   onPickSat={openSatellite}
                   onPlay={setStation}
                   onClose={close}
+                  onExplore={(tab) => openTools(tab, { lat: other.lat, lon: other.lon, name: 'Selected location' })}
                 />
               ) : selected && catalog && (
               <StreamPanel
@@ -493,10 +579,22 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
           (layers.radio || station) && 'Radio: Radio Browser',
           other?.kind === 'dossier' && 'Open-Meteo (CC BY 4.0) · Wikipedia · Panoramax',
           sky.terrain && 'Terrain: Mapzen',
+          weather.alerts && 'Warnings: NOAA NWS (U.S.)',
+          weather.cyclones && 'Forecast tracks: NHC / CPHC',
+          weather.radar && 'Radar: RainViewer',
         ].filter((c): c is string => !!c)}
       />
     </div>
   );
+}
+
+function focusTarget(focus: Focus | null): Target | null {
+  if (!focus) return null;
+  if (focus.kind === 'tools') return focus.target;
+  if (focus.kind === 'flight') return { kind: 'flight', hex: focus.flight.hex };
+  if (focus.kind === 'flight-link') return { kind: 'flight', hex: focus.hex };
+  if (focus.kind === 'pulse' || focus.kind === 'earth') return { kind: focus.kind, ...focus.at, eventId: focus.eventId };
+  return focus;
 }
 
 /** What the flights layer is showing, and when it's failing. */

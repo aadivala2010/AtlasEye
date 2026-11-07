@@ -16,7 +16,7 @@ export default function About() {
         <p className="mt-3 text-[14px] leading-6 text-secondary">
           A live window onto anywhere on Earth: a globe of public live streams, the sky as the satellites see it
           now, everything in orbit, and what is happening on the planet as it happens. Spin it, click a point, and
-          watch what is happening there right now, or scrub back through time.
+          watch what is happening there right now, or compare historical satellite imagery of that place.
         </p>
 
         <Section title="What this is">
@@ -44,6 +44,12 @@ export default function About() {
             position never leaves your device. Video plays through youtube-nocookie.com; once you play a stream,
             YouTube&apos;s own policies apply to that player. Radio plays straight from each station&apos;s own server.
             Pulse alerts use your browser&apos;s notifications only if you switch them on, and are sent by your own browser.
+          </p>
+          <p>
+            Saved places and alert filters stay in this browser&apos;s local storage. Imported map files stay on your
+            device for the current visit. Shared links include the selected location, object and visible layers,
+            but exclude your saved places and imported files. Place searches go to Photon; map imagery and local
+            information are fetched from the credited providers. Alerts require this tab to remain open.
           </p>
         </Section>
 
@@ -81,6 +87,8 @@ export default function About() {
             <Credit k="Place data">
               <a className="text-accent hover:underline" href="https://www.geonames.org/">GeoNames</a>, licensed under{' '}
               <a className="text-accent hover:underline" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
+              {' '}City and landmark search: <a className="text-accent hover:underline" href="https://photon.komoot.io/">Photon</a>,
+              using © OpenStreetMap contributors (ODbL).
             </Credit>
             <Credit k="Imagery">
               <a className="text-accent hover:underline" href="https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9">Esri World Imagery</a>:
@@ -102,6 +110,10 @@ export default function About() {
               Fire detections: <a className="text-accent hover:underline" href="https://firms.modaps.eosdis.nasa.gov">NASA FIRMS</a> (VIIRS NOAA-20).
               Launches: <a className="text-accent hover:underline" href="https://thespacedevs.com">The Space Devs</a> Launch Library 2.
               Geomagnetic storms: NOAA SWPC.
+            </Credit>
+            <Credit k="Weather risks">
+              Official U.S. warnings: <a className="text-accent hover:underline" href="https://www.weather.gov/">National Weather Service</a>.
+              {' '}Atlantic, eastern and central Pacific cyclone forecasts: <a className="text-accent hover:underline" href="https://www.nhc.noaa.gov/">NHC and CPHC</a>.
             </Credit>
             <Credit k="Orbits">
               Orbital elements from <a className="text-accent hover:underline" href="https://celestrak.org">CelesTrak</a>,

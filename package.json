@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "tsx scripts/selftest.ts",
+    "test": "tsx scripts/selftest.ts && tsx scripts/explore-selftest.ts",
     "gazetteer": "tsx scripts/build-gazetteer.ts",
     "import": "tsx scripts/import-catalog.ts",
     "extras": "tsx scripts/import-extras.ts"

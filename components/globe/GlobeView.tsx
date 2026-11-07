@@ -19,17 +19,21 @@ import { EVENT_COLORS, EVENT_LABELS, type EarthEvent, type Planet, type Quake } 
 import type { Fires } from '@/lib/fires';
 import type { Station } from '@/lib/radio';
 import { GROUP_LABEL, footprint, groundTrack, periodMin, positions, subpoint, type Sat } from '@/lib/satellites';
+import ExploreLayers, { type ExploreMapProps } from './ExploreLayers';
+import { sourceStatus } from '@/lib/sources';
 
-export interface Camera { lon: number; lat: number; zoom: number }
+export interface Camera { lon: number; lat: number; zoom: number; bearing?: number; pitch?: number }
 export interface GlobeHandle {
   /** `travel` arcs out and back in across the planet (random, search); `near` is a short glide. */
   flyToStream(stream: Stream, mode: 'near' | 'travel'): void;
   flyTo(lon: number, lat: number, mode: 'near' | 'travel'): void;
   stopRotation(): void;
+  getCamera(): Camera | null;
 }
 
 interface Props {
   ref?: Ref<GlobeHandle>;
+  explore: ExploreMapProps;
   streams: Stream[] | null;
   /** Where the pulse sits: the open stream or dossier target. */
   focus: { lat: number; lon: number } | null;
@@ -540,7 +544,9 @@ export default function GlobeView(props: Props) {
         zoom,
         minZoom: 0.5,
         maxZoom: 18,
-        maxPitch: 0, // raised with zoom by apply3d
+        bearing: initialCamera?.bearing ?? 0,
+        pitch: initialCamera?.pitch ?? 0,
+        maxPitch: initialCamera?.pitch ?? 0, // raised with zoom by apply3d
         attributionControl: false,
         dragRotate: false, // enabled once zoomed in, by apply3d
         fadeDuration: 0,
@@ -555,10 +561,18 @@ export default function GlobeView(props: Props) {
       // that's expected, not an error.
       map.on('error', (e) => {
         const id = (e as { sourceId?: string }).sourceId;
-        if (id === 'satellite' || (id && OVERLAY_IDS.has(id))) return;
+        if (id && (id === 'satellite' || OVERLAY_IDS.has(id))) sourceStatus(`Map tiles · ${id}`, id === 'satellite' ? 0 : 300000, 'error');
+        if (id === 'satellite' || id?.startsWith('weather-') || (id && OVERLAY_IDS.has(id))) return;
         console.error(e.error);
       });
       mapRef.current = map;
+      const sourceTimes = new Map<string, number>();
+      map.on('sourcedata', (e) => {
+        const id = e.sourceId;
+        if (!e.isSourceLoaded || !id || (id !== 'satellite' && !OVERLAY_IDS.has(id)) || (map?.getLayer(id) && map.getLayoutProperty(id, 'visibility') === 'none')) return;
+        if (Date.now() - (sourceTimes.get(id) ?? 0) < 30000) return;
+        sourceTimes.set(id, Date.now()); sourceStatus(`Map tiles · ${id}`, id === 'satellite' ? 0 : 300000, 'ok');
+      });
       sweepFrom.current = (initialCamera?.lon ?? -30) - 90;
 
       // Cluster counts are drawn in Geist Mono via canvas, since map glyph servers only carry sans fonts.
@@ -769,7 +783,7 @@ export default function GlobeView(props: Props) {
       });
 
       for (const layer of base ? ['airports', 'airport-labels'] : []) map.on('click', layer, (e) => {
-        if (!map || !cb.current.airports) return;
+        if (!map || !cb.current.airports || cb.current.explore.measureMode !== 'off') return;
         const feature = e.features?.[0];
         if (feature?.geometry.type !== 'Point') return;
         const p = feature.properties;
@@ -781,20 +795,24 @@ export default function GlobeView(props: Props) {
       });
 
       map.on('click', 'pins', (e) => {
+        if (cb.current.explore.measureMode !== 'off') return;
         const id = e.features?.[0]?.properties.id;
         if (typeof id === 'string') cb.current.onSelect(id);
       });
       map.on('click', 'planes', (e) => {
+        if (cb.current.explore.measureMode !== 'off') return;
         const hex = e.features?.[0]?.properties.hex;
         const flight = flightsRef.current.find((f) => f.hex === hex);
         if (flight) cb.current.onFlight(flight);
       });
       map.on('click', 'radio', (e) => {
+        if (cb.current.explore.measureMode !== 'off') return;
         const id = e.features?.[0]?.properties.id;
         if (map?.queryRenderedFeatures(e.point, { layers: ['planes', 'pins', 'clusters'] }).length) return;
         if (typeof id === 'string') cb.current.onRadio(id);
       });
       map.on('click', 'sats', (e) => {
+        if (cb.current.explore.measureMode !== 'off') return;
         const id = e.features?.[0]?.properties.id;
         if (map?.queryRenderedFeatures(e.point, { layers: ['planes', 'pins', 'clusters'] }).length) return;
         if (id !== undefined) cb.current.onSatellite(Number(id));
@@ -806,6 +824,7 @@ export default function GlobeView(props: Props) {
       // A quake or event opens the dossier on the spot: weather, nearby cameras, aircraft, history.
       for (const layer of ['quakes', 'events']) {
         map.on('click', layer, (e) => {
+          if (cb.current.explore.measureMode !== 'off') return;
           const g = e.features?.[0]?.geometry;
           if (g?.type === 'Point' && !map?.queryRenderedFeatures(e.point, { layers: ['planes', 'pins', 'clusters'] }).length) {
             cb.current.onDossier(g.coordinates[1], g.coordinates[0]);
@@ -813,11 +832,13 @@ export default function GlobeView(props: Props) {
         });
       }
       map.on('click', (e) => {
+        if (cb.current.explore.measureMode !== 'off') { cb.current.explore.onMeasurePoint(e.lngLat.lng, e.lngLat.lat); return; }
         if (!map || !cb.current.dossier) return;
         if (map.queryRenderedFeatures(e.point, { layers: HIT_LAYERS.filter((id) => map!.getLayer(id)) }).length) return;
         cb.current.onDossier(e.lngLat.lat, e.lngLat.lng);
       });
       map.on('click', 'clusters', async (e) => {
+        if (cb.current.explore.measureMode !== 'off') return;
         const f = e.features?.[0];
         if (!map || !f || f.geometry.type !== 'Point') return;
         const zoom = await map.getSource<GeoJSONSource>('streams')!.getClusterExpansionZoom(f.properties.cluster_id);
@@ -878,7 +899,7 @@ export default function GlobeView(props: Props) {
         countInView();
         if (rotating.current) return;
         const c = map.getCenter();
-        cb.current.onCamera({ lon: c.lng, lat: c.lat, zoom: map.getZoom() });
+        cb.current.onCamera({ lon: c.lng, lat: c.lat, zoom: map.getZoom(), bearing: map.getBearing(), pitch: map.getPitch() });
       });
       map.once('idle', countInView);
       map.once('style.load', countInView);
@@ -1100,6 +1121,7 @@ export default function GlobeView(props: Props) {
   // ── imperative camera ──────────────────────────────────────────────────────
   useImperativeHandle(ref, () => ({
     stopRotation() { rotating.current = false; },
+    getCamera() { const m = mapRef.current; if (!m) return null; const c = m.getCenter(); return { lon: c.lng, lat: c.lat, zoom: m.getZoom(), bearing: m.getBearing(), pitch: m.getPitch() }; },
     flyToStream(s, mode) { this.flyTo(s.longitude, s.latitude, mode); },
     flyTo(lon, lat, mode) {
       const map = mapRef.current;
@@ -1113,6 +1135,8 @@ export default function GlobeView(props: Props) {
       {/* maplibre forces position:relative on its container, so size it with h/w, not inset. */}
       <div ref={halo} className="pointer-events-none absolute left-0 top-0 rounded-full opacity-0" aria-hidden />
       <div ref={container} className="relative h-full w-full" />
+      <ExploreLayers map={ready ? mapRef.current : null} {...props.explore} />
+      {props.explore.measureMode !== 'off' && <div className="pointer-events-none absolute bottom-10 left-3 z-10 rounded border border-accent-muted bg-panel p-2 text-xs text-accent">Tap the globe to measure {props.explore.measureMode} · {props.explore.points.length}/100 points</div>}
       {props.airports && airport && (
         <div className="absolute right-3 top-3 z-10 max-h-[calc(100%-24px)] w-72 max-w-[calc(100%-24px)] overflow-y-auto overscroll-contain rounded-[4px] border border-accent-muted bg-panel/95 p-3 shadow-xl">
             <div className="flex items-start gap-2">
