@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { formatAlt, type Flight } from '@/lib/flights';
 import { formatCoord } from '@/lib/geo';
 import { IconButton, Row } from '@/components/stream/StreamPanel';
@@ -37,6 +37,7 @@ export default function FlightPanel({ flight: f, live, onClose, onLocate, trailC
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <AircraftPhoto hex={f.hex} />
         <div className="p-4 pb-3"><Cockpit key={f.hex} ref={cockpit} flight={f} /></div>
 
         <div className="px-4">
@@ -62,9 +63,10 @@ export default function FlightPanel({ flight: f, live, onClose, onLocate, trailC
             {SQUAWK_MEANING[f.squawk ?? ''] && <span className="text-emergency"> · {SQUAWK_MEANING[f.squawk!]}</span>}
           </Row>
           <Row label="Coords">{formatCoord(f.lat, f.lon)}</Row>
+          <Row label="Last fix">{Math.max(0, Math.round((Date.now() - f.at) / 60_000))} min ago{live ? '' : ' · position may be stale'}</Row>
           <Row label="Trail">{trailCount} received positions · this visit only, up to 30 min. Gaps are not connected.</Row>
           <Row label="Source">
-            <a href="https://adsb.lol" target="_blank" rel="noopener noreferrer" className="hover:text-accent">adsb.lol (ODbL)</a>
+            <a href={f.source === 'OpenSky' ? 'https://opensky-network.org' : 'https://adsb.lol'} target="_blank" rel="noopener noreferrer" className="hover:text-accent">{f.source}</a>
           </Row>
         </dl>
 
@@ -85,4 +87,35 @@ export default function FlightPanel({ flight: f, live, onClose, onLocate, trailC
       </div>
     </div>
   );
+}
+
+interface Photo { src: string; link: string; photographer: string }
+
+/** A photo of this exact airframe when one is available; the photographer retains the credit. */
+function AircraftPhoto({ hex }: { hex: string }) {
+  const [photo, setPhoto] = useState<Photo | null>(null);
+  useEffect(() => {
+    const ctrl = new AbortController();
+    setPhoto(null);
+    fetch(`https://api.planespotters.net/pub/photos/hex/${hex}`, { signal: ctrl.signal })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data: { photos?: { thumbnail_large?: { src?: string }; link?: string; photographer?: string }[] } | null) => {
+        const p = data?.photos?.[0];
+        if (p?.thumbnail_large?.src && p.link && new URL(p.thumbnail_large.src).hostname === 't.plnspttrs.net'
+          && new URL(p.link).hostname === 'www.planespotters.net') {
+          setPhoto({ src: p.thumbnail_large.src, link: p.link, photographer: p.photographer || 'Planespotters.net contributor' });
+        }
+      }).catch(() => undefined);
+    return () => ctrl.abort();
+  }, [hex]);
+  if (!photo) return null;
+  return <figure className="border-b border-subtle bg-void">
+    <a href={photo.link} target="_blank" rel="noopener noreferrer" aria-label="View aircraft photo on Planespotters.net">
+      {/* eslint-disable-next-line @next/next/no-img-element -- external credited thumbnail */}
+      <img src={photo.src} alt={`Aircraft ${hex.toUpperCase()}`} className="max-h-52 w-full object-contain" />
+    </a>
+    <figcaption className="px-4 py-1 text-[10px] text-secondary">
+      © {photo.photographer} / <a href={photo.link} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Planespotters.net</a>
+    </figcaption>
+  </figure>;
 }

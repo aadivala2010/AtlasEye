@@ -6,14 +6,14 @@ import type { PulseItem } from './events';
 import type { Flight } from './flights';
 
 export interface Place { id: string; name: string; lat: number; lon: number; radius: number }
-export const DEFAULT_LAYERS: Layers = { cameras: true, flights: true, airports: false, satellites: false, events: true, radio: false, dossier: false };
+export const DEFAULT_LAYERS: Layers = { cameras: true, flights: true, ships: false, airports: false, satellites: false, events: true, radio: false, dossier: false };
 export const KINDS = ['quake', 'event', 'emergency', 'launch', 'aurora'] as const;
 export interface AlertFilter { level: number; kinds: PulseItem['kind'][]; placeId: string }
 export const DEFAULT_FILTER: AlertFilter = { level: 2, kinds: [...KINDS], placeId: '' };
 export interface WeatherLayers { alerts: boolean; cyclones: boolean; radar: boolean }
 export const WEATHER_OFF: WeatherLayers = { alerts: false, cyclones: false, radar: false };
 export type Target = { kind: 'dossier'; lat: number; lon: number } | { kind: 'satellite'; id: number }
-  | { kind: 'flight'; hex: string } | { kind: 'earth' | 'pulse'; lat?: number; lon?: number; eventId?: string };
+  | { kind: 'flight'; hex: string } | { kind: 'ship'; mmsi: number } | { kind: 'earth' | 'pulse'; lat?: number; lon?: number; eventId?: string };
 export interface Scene { camera: Camera | null; stream: string | null; target: Target | null; layers: Layers; sky: Sky; snapshots: boolean; weather: WeatherLayers; follow: boolean }
 export const validPoint = (lat: unknown, lon: unknown): boolean => typeof lat === 'number' && typeof lon === 'number' && Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
 export const wrapLon = (lon: number) => ((lon + 180) % 360 + 360) % 360 - 180;
@@ -46,6 +46,7 @@ export function readScene(search: string): Scene {
   if ((kind === 'earth' || kind === 'pulse')) target = { kind, ...point, eventId: p.get('event')?.slice(0, 200) };
   if (kind === 'satellite' && /^\d{1,9}$/.test(p.get('id') ?? '')) target = { kind, id: Number(p.get('id')) };
   if (kind === 'flight' && /^[a-f\d]{6}$/i.test(p.get('id') ?? '')) target = { kind, hex: p.get('id')!.toLowerCase() };
+  if (kind === 'ship' && /^\d{9}$/.test(p.get('id') ?? '')) target = { kind, mmsi: Number(p.get('id')) };
   return { camera, layers, sky, weather, target, stream: p.get('s')?.slice(0, 200) ?? null, snapshots: p.get('snap') !== '0', follow: p.get('follow') === '1' };
 }
 
@@ -64,6 +65,7 @@ export function sceneQuery(s: Scene): string {
     if ('lat' in t && t.lat !== undefined && t.lon !== undefined) p.set('at', `${t.lat.toFixed(5)},${t.lon.toFixed(5)}`);
     if ('id' in t) p.set('id', String(t.id));
     if ('hex' in t) p.set('id', t.hex);
+    if ('mmsi' in t) p.set('id', String(t.mmsi));
     if ('eventId' in t && t.eventId) p.set('event', t.eventId);
   }
   if (s.follow && t?.kind === 'satellite') p.set('follow', '1');

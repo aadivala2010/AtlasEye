@@ -3,6 +3,7 @@
 import { useDeferredValue, useEffect, useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react';
 import type { Stream } from '@/lib/stream';
 import type { Flight } from '@/lib/flights';
+import type { Ship } from '@/lib/ships';
 import type { Sat } from '@/lib/satellites';
 import type { PulseItem } from '@/lib/events';
 import { parseCoordinates, validPoint } from '@/lib/explore';
@@ -11,10 +12,10 @@ import { IconSearch } from './icons';
 
 export interface SearchHandle { focus(): void }
 export type SearchResult = { label: string; detail: string } & (
-  { kind: 'camera'; stream: Stream } | { kind: 'flight'; flight: Flight } | { kind: 'satellite'; satellite: Sat }
+  { kind: 'camera'; stream: Stream } | { kind: 'flight'; flight: Flight } | { kind: 'ship'; ship: Ship } | { kind: 'satellite'; satellite: Sat }
   | { kind: 'event'; event: PulseItem } | { kind: 'place'; lat: number; lon: number }
 );
-export interface SearchData { flights: Flight[] | null; sats: Sat[] | null; events: PulseItem[]; onActive(on: boolean): void; onResult(result: SearchResult): void }
+export interface SearchData { flights: Flight[] | null; ships: Ship[] | null; sats: Sat[] | null; events: PulseItem[]; onActive(on: boolean): void; onResult(result: SearchResult): void }
 const fold = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 
 export default function Search({ ref, streams, data }: { ref?: Ref<SearchHandle>; streams: Stream[]; data: SearchData }) {
@@ -35,11 +36,12 @@ export default function Search({ ref, streams, data }: { ref?: Ref<SearchHandle>
     return [
       ...(point ? [{ kind: 'place' as const, ...point, label: `${point.lat}, ${point.lon}`, detail: 'Coordinates · latitude, longitude' }] : []),
       ...(data.flights ?? []).filter((f) => match(`${f.callsign} ${f.hex} ${f.reg ?? ''}`)).slice(0, 3).map((flight) => ({ kind: 'flight' as const, flight, label: flight.callsign, detail: `Aircraft · ${flight.reg ?? flight.hex}` })),
+      ...(data.ships ?? []).filter((s) => match(`${s.name ?? ''} ${s.mmsi} ${s.imo ?? ''}`)).slice(0, 3).map((ship) => ({ kind: 'ship' as const, ship, label: ship.name || `MMSI ${ship.mmsi}`, detail: `Ship · MMSI ${ship.mmsi}` })),
       ...(data.sats ?? []).filter((s) => match(`${s.name} ${s.id}`)).slice(0, 3).map((satellite) => ({ kind: 'satellite' as const, satellite, label: satellite.name, detail: `Satellite · NORAD ${satellite.id}` })),
       ...data.events.filter((e) => match(`${e.title} ${e.detail}`)).slice(0, 3).map((event) => ({ kind: 'event' as const, event, label: event.title, detail: event.detail })),
       ...index.filter((s) => terms.every((t) => s.hay.includes(t))).slice(0, 5).map(({ s: stream }) => ({ kind: 'camera' as const, stream, label: stream.name, detail: `Camera · ${stream.place}, ${stream.country}` })),
     ];
-  }, [query, data.flights, data.sats, data.events, index]);
+  }, [query, data.flights, data.ships, data.sats, data.events, index]);
   const results = [...remote, ...local];
   const pick = (r?: SearchResult) => { if (!r) return; data.onResult(r); setQ(''); setRemote([]); setOpen(false); request.current?.abort(); input.current?.blur(); };
   const findPlaces = async () => {
@@ -67,12 +69,12 @@ export default function Search({ ref, streams, data }: { ref?: Ref<SearchHandle>
           if (e.key === 'ArrowDown') { e.preventDefault(); setActive((i) => Math.min(i + 1, results.length - 1)); }
           if (e.key === 'ArrowUp') { e.preventDefault(); setActive((i) => Math.max(-1, i - 1)); }
           if (e.key === 'Escape') { e.stopPropagation(); setOpen(false); input.current?.blur(); }
-        }} placeholder="Search anywhere" aria-label="Search places, cameras, flights and satellites" role="combobox" aria-expanded={open && !!q} aria-controls="search-results"
+        }} placeholder="Search anywhere" aria-label="Search places, cameras, flights, ships and satellites" role="combobox" aria-expanded={open && !!q} aria-controls="search-results"
         aria-autocomplete="list" aria-activedescendant={active >= 0 && results[active] ? `search-${active}` : undefined} className="min-w-0 flex-1 bg-transparent text-[13px] focus:outline-none" />
       <button type="submit" aria-label="Find cities and landmarks" className="min-h-9 min-w-8 text-accent"><IconSearch width={18} height={18} /></button>
     </form>
     {open && q && <div className="absolute right-0 top-10 z-40 max-h-[65dvh] w-[min(380px,calc(100vw-24px))] overflow-y-auto rounded border border-strong bg-panel shadow-xl max-md:fixed max-md:inset-x-3 max-md:top-12 max-md:w-auto">
-      <p className="px-3 py-2 text-xs text-secondary">Enter or tap search for cities and landmarks. Aircraft and events search loaded feeds.</p>
+      <p className="px-3 py-2 text-xs text-secondary">Enter or tap search for cities and landmarks. Aircraft, ships and events search loaded feeds.</p>
       <ul id="search-results" role="listbox">{results.map((r, i) => <li key={`${r.kind}:${i}`} id={`search-${i}`} role="option" aria-selected={active === i}>
         <button type="button" tabIndex={-1} onMouseDown={(e) => e.preventDefault()} onClick={() => pick(r)} onMouseEnter={() => setActive(i)}
           className={`min-h-12 w-full px-3 py-2 text-left hover:bg-hover ${active === i ? 'bg-hover border-l-2 border-accent' : ''}`}><span className="block truncate">{r.label}</span><span className="block truncate text-xs text-secondary">{r.detail}</span></button>

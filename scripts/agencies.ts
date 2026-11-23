@@ -23,6 +23,7 @@ export interface AgencyCam {
   country?: string;
   category: Category;
   source: Source;
+  operator?: string;
   /** Snapshot to fall back to if the HLS stream is dead at import time (stripped before writing). */
   fallback?: string;
   /** Unvetted image: fetched at import and dropped if it fails or is a shared placeholder (stripped before writing). */
@@ -1076,11 +1077,35 @@ async function osm(): Promise<AgencyCam[]> {
   });
 }
 
+// Public road-authority videos in countries our operator catalog barely covers.
+// The dataset is CC BY 4.0; each record also retains its agency's attribution.
+const RoadcamFile = z.object({ features: z.array(z.object({
+  geometry: z.object({ coordinates: z.tuple([z.number(), z.number()]) }),
+  properties: z.object({ name: z.string(), url: z.string(), url_type: z.string(),
+    country_code: z.string(), coordinates_quality: z.string(), status: z.string(),
+    attribution: z.string(), display_name: z.string().optional() }),
+})) });
+
+async function roadcams(): Promise<AgencyCam[]> {
+  const data = parse(RoadcamFile, await getJson(
+    'https://raw.githubusercontent.com/william-ricchiuti/Live-Environment-Streams/v4.0.0/streams.geojson'), 'Live Environment Streams');
+  return data.features.flatMap(({ geometry, properties: p }) => {
+    const [lon, lat] = geometry.coordinates;
+    if (!['ID', 'TH', 'NO'].includes(p.country_code) || p.url_type !== 'hls'
+      || p.coordinates_quality !== 'exact' || p.status !== 'active' || !p.url.startsWith('https://')
+      || !inRange(lat, lon)) return [];
+    return [{ id: `roadcams:${createHash('sha1').update(p.url).digest('hex').slice(0, 16)}`,
+      kind: 'hls' as const, url: p.url, name: tidy(p.name), latitude: lat, longitude: lon,
+      place: p.display_name, country: p.country_code, category: 'traffic' as const,
+      source: 'roadcams' as const, operator: p.attribution }];
+  });
+}
+
 /** A playlist is live if it answers 200 with an HLS header, and CORS headers hls.js needs, within a few seconds. */
-async function probeHls(url: string): Promise<boolean> {
+async function probeHls(url: string, cors = true): Promise<boolean> {
   try {
     const res = await fetch(url, { headers: { ...BROWSER, origin: 'https://atlas-eye.vercel.app' }, signal: AbortSignal.timeout(8_000) });
-    return res.ok && res.headers.has('access-control-allow-origin') && (await res.text()).startsWith('#EXTM3U');
+    return res.ok && (!cors || res.headers.has('access-control-allow-origin')) && (await res.text()).startsWith('#EXTM3U');
   } catch { return false; }
 }
 
@@ -1136,7 +1161,7 @@ export const AGENCIES: Partial<Record<Source, () => Promise<AgencyCam[]>>> = {
   ...Object.fromEntries(IBI_SITES.map(([source, host, country]) => [source, () => ibi(source, host, country)])),
   ...Object.fromEntries(CARS_SITES.map(([source, host, bbox, country]) => [source, () => cars(source, host, bbox, country)])),
   vdot, modot, chart, tripcheck, cotrip, wsdot, austin, york, alertca, itraffic, dgt, madrid, sct, tfl, vegagerdin, eismoinfo, fotowebcam,
-  nzta, livetraffic, mlit, usgs, aad, noaagml, ndbc, osm,
+  nzta, livetraffic, mlit, usgs, aad, noaagml, ndbc, osm, roadcams,
   twfreeway: () => taiwan('freeway', 'twfreeway'),
   twthb: () => taiwan('thb', 'twthb'),
 };
@@ -1163,7 +1188,7 @@ function tallyProbe(tally: ProbeTally, source: string, ok: boolean) {
  * the camera's snapshot when the operator publishes one; otherwise it is dropped.
  */
 export async function verifyLive(cams: AgencyCam[], tally: ProbeTally): Promise<{ cams: AgencyCam[]; dead: number }> {
-  const alive = await pool(cams, 48, (c) => (c.kind === 'hls' ? probeHls(c.url) : c.kind === 'mjpeg' ? probeMjpeg(c.url) : Promise.resolve(true)));
+  const alive = await pool(cams, 48, (c) => (c.kind === 'hls' ? probeHls(c.url, c.source !== 'roadcams') : c.kind === 'mjpeg' ? probeMjpeg(c.url) : Promise.resolve(true)));
   let dead = 0;
   const out: AgencyCam[] = [];
   cams.forEach(({ fallback, ...cam }, i) => {

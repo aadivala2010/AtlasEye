@@ -42,7 +42,8 @@ export default function About() {
             Atlas Eye collects no personal data: no accounts, no analytics, no cookies of its own, no tracking. The
             &ldquo;distance from me&rdquo; readout asks your browser for your location only when you click it, and that
             position never leaves your device. Video plays through youtube-nocookie.com; once you play a stream,
-            YouTube&apos;s own policies apply to that player. Radio plays straight from each station&apos;s own server.
+            YouTube&apos;s own policies apply to that player. Some public road video passes through Atlas Eye because
+            the agency does not allow direct browser playback. Radio plays straight from each station&apos;s own server.
             Pulse alerts use your browser&apos;s notifications only if you switch them on, and are sent by your own browser.
           </p>
           <p>
@@ -120,7 +121,15 @@ export default function About() {
               propagated with satellite.js (MIT). ISS video: the station&apos;s public live streams, from the stream catalogs above.
             </Credit>
             <Credit k="Flights">
-              <a className="text-accent hover:underline" href="https://adsb.lol">adsb.lol</a>, licensed under the ODbL.
+              <a className="text-accent hover:underline" href="https://opensky-network.org">OpenSky Network</a> global
+              state vectors and <a className="text-accent hover:underline" href="https://adsb.lol">adsb.lol</a> ADS-B
+              positions (ODbL). Aircraft thumbnails are credited to their photographer and linked to{' '}
+              <a className="text-accent hover:underline" href="https://www.planespotters.net/">Planespotters.net</a>.
+            </Credit>
+            <Credit k="Ships">
+              Recent AIS positions and received tracks from{' '}
+              <a className="text-accent hover:underline" href="https://openseafeed.com/docs">OpenSeaFeed</a>.
+              Coverage depends on receivers; gaps in a track are left open.
             </Credit>
             <Credit k="Radio">
               Station list from <a className="text-accent hover:underline" href="https://www.radio-browser.info">Radio Browser</a>, the

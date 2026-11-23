@@ -31,6 +31,8 @@ export interface Stream {
   category: Category;
   /** Where this record came from, for attribution and debugging. */
   source: Source;
+  /** Operator credit when an upstream catalog combines several public agencies. */
+  operator?: string;
   /**
    * How the coordinates were obtained: hand-placed, matched in the gazetteer, the uploader's own
    * YouTube recording location, or published by the camera's operator.
@@ -120,4 +122,5 @@ export const SOURCE_CREDIT = {
   noaagml: { label: 'NOAA Global Monitoring Laboratory', href: 'https://gml.noaa.gov/obop/' },
   ndbc: { label: 'NOAA National Data Buoy Center', href: 'https://www.ndbc.noaa.gov/buoycams.shtml' },
   osm: { label: 'OpenStreetMap contributors (ODbL) · image © its operator', href: 'https://www.openstreetmap.org/copyright' },
+  roadcams: { label: 'Live Environment Streams (William Ricchiuti, CC BY 4.0)', href: 'https://github.com/william-ricchiuti/Live-Environment-Streams' },
 } as const satisfies Record<string, { label: string; href: string }>;

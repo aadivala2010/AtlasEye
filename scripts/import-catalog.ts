@@ -17,7 +17,7 @@ import { AGENCIES, SchemaError, blockedSources, verifyImages, verifyLive, type A
 
 const OFFLINE = process.argv.includes('--offline');
 const FORCE = process.argv.includes('--force');
-const FAMELACK = 'https://raw.githubusercontent.com/famelack/famelack-data/main/webcams/raw';
+const FAMELACK = 'https://raw.githubusercontent.com/famelack/famelack-data/main/webcams';
 const CAMLISTED = 'https://raw.githubusercontent.com/tantran21501/camlisted/main/data/streams.json';
 const CAMLISTED_LOCATIONS = 'https://raw.githubusercontent.com/tantran21501/camlisted/main/data/location_resolve.json';
 const CATALOG = 'public/data/streams.json';
@@ -396,6 +396,7 @@ for (const cam of agencies.cams) {
     name: cam.name, latitude: round(cam.latitude), longitude: round(cam.longitude),
     place: cam.place ?? placeLabel(near.place), country: cam.country ?? near.place.country, timezone: cam.timezone ?? near.place.timezone,
     category: cam.category, source: cam.source, geocode: 'operator', confidence: 1,
+    ...(cam.operator ? { operator: cam.operator } : {}),
     addedAt: previousAdded.get(cam.id) ?? now,
   });
 }

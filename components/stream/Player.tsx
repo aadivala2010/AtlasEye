@@ -108,7 +108,8 @@ function HlsVideo({ stream, muted, status, setStatus }: PartProps & { muted: boo
 
   useEffect(() => {
     const el = video.current;
-    const url = stream.url;
+    const url = stream.source === 'roadcams' && stream.url
+      ? `/api/camera-hls?url=${encodeURIComponent(stream.url)}` : stream.url;
     if (!el || !url) { setStatus('unavailable'); return; }
     let destroy = () => {};
     let cancelled = false;

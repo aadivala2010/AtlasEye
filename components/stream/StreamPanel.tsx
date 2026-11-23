@@ -85,6 +85,7 @@ export default function StreamPanel(p: Props) {
               {SOURCE_CREDIT[s.source].label}
             </a>
           </Row>
+          {s.operator && <Row label="Operator">{s.operator}</Row>}
           <Row label="Distance">
             {p.userPos ? (
               formatDistance(distanceKm(p.userPos.lat, p.userPos.lon, s.latitude, s.longitude))

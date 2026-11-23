@@ -5,7 +5,7 @@ texts are reproduced in full here and in `licenses/`.
 
 | Source | What we use | License | Where it lives in this repo |
 |---|---|---|---|
-| [Famelack](https://github.com/famelack/famelack-data) | webcam catalog (`webcams/raw/categories/*.json`) | MIT, © 2026 Famelack | `data/upstream/famelack.json`, derived `public/data/streams.json` and `public/data/iss.json` |
+| [Famelack](https://github.com/famelack/famelack-data) | webcam catalog (`webcams/categories/*.json`) | MIT, © 2026 Famelack | `data/upstream/famelack.json`, derived `public/data/streams.json` and `public/data/iss.json` |
 | [camlisted](https://github.com/tantran21501/camlisted) | `data/streams.json` | MIT, © 2026 zenith605 | `data/upstream/camlisted.json`, derived `public/data/streams.json` and `public/data/iss.json` |
 | [GeoNames](https://www.geonames.org/) | `cities1000`, `alternateNamesV2`, `admin1CodesASCII` | CC BY 4.0 | `data/gazetteer/cities.tsv` (pruned; see below) |
 | [Esri World Imagery](https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9): Esri, Maxar, Earthstar Geographics, and the GIS User Community | satellite imagery of the globe and cockpit view | Esri terms of use, attribution required | not stored; tiles are fetched from server.arcgisonline.com at runtime |
@@ -27,6 +27,10 @@ texts are reproduced in full here and in `licenses/`.
 | [Wikipedia](https://www.wikipedia.org/) | titles, descriptions and thumbnails of nearby articles | CC BY-SA 4.0 (text), per-file (images) | not stored; fetched at runtime |
 | [Panoramax](https://panoramax.fr/) | street-level photo thumbnails near a dossier point | per photo, as each instance publishes it | not stored; fetched at runtime |
 | [adsb.lol](https://adsb.lol/) | live aircraft positions | ODbL 1.0 | not stored; proxied at runtime by `app/api/flights` |
+| [OpenSky Network](https://opensky-network.org/) | worldwide aircraft state vectors | [OpenSky API terms](https://openskynetwork.github.io/opensky-api/rest.html) | not stored; proxied at runtime by `app/api/flights/global` |
+| [Planespotters.net](https://www.planespotters.net/) photographers | aircraft thumbnails, linked to each photographer's photo page with credit | [Planespotters.net Terms of Use](https://www.planespotters.net/legal/termsofuse) | not stored; fetched by the browser when an aircraft is selected |
+| [OpenSeaFeed](https://openseafeed.com/docs) | AIS vessel snapshot and recent received tracks | [OpenSeaFeed API docs](https://openseafeed.com/docs) | not stored; fetched by the browser when Ships is enabled |
+| [Live Environment Streams](https://github.com/william-ricchiuti/Live-Environment-Streams) (William Ricchiuti) | public road camera metadata and URLs in Indonesia, Thailand and Norway, with each operator's credit retained | CC BY 4.0 for the catalog; video belongs to its operator | derived `public/data/streams.json` and `data/upstream/agencies.json` |
 | Mapzen Terrarium ([AWS Open Data](https://registry.opendata.aws/terrain-tiles/)) | elevation tiles for 3D terrain and the cockpit | open data, attribution | not stored; fetched at runtime |
 | [Caltrans](https://cwwp2.dot.ca.gov/) CCTV status feeds | camera list, coordinates, live video / still URLs | public California state data | `data/upstream/agencies.json` (normalised); video and images are not stored |
 | [Delaware DOT](https://tmc.deldot.gov/json/videocamera.json) | camera list, coordinates, live video URLs | public state data | as above |

@@ -15,6 +15,7 @@ import {
 } from '@/lib/sky';
 import { readout } from '@/lib/readout';
 import { formatAlt, project, type Flight } from '@/lib/flights';
+import { shipType, type Ship } from '@/lib/ships';
 import { EVENT_COLORS, EVENT_LABELS, type EarthEvent, type Planet, type Quake } from '@/lib/events';
 import type { Fires } from '@/lib/fires';
 import type { Station } from '@/lib/radio';
@@ -39,6 +40,9 @@ interface Props {
   focus: { lat: number; lon: number } | null;
   flights: Flight[] | null;
   flightId: string | null;
+  ships: Ship[] | null;
+  shipId: number | null;
+  shipTrail: number[][][];
   airports: boolean;
   /** Dossier mode: a click on empty globe opens a dossier there. */
   dossier: boolean;
@@ -69,6 +73,7 @@ interface Props {
   onRadio(id: string): void;
   onSelect(id: string): void;
   onFlight(flight: Flight): void;
+  onShip(ship: Ship): void;
   onDossier(lat: number, lon: number): void;
   onCamera(camera: Camera): void;
 }
@@ -122,10 +127,18 @@ function planeData(flights: Flight[], now: number): GeoJSON.FeatureCollection<Ge
       return {
         type: 'Feature',
         geometry: { type: 'Point', coordinates: [p.lon, p.lat] },
-        properties: { hex: f.hex, track: f.track, ground: f.ground, mil: f.mil, emergency: f.emergency },
+        properties: { hex: f.hex, track: f.track, ground: f.ground, mil: f.mil, emergency: f.emergency,
+          age: Math.max(0, (now - f.at) / 60_000) },
       };
     }),
   };
+}
+
+function shipData(ships: Ship[]): GeoJSON.FeatureCollection<GeoJSON.Point> {
+  return { type: 'FeatureCollection', features: ships.map((s) => ({
+    type: 'Feature', geometry: { type: 'Point', coordinates: [s.lon, s.lat] },
+    properties: { mmsi: s.mmsi, name: s.name ?? '', type: shipType(s.type), speed: s.speed ?? 0 },
+  })) };
 }
 
 // A zoom curve must be the top-level expression, so the selected-aircraft case goes inside each stop.
@@ -338,7 +351,7 @@ const eventData = (events: EarthEvent[] | null | undefined) => ({
 });
 
 /** Layers a click or hover can land on, topmost first. */
-const HIT_LAYERS = ['planes', 'pins', 'clusters', 'radio', 'sats', 'quakes', 'events', 'airports', 'airport-labels'];
+const HIT_LAYERS = ['planes', 'pins', 'clusters', 'ships', 'radio', 'sats', 'quakes', 'events', 'airports', 'airport-labels'];
 
 /** Satellites are placed at the moment on screen, while their elements still mean something there. */
 const satTime = (time: number | null) => (time === null ? Date.now() : Math.abs(time - Date.now()) < 7 * 86400_000 ? time : null);
@@ -464,6 +477,7 @@ export default function GlobeView(props: Props) {
   const streamsRef = useRef<Stream[]>([]);
   const streamVectors = useRef(new Float32Array(0));
   const flightsRef = useRef<Flight[]>([]);
+  const shipsById = useRef(new Map<number, Ship>());
   const sweepFrom = useRef(0);
   const cb = useRef(props);
   cb.current = props;
@@ -692,6 +706,15 @@ export default function GlobeView(props: Props) {
           },
         });
 
+        map.addSource('ship-trail', { type: 'geojson', data: EMPTY });
+        map.addLayer({ id: 'ship-trail', type: 'line', source: 'ship-trail',
+          paint: { 'line-color': C.accent, 'line-width': 2, 'line-opacity': 0.75, 'line-dasharray': [2, 1] } });
+        map.addSource('ships', { type: 'geojson', data: EMPTY });
+        map.addLayer({ id: 'ships', type: 'circle', source: 'ships',
+          paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 1.3, 5, 2.5, 9, 4],
+            'circle-color': C.accent, 'circle-opacity': 0.72,
+            'circle-stroke-color': C.void, 'circle-stroke-width': 0.6 } });
+
         const planeImg = planeIcon(2);
         if (planeImg) map.addImage('plane', planeImg, { pixelRatio: 2, sdf: true });
         map.addSource('planes', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
@@ -701,7 +724,8 @@ export default function GlobeView(props: Props) {
             'icon-image': 'plane', 'icon-rotate': ['get', 'track'], 'icon-rotation-alignment': 'map',
             'icon-allow-overlap': true, 'icon-ignore-placement': true, 'icon-size': planeSize(''),
           },
-          paint: { 'icon-color': planeColor(''), 'icon-halo-color': C.void, 'icon-halo-width': 1 },
+          paint: { 'icon-color': planeColor(''), 'icon-opacity': ['interpolate', ['linear'], ['get', 'age'], 0, 1, 2, 0.9, 10, 0.45, 20, 0.3],
+            'icon-halo-color': C.void, 'icon-halo-width': 1 },
         });
         // The night shade: one canvas over the whole world, under the city lights (see drawShade).
         shadeCanvas.current = document.createElement('canvas');
@@ -754,6 +778,7 @@ export default function GlobeView(props: Props) {
         if (!label) return;
         const s = hit?.layer.id === 'pins' ? streamsRef.current.find((x) => x.id === hit.properties.id) : undefined;
         const f = hit?.layer.id === 'planes' ? flightsRef.current.find((x) => x.hex === hit.properties.hex) : undefined;
+        const ship = hit?.layer.id === 'ships' ? shipsById.current.get(Number(hit.properties.mmsi)) : undefined;
         const q = hit?.layer.id === 'quakes' ? hit.properties : undefined;
         const ev = hit?.layer.id === 'events' ? hit.properties : undefined;
         const sat = hit?.layer.id === 'sats' ? hit.properties : undefined;
@@ -762,6 +787,7 @@ export default function GlobeView(props: Props) {
         const text = ap ? [String(ap['name:en'] || ap.name || 'Airport'), [ap.iata, ap.icao, ap.class].filter(Boolean).join(' · ')]
           : s ? [s.name, `${s.place} · ${s.country}`]
           : f ? [f.callsign, `${f.type ?? '—'} · ${formatAlt(f)} · ${Math.round(f.gs)} kt`]
+          : ship ? [ship.name || `MMSI ${ship.mmsi}`, `${shipType(ship.type)} · ${ship.speed?.toFixed(1) ?? '—'} kt`]
           : q ? [`M${Number(q.mag).toFixed(1)} earthquake`, `${q.place} · ${ago(Number(q.age))}`]
           : ev ? [String(ev.title), String(ev.category)]
           : fm ? [String(fm.name), [fm.cc, fm.tags].filter(Boolean).join(' · ') || 'Radio']
@@ -804,6 +830,12 @@ export default function GlobeView(props: Props) {
         const hex = e.features?.[0]?.properties.hex;
         const flight = flightsRef.current.find((f) => f.hex === hex);
         if (flight) cb.current.onFlight(flight);
+      });
+      map.on('click', 'ships', (e) => {
+        if (cb.current.explore.measureMode !== 'off') return;
+        if (map?.queryRenderedFeatures(e.point, { layers: ['planes', 'pins', 'clusters'] }).length) return;
+        const ship = shipsById.current.get(Number(e.features?.[0]?.properties.mmsi));
+        if (ship) cb.current.onShip(ship);
       });
       map.on('click', 'radio', (e) => {
         if (cb.current.explore.measureMode !== 'off') return;
@@ -1007,6 +1039,22 @@ export default function GlobeView(props: Props) {
     map.setLayoutProperty('planes', 'icon-size', planeSize(flightId ?? ''));
     map.setPaintProperty('planes', 'icon-color', planeColor(flightId ?? ''));
   }, [ready, flightId]);
+
+  // ── AIS ships and the selected vessel's received track ────────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    shipsById.current = new Map((props.ships ?? []).map((s) => [s.mmsi, s]));
+    map.getSource<GeoJSONSource>('ships')?.setData(shipData(props.ships ?? []));
+  }, [ready, props.ships]);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    map.getSource<GeoJSONSource>('ship-trail')?.setData(props.shipId && props.shipTrail.length
+      ? { type: 'Feature', geometry: { type: 'MultiLineString', coordinates: props.shipTrail }, properties: {} }
+      : EMPTY);
+    map.setPaintProperty('ships', 'circle-color', ['case', ['==', ['get', 'mmsi'], props.shipId ?? -1], C.live, C.accent]);
+  }, [ready, props.shipId, props.shipTrail]);
 
   // ── 3D: re-applied on every move; this catches the Sky menu's toggle ──────
   useEffect(() => {

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { appendFix, DEFAULT_FILTER, DEFAULT_LAYERS, matchesAlert, measurement, parseCoordinates, readPreferences, readScene, sceneQuery, trailGeometry, WEATHER_OFF, type Scene } from '../lib/explore';
 import { csvRows, firstPoint, importData, validateGeoJSON } from '../lib/import-data';
 import { SKY_DEFAULT } from '../lib/sky';
+import { parseShips, shipTrack } from '../lib/ships';
 import type { PulseItem } from '../lib/events';
 
 assert.deepEqual(parseCoordinates('40.7, -74.0'), { lat: 40.7, lon: -74 });
@@ -47,4 +48,14 @@ assert.throws(() => validateGeoJSON({ type: 'LineString', coordinates: [[1, 1]] 
 const sanitized = validateGeoJSON({ type: 'Feature', geometry: { type: 'Point', coordinates: [0, 0] }, properties: { name: 'A', html: '<script>bad</script>', url: 'javascript:bad' } });
 assert.deepEqual(sanitized.features[0].properties, { name: 'A' });
 assert.throws(() => validateGeoJSON({ type: 'MultiPoint', coordinates: Array.from({ length: 50001 }, () => [0, 0]) }), /50,000/);
+const shipNow = Date.now();
+assert.equal(parseShips([{ mmsi: 538013124, lat: 0, lon: 0, ts: shipNow - 60_000 },
+  { mmsi: 538013125, lat: 0, lon: 0, ts: shipNow - 31 * 60_000 },
+  { mmsi: 1, lat: 0, lon: 0, ts: shipNow }], shipNow).length, 1);
+assert.deepEqual(shipTrack([
+  { lat: 0, lon: 0, ts: '2026-11-23 00:00:00' },
+  { lat: 0, lon: 0.1, ts: '2026-11-23T00:10:00+00:00' },
+  { lat: 0, lon: 2, ts: '2026-11-23 00:20:00' },
+  { lat: 0, lon: 2.1, ts: '2026-11-23 00:30:00' },
+]), [[[0, 0], [0.1, 0]], [[2, 0], [2.1, 0]]]);
 console.log('explore selftest passed: sharing, coordinates, storage, alert filters, trails, geodesy and import boundaries');
