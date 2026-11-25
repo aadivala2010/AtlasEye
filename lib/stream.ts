@@ -123,4 +123,5 @@ export const SOURCE_CREDIT = {
   ndbc: { label: 'NOAA National Data Buoy Center', href: 'https://www.ndbc.noaa.gov/buoycams.shtml' },
   osm: { label: 'OpenStreetMap contributors (ODbL) · image © its operator', href: 'https://www.openstreetmap.org/copyright' },
   roadcams: { label: 'Live Environment Streams (William Ricchiuti, CC BY 4.0)', href: 'https://github.com/william-ricchiuti/Live-Environment-Streams' },
+  hcmc: { label: 'Ho Chi Minh City Traffic Portal · camera catalog by MeoPaoo', href: 'https://github.com/MeoPaoo/camera-giao-thong-data' },
 } as const satisfies Record<string, { label: string; href: string }>;

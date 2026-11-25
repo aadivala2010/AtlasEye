@@ -7,6 +7,7 @@ texts are reproduced in full here and in `licenses/`.
 |---|---|---|---|
 | [Famelack](https://github.com/famelack/famelack-data) | webcam catalog (`webcams/categories/*.json`) | MIT, © 2026 Famelack | `data/upstream/famelack.json`, derived `public/data/streams.json` and `public/data/iss.json` |
 | [camlisted](https://github.com/tantran21501/camlisted) | `data/streams.json` | MIT, © 2026 zenith605 | `data/upstream/camlisted.json`, derived `public/data/streams.json` and `public/data/iss.json` |
+| [Ho Chi Minh City traffic camera catalog](https://github.com/MeoPaoo/camera-giao-thong-data) | public camera IDs, names, and coordinates | [Original catalog](https://github.com/MeoPaoo/camera-giao-thong-data/blob/main/THIRD_PARTY_NOTICES.md) MIT, © tranlong5252; imagery belongs to the city portal | `data/upstream/agencies.json`, derived `public/data/streams.json`; imagery fetched from the portal when viewed |
 | [GeoNames](https://www.geonames.org/) | `cities1000`, `alternateNamesV2`, `admin1CodesASCII` | CC BY 4.0 | `data/gazetteer/cities.tsv` (pruned; see below) |
 | [Esri World Imagery](https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9): Esri, Maxar, Earthstar Geographics, and the GIS User Community | satellite imagery of the globe and cockpit view | Esri terms of use, attribution required | not stored; tiles are fetched from server.arcgisonline.com at runtime |
 | [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors | map data in the basemap tiles | ODbL 1.0 | not stored; tiles are fetched from OpenFreeMap / CARTO at runtime |
@@ -121,6 +122,34 @@ SOFTWARE.
 MIT License
 
 Copyright (c) 2026 zenith605
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+## Original Ho Chi Minh City traffic camera catalog — MIT License
+
+The catalog identifies public portal feeds; camera images remain with their operator.
+
+```
+MIT License
+
+Copyright (c) tranlong5252
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

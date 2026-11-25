@@ -1101,6 +1101,27 @@ async function roadcams(): Promise<AgencyCam[]> {
   });
 }
 
+// The city's public traffic portal publishes stills; this community catalog keeps
+// their IDs and coordinates in sync without storing or redistributing the images.
+const HcmcFile = z.object({ count: z.number(), cameras: z.array(z.object({
+  id: z.string().regex(/^[a-f\d]{24}$/i), name: z.string().min(1),
+  latitude: coord, longitude: coord, imageUrl: z.string().nullable().optional(),
+  district: z.string().optional(), ward: z.string().optional(),
+})).min(300) });
+
+async function hcmc(): Promise<AgencyCam[]> {
+  const data = parse(HcmcFile, await getJson(
+    'https://raw.githubusercontent.com/MeoPaoo/camera-giao-thong-data/main/docs/cameras.json'), 'HCMC traffic camera catalog');
+  if (data.count !== data.cameras.length) throw new SchemaError('HCMC camera count does not match its entries');
+  return data.cameras.filter((c) => c.imageUrl && inRange(c.latitude, c.longitude)).map((c) => ({
+    id: `hcmc:${c.id}`, kind: 'snapshot',
+    url: `https://giaothong.hochiminhcity.gov.vn/render/ImageHandler.ashx?id=${c.id}`,
+    refresh: 60, name: tidy(c.name), latitude: c.latitude, longitude: c.longitude,
+    place: [c.ward, c.district].filter(Boolean).join(', ') || 'Ho Chi Minh City',
+    timezone: 'Asia/Ho_Chi_Minh', country: 'VN', category: 'traffic', source: 'hcmc',
+  }));
+}
+
 /** A playlist is live if it answers 200 with an HLS header, and CORS headers hls.js needs, within a few seconds. */
 async function probeHls(url: string, cors = true): Promise<boolean> {
   try {
@@ -1161,7 +1182,7 @@ export const AGENCIES: Partial<Record<Source, () => Promise<AgencyCam[]>>> = {
   ...Object.fromEntries(IBI_SITES.map(([source, host, country]) => [source, () => ibi(source, host, country)])),
   ...Object.fromEntries(CARS_SITES.map(([source, host, bbox, country]) => [source, () => cars(source, host, bbox, country)])),
   vdot, modot, chart, tripcheck, cotrip, wsdot, austin, york, alertca, itraffic, dgt, madrid, sct, tfl, vegagerdin, eismoinfo, fotowebcam,
-  nzta, livetraffic, mlit, usgs, aad, noaagml, ndbc, osm, roadcams,
+  nzta, livetraffic, mlit, usgs, aad, noaagml, ndbc, osm, roadcams, hcmc,
   twfreeway: () => taiwan('freeway', 'twfreeway'),
   twthb: () => taiwan('thb', 'twthb'),
 };
