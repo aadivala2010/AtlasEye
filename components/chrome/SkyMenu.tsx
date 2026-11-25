@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { SENSES, type SenseId, type Sky } from '@/lib/sky';
 import { IconCloud } from './icons';
+import { cloudsDate } from '@/lib/time';
 
-const TOGGLES: { key: Exclude<keyof Sky, 'sense'>; label: string; note: string }[] = [
+const TOGGLES: { key: Exclude<keyof Sky, 'sense' | 'quality'>; label: string; note: string }[] = [
   { key: 'live', label: 'Live clouds', note: 'Five geostationary satellites, a new frame every 10–15 min' },
-  { key: 'night', label: 'Night side', note: 'City lights wherever the sun is down right now' },
+  { key: 'night', label: 'Real-time sunlight', note: 'UTC day/night boundary and city lights; off for daytime imagery' },
   { key: 'clouds', label: 'Daily pass', note: 'One day’s true-colour composite (NASA VIIRS, yesterday)' },
   { key: 'aurora', label: 'Aurora', note: 'NOAA’s aurora nowcast, updated every few minutes' },
   { key: 'lightning', label: 'Lightning', note: 'Europe, Africa & the Atlantic (Meteosat), every 5 min' },
@@ -56,6 +57,16 @@ export default function SkyMenu({ sky, onChange }: { sky: Sky; onChange(next: Sk
               <Option key={key} on={sky[key]} label={label} note={note} role="switch" onClick={() => onChange({ ...sky, [key]: !sky[key] })} />
             ))}
           </ul>
+          {sky.clouds && <p className="mt-2 text-[11px] text-secondary">Daily observation: {cloudsDate()} UTC. Satellite composite, not live video.</p>}
+          <Heading className="mt-3">Earth detail</Heading>
+          <ul className="flex flex-col" role="radiogroup" aria-label="Earth detail">
+            {([
+              ['standard', 'Standard', 'Satellite imagery and terrain; fewer building details'],
+              ['enhanced', 'Enhanced', 'True-scale terrain and OSM buildings where mapped'],
+              ['automatic', 'Automatic', 'Select building detail and resolution for this device'],
+            ] as const).map(([id, label, note]) => <Option key={id} on={(sky.quality ?? 'automatic') === id} label={label} note={note} role="radio" onClick={() => onChange({ ...sky, quality: id })} />)}
+          </ul>
+          <p className="mt-2 text-[11px] leading-4 text-secondary">Buildings use mapped or estimated heights, not photogrammetry. Right-drag to tilt when zoomed in.</p>
           <Heading className="mt-3">Senses</Heading>
           <ul className="flex flex-col" role="radiogroup" aria-label="Senses">
             <Option on={sky.sense === null} label="Off" role="radio" onClick={() => onChange({ ...sky, sense: null })} />

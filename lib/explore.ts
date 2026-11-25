@@ -32,6 +32,8 @@ export function readScene(search: string): Scene {
   const layers = { ...DEFAULT_LAYERS };
   if (p.has('layers')) for (const key of Object.keys(layers) as (keyof Layers)[]) layers[key] = p.get('layers')!.split(',').includes(key);
   const sky = { ...SKY_DEFAULT };
+  const quality = p.get('quality');
+  if (quality === 'standard' || quality === 'enhanced' || quality === 'automatic') sky.quality = quality;
   if (p.has('sky')) {
     const on = p.get('sky')!.split(',');
     for (const key of ['live', 'clouds', 'night', 'aurora', 'lightning', 'terrain'] as const) sky[key] = on.includes(key);
@@ -57,6 +59,7 @@ export function sceneQuery(s: Scene): string {
   p.set('layers', Object.entries(s.layers).filter(([, on]) => on).map(([id]) => id).join(','));
   p.set('sky', [...Object.entries(s.sky).filter(([k, v]) => k !== 'sense' && v === true).map(([k]) => k), ...(s.sky.sense ? [s.sky.sense] : [])].join(','));
   p.set('snap', s.snapshots ? '1' : '0');
+  if (s.sky.quality) p.set('quality', s.sky.quality);
   const weather = Object.entries(s.weather).filter(([, on]) => on).map(([id]) => id).join(',');
   if (weather) p.set('weather', weather);
   const t = s.target;

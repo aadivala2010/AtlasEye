@@ -16,6 +16,10 @@ const scene: Scene = { camera: { lat: 40, lon: -70, zoom: 9, pitch: 45, bearing:
 assert.deepEqual(readScene(sceneQuery(scene)), scene);
 assert.deepEqual(readScene('?layers=&sky=').layers, Object.fromEntries(Object.keys(DEFAULT_LAYERS).map((k) => [k, false])));
 assert.equal(readScene('?sky=INVALID').sky.sense, null);
+assert.equal(readScene('?quality=INVALID').sky.quality, 'automatic');
+for (const quality of ['standard', 'enhanced', 'automatic'] as const) {
+  assert.equal(readScene(sceneQuery({ ...scene, sky: { ...scene.sky, quality } })).sky.quality, quality);
+}
 assert.deepEqual(readPreferences('{broken'), { places: [], filter: DEFAULT_FILTER });
 assert.equal(readPreferences(JSON.stringify({ places: [{ id: 'a', name: 'x', lat: 900, lon: 0, radius: 10 }] })).places.length, 0);
 const place = { id: 'p', name: 'Dateline', lat: 0, lon: 179.9, radius: 100 };

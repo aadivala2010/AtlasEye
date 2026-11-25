@@ -209,7 +209,7 @@ function buildStyle(base: Base | null): StyleSpecification {
     { id: 'space-fill', type: 'background', paint: { 'background-color': C.ocean } },
     {
       id: 'satellite', type: 'raster', source: 'satellite',
-      paint: { 'raster-fade-duration': 500, 'raster-contrast': 0.08, 'raster-saturation': 0.05 },
+      paint: { 'raster-fade-duration': 500, 'raster-contrast': 0.02, 'raster-saturation': 0 },
     },
     // Every sky overlay, hidden until switched on: a hidden layer's tiles are never fetched.
     ...OVERLAYS.map((o): LayerSpecification => ({
@@ -254,10 +254,11 @@ function buildStyle(base: Base | null): StyleSpecification {
         // Shown with 3D terrain (the Sky menu), from street level up.
         id: 'buildings', type: 'fill-extrusion', ...src, 'source-layer': 'building', minzoom: 14, layout: { visibility: 'none' },
         paint: {
-          'fill-extrusion-color': '#A9B3C6',
+          'fill-extrusion-color': '#C5C1B8',
           'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 8],
           'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
-          'fill-extrusion-opacity': 0.72,
+          'fill-extrusion-opacity': 0.96,
+          'fill-extrusion-vertical-gradient': true,
         },
       },
       {
@@ -435,7 +436,7 @@ export default function GlobeView(props: Props) {
     const size = 2 * r + 80;
     el.style.width = el.style.height = `${size}px`;
     el.style.transform = `translate(${mid.x - size / 2}px, ${mid.y - size / 2}px)`;
-    el.style.background = `radial-gradient(circle closest-side, transparent ${r - 1}px, rgba(120,180,255,0.55) ${r}px, rgba(90,150,255,0.2) ${r + 7}px, transparent ${r + 36}px)`;
+    el.style.background = `radial-gradient(circle closest-side, transparent ${r - 1}px, rgba(145,196,240,0.4) ${r}px, rgba(90,150,220,0.12) ${r + 4}px, transparent ${r + 18}px)`;
   };
   /**
    * The descent into 3D: tilt and rotation unlock as the globe gives way to a landscape (pitch up to
@@ -445,6 +446,12 @@ export default function GlobeView(props: Props) {
   const apply3d = (map: MLMap) => {
     if (!styled.current) return; // terrain and sky can't be set before the style is in
     const on = cb.current.sky.terrain;
+    const quality = cb.current.sky.quality ?? 'automatic';
+    const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8;
+    const modest = memory <= 4 || (navigator.hardwareConcurrency || 8) <= 4;
+    const detailed = quality === 'enhanced' || (quality === 'automatic' && !modest);
+    const ratio = Math.min(window.devicePixelRatio || 1, detailed ? 1.5 : 1);
+    if (map.getPixelRatio() !== ratio) map.setPixelRatio(ratio);
     const z = map.getZoom();
     const cap = on ? Math.round(Math.max(0, Math.min(70, (z - 5) * 20))) : 0;
     if (map.getMaxPitch() !== cap) map.setMaxPitch(cap);
@@ -456,21 +463,29 @@ export default function GlobeView(props: Props) {
     const has = !!map.getTerrain();
     const want = on && z >= (has ? 7.5 : 8);
     if (want !== has) {
-      map.setTerrain(want ? { source: 'dem', exaggeration: 1.4 } : null);
-      const c = map.getCenter();
-      const colors = sunAltitude(c.lat, c.lng, subsolarPoint(new Date())) < -6 ? SKY_NIGHT : SKY_DAY;
+      map.setTerrain(want ? { source: 'dem', exaggeration: 1 } : null);
+    }
+    const c = map.getCenter();
+    const altitude = sunAltitude(c.lat, c.lng, subsolarPoint(new Date()));
+    const night = cb.current.sky.night && altitude < -6;
+    const skyKey = `${want}:${night}`;
+    if (skyKey !== appliedHorizon.current) {
+      appliedHorizon.current = skyKey;
+      const colors = night ? SKY_NIGHT : SKY_DAY;
       map.setSky(want ? {
         ...colors, ...SKY_BLEND,
         'horizon-color': colors['sky-color'], 'fog-color': colors['sky-color'], 'fog-ground-blend': 1,
       } : SKY_OFF);
+      map.setLight({ anchor: 'map', color: night ? '#A8BAD7' : '#FFF5E4', intensity: night ? 0.18 : 0.45, position: [1.5, 210, night ? 80 : 35] });
     }
-    const visibility = on ? 'visible' : 'none';
+    const visibility = on && detailed ? 'visible' : 'none';
     if (map.getLayer('buildings') && map.getLayoutProperty('buildings', 'visibility') !== visibility) {
       map.setLayoutProperty('buildings', 'visibility', visibility);
     }
     if (z < 4 && map.getBearing() !== 0 && !map.isMoving()) map.easeTo({ bearing: 0, duration: 400 });
   };
   const mapRef = useRef<MLMap | null>(null);
+  const appliedHorizon = useRef('');
   const styled = useRef(false);
   const markerRef = useRef<Marker | null>(null);
   const rotating = useRef(false);
@@ -1062,7 +1077,7 @@ export default function GlobeView(props: Props) {
     if (ready && map) apply3d(map);
     // apply3d reads the toggle through cb.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, sky.terrain]);
+  }, [ready, sky.terrain, sky.quality, sky.night, minute]);
 
   // ── radio ──────────────────────────────────────────────────────────────────
   const { stations, radioId } = props;
