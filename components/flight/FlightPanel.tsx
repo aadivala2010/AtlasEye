@@ -66,7 +66,8 @@ export default function FlightPanel({ flight: f, live, onClose, onLocate, trailC
           <Row label="Last fix">{Math.max(0, Math.round((Date.now() - f.at) / 60_000))} min ago{live ? '' : ' · position may be stale'}</Row>
           <Row label="Trail">{trailCount} received positions · this visit only, up to 30 min. Gaps are not connected.</Row>
           <Row label="Source">
-            <a href={f.source === 'OpenSky' ? 'https://opensky-network.org' : 'https://adsb.lol'} target="_blank" rel="noopener noreferrer" className="hover:text-accent">{f.source}</a>
+            <a href={{ OpenSky: 'https://opensky-network.org', PocketWorld: 'https://pocketworld.org/api', 'adsb.lol': 'https://adsb.lol' }[f.source]}
+              target="_blank" rel="noopener noreferrer" className="hover:text-accent">{f.source}</a>
           </Row>
         </dl>
 

@@ -25,7 +25,7 @@ export interface Flight {
   mil: boolean;
   /** Declared emergency, or an emergency squawk: 7500 unlawful interference, 7600 radio failure, 7700 general. */
   emergency: boolean;
-  source: 'adsb.lol' | 'OpenSky';
+  source: 'adsb.lol' | 'OpenSky' | 'PocketWorld';
   /** Epoch ms of the position fix. */
   at: number;
 }
@@ -34,7 +34,7 @@ interface Raw {
   hex: string; flight?: string; r?: string; t?: string; lat?: number; lon?: number;
   alt_baro?: number | 'ground'; alt_geom?: number; gs?: number; track?: number; true_heading?: number;
   roll?: number; baro_rate?: number; geom_rate?: number; squawk?: string; seen_pos?: number;
-  dbFlags?: number; emergency?: string; source?: 'OpenSky';
+  dbFlags?: number; emergency?: string; source?: 'OpenSky' | 'PocketWorld';
 }
 
 /** readsb dbFlags is a bitfield: 1 military, 2 interesting, 4 PIA, 8 LADD. */
@@ -69,12 +69,13 @@ export function parseFlights(ac: Raw[], now: number): Flight[] {
   return out;
 }
 
-async function getFlights(url: string, signal?: AbortSignal): Promise<Flight[]> {
-  const r = await sourceFetch(url.includes('feed=opensky') ? 'OpenSky worldwide aircraft'
+async function getFlights(url: string, signal?: AbortSignal, onPartial?: (partial: boolean) => void): Promise<Flight[]> {
+  const r = await sourceFetch(url.includes('feed=world') ? 'Worldwide aircraft'
     : url.includes('/global') ? 'ADS-B worldwide sweep' : 'ADS-B local aircraft', url.includes('/global') ? 60000 : 10000, url, { signal });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   // `now` is when the snapshot was taken upstream: a CDN-cached copy keeps its true age.
-  const j = (await r.json()) as { ac?: Raw[]; now?: number };
+  const j = (await r.json()) as { ac?: Raw[]; now?: number; partial?: boolean };
+  onPartial?.(!!j.partial);
   return parseFlights(j.ac ?? [], j.now ?? Date.now());
 }
 
@@ -91,11 +92,11 @@ export const fetchFlights = (lat: number, lon: number, nm: number, signal?: Abor
 
 /**
  * Dead-reckoned position at `now`: straight along the track at ground speed (1 nm = 1 arcminute).
- * ponytail: flat-earth straight line, capped at 15 min for ADS-B and 2 min for OpenSky; turns
+ * ponytail: flat-earth straight line, capped at 15 min for ADS-B and 2 min for aggregated feeds; turns
  * aren't modelled, so far-off aircraft drift until the next snapshot.
  */
 export function project(f: Flight, now: number): { lat: number; lon: number } {
-  const dt = Math.min(f.source === 'OpenSky' ? 120 : 900, Math.max(0, (now - f.at) / 1000));
+  const dt = Math.min(f.source === 'adsb.lol' ? 900 : 120, Math.max(0, (now - f.at) / 1000));
   const nm = (f.gs * dt) / 3600;
   const t = (f.track * Math.PI) / 180;
   const lat = f.lat + (nm * Math.cos(t)) / 60;
@@ -111,7 +112,9 @@ export function project(f: Flight, now: number): { lat: number; lon: number } {
 export function useFlights(on: boolean, center: () => { lat: number; lon: number } | null, nm = 250, worldwide = false) {
   const [local, setLocal] = useState<Flight[] | null>(null);
   const [world, setWorld] = useState<Flight[] | null>(null);
-  const [openSkyWorld, setOpenSkyWorld] = useState<Flight[] | null>(null);
+  const [globalFlights, setGlobalFlights] = useState<Flight[] | null>(null);
+  const [globalPartial, setGlobalPartial] = useState(false);
+  const [globalError, setGlobalError] = useState(false);
   const [error, setError] = useState(false);
   const centerRef = useRef(center);
   centerRef.current = center;
@@ -142,7 +145,7 @@ export function useFlights(on: boolean, center: () => { lat: number; lon: number
 
   useEffect(() => {
     if (!on || !worldwide) { setWorld(null); return; }
-    if (openSkyWorld) return;
+    if (globalFlights) return;
     const ctrl = new AbortController();
     const byFeed = new Map<string, Flight[]>();
     let i = 0;
@@ -158,32 +161,33 @@ export function useFlights(on: boolean, center: () => { lat: number; lon: number
     };
     tick();
     return () => { ctrl.abort(); clearTimeout(timer); };
-  }, [on, worldwide, !!openSkyWorld]);
+  }, [on, worldwide, !!globalFlights]);
 
   useEffect(() => {
-    if (!on || !worldwide) { setOpenSkyWorld(null); return; }
+    if (!on || !worldwide) { setGlobalFlights(null); setGlobalPartial(false); setGlobalError(false); return; }
     const ctrl = new AbortController();
     let timer = 0;
     const tick = async () => {
       try {
-        const all = await getFlights('/api/flights/global?feed=opensky', ctrl.signal);
-        setOpenSkyWorld(all);
-      } catch { if (!ctrl.signal.aborted) setOpenSkyWorld(null); }
-      if (!ctrl.signal.aborted) timer = window.setTimeout(tick, 15 * 60_000);
+        const all = await getFlights('/api/flights/global?feed=world', ctrl.signal, setGlobalPartial);
+        setGlobalFlights(all);
+        setGlobalError(false);
+      } catch { if (!ctrl.signal.aborted) { setGlobalFlights(null); setGlobalError(true); } }
+      if (!ctrl.signal.aborted) timer = window.setTimeout(tick, 2 * 60_000);
     };
     tick();
     return () => { ctrl.abort(); clearTimeout(timer); };
   }, [on, worldwide]);
 
   const flights = useMemo(() => {
-    if (!world && !openSkyWorld) return local;
-    const byHex = new Map((openSkyWorld ?? []).filter((f) => Date.now() - f.at < 20 * 60_000).map((f) => [f.hex, f]));
+    if (!world && !globalFlights) return local;
+    const byHex = new Map((globalFlights ?? []).filter((f) => Date.now() - f.at < 20 * 60_000).map((f) => [f.hex, f]));
     for (const f of world ?? []) if (Date.now() - f.at < 15 * 60_000) byHex.set(f.hex, f);
     for (const f of local ?? []) byHex.set(f.hex, f);
     return [...byHex.values()];
-  }, [local, world, openSkyWorld]);
+  }, [local, world, globalFlights]);
 
-  return { flights, error: error && !world && !openSkyWorld };
+  return { flights, error: (error || globalError) && !world && !globalFlights, partial: globalPartial || globalError };
 }
 
 export const formatAlt = (f: Flight) => (f.ground ? 'GROUND' : `${Math.round(f.alt).toLocaleString('en-US')} ft`);

@@ -121,9 +121,12 @@ export default function About() {
               propagated with satellite.js (MIT). ISS video: the station&apos;s public live streams, from the stream catalogs above.
             </Credit>
             <Credit k="Flights">
-              <a className="text-accent hover:underline" href="https://opensky-network.org">OpenSky Network</a> global
-              state vectors and <a className="text-accent hover:underline" href="https://adsb.lol">adsb.lol</a> ADS-B
-              positions (ODbL). Aircraft thumbnails are credited to their photographer and linked to{' '}
+              Global map chunks from <a className="text-accent hover:underline" href="https://pocketworld.org/api">PocketWorld</a>,
+              which combines public feeds including <a className="text-accent hover:underline" href="https://adsb.fi">ADSB.fi</a>;
+              fallback positions from{' '}
+              <a className="text-accent hover:underline" href="https://opensky-network.org">OpenSky Network</a> and{' '}
+              <a className="text-accent hover:underline" href="https://adsb.lol">adsb.lol</a> (ODbL).
+              Aircraft thumbnails are credited to their photographer and linked to{' '}
               <a className="text-accent hover:underline" href="https://www.planespotters.net/">Planespotters.net</a>.
             </Credit>
             <Credit k="Ships">

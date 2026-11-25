@@ -169,7 +169,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   // ── flights: airliners worldwide; plus a 5 nm live poll around the aircraft in the cockpit, so it
   // updates every 10 s. (A wide live circle around the view would draw a visible disc of extra aircraft.)
   const tracked = other?.kind === 'flight' ? other.flight : null;
-  const { flights, error: flightError } = useFlights(layers.flights || !!tracked || searching, () =>
+  const { flights, error: flightError, partial: flightPartial } = useFlights(layers.flights || !!tracked || searching, () =>
     tracked ? project(tracked, Date.now()) : null, 5, true);
   const liveTracked = tracked ? flights?.find((f) => f.hex === tracked.hex && Date.now() - f.at < 90_000)
     ?? (Date.now() - tracked.at < 90_000 ? tracked : undefined) : undefined;
@@ -505,7 +505,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
               <RadioBar station={station} onNext={() => tune(station.lat, station.lon, station.id)} onStop={() => setStation(null)} />
             </div>
           )}
-          {layers.flights && <FlightNotice error={flightError} count={flights?.length ?? null} />}
+          {layers.flights && <FlightNotice error={flightError} partial={flightPartial} count={flights?.length ?? null} />}
           {error && <CatalogError message={error} onRetry={() => setAttempt((a) => a + 1)} />}
         </section>
 
@@ -612,7 +612,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
         builtAt={catalog?.builtAt ?? null}
         loading={!catalog && !error}
         credits={[
-          (layers.flights || tracked || other?.kind === 'dossier') && 'Flights: OpenSky · adsb.lol (ODbL)',
+          (layers.flights || tracked || other?.kind === 'dossier') && 'Flights: PocketWorld · OpenSky · adsb.lol (ODbL)',
           (layers.ships || selectedShip) && 'Ships: OpenSeaFeed AIS',
           (sky.live || sky.clouds || sky.night || sky.sense) && 'Sky: NASA GIBS',
           (sky.live || sky.lightning) && '© EUMETSAT',
@@ -643,9 +643,10 @@ function focusTarget(focus: Focus | null): Target | null {
 }
 
 /** What the flights layer is showing, and when it's failing. */
-function FlightNotice({ error, count }: { error: boolean; count: number | null }) {
+function FlightNotice({ error, partial, count }: { error: boolean; partial: boolean; count: number | null }) {
   const text = error ? 'FLIGHT FEED BUSY — RETRYING'
     : count === 0 ? 'NO AIRCRAFT REPORTED'
+    : partial ? 'PARTIAL FLIGHT COVERAGE — RETRYING'
     : null;
   if (!text) return null;
   return (
