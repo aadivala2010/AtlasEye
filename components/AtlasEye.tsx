@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Catalog, Stream } from '@/lib/stream';
-import { byDistanceFrom } from '@/lib/geo';
+import { byDistanceFrom, distanceKm } from '@/lib/geo';
 import { parseFlights, project, useFlights, type Flight } from '@/lib/flights';
 import { shipTrack, useShips, type Ship } from '@/lib/ships';
 import { SKY_DEFAULT, type Sky } from '@/lib/sky';
@@ -26,6 +26,9 @@ import { appendFix, DEFAULT_FILTER, DEFAULT_LAYERS, matchesAlert, readPreference
 import { sourceFetch, useFeed } from '@/lib/sources';
 import { useRadar, useWarnings } from '@/lib/weather';
 import type { SearchResult } from './chrome/Search';
+import IntelPanel from './intel/IntelPanel';
+import { deduplicateIntel, INTEL_DEFAULT, planetIntel, readIntel, writeIntel, type IntelEvent, type IntelSettings } from '@/lib/intel';
+import { useIntel } from '@/lib/use-intel';
 
 /** What the side panel shows when it isn't a stream (streams keep their own id for the URL). */
 type Focus =
@@ -85,6 +88,11 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   const [other, setOther] = useState<Focus | null>(null);
   const [snapshots, setSnapshots] = useState(true);
   const [sky, setSky] = useState<Sky>(SKY_DEFAULT);
+  const [intelOpen, setIntelOpen] = useState(false);
+  const [intelEnabled, setIntelEnabled] = useState(false);
+  const [intel, setIntel] = useState<IntelSettings>(INTEL_DEFAULT);
+  const [bounds, setBounds] = useState<[number, number, number, number] | null>(null);
+  const intelFeeds = useIntel(intelEnabled, intel.categories);
   const [notify, setNotify] = useState(false);
   const [follow, setFollow] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -115,6 +123,8 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
 
   useEffect(() => {
     const b = readBoot();
+    const sharedIntel = new URLSearchParams(window.location.search).has('intel');
+    setIntel(readIntel(window.location.search)); setIntelEnabled(sharedIntel); setIntelOpen(sharedIntel);
     camera.current = b.camera; // so the first URL write keeps a shared link's camera
     setLayers(b.scene.layers); setSky(b.scene.sky); setSnapshots(b.scene.snapshots); setWeather(b.scene.weather); setFollow(b.scene.follow);
     const target = b.scene.target;
@@ -216,7 +226,24 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   // ── the planet: events on the globe, and the Pulse built from them ─────────
   const pulseOpen = other?.kind === 'pulse';
   const earthOpen = other?.kind === 'earth';
-  const planet = usePlanet(layers.events || pulseOpen || earthOpen || notify || searching || other?.kind === 'tools', null);
+  const planet = usePlanet(layers.events || intelEnabled || pulseOpen || earthOpen || notify || searching || other?.kind === 'tools', null);
+  const intelEvents = useMemo(() => deduplicateIntel([
+    ...planetIntel(planet, Date.now()), ...intel.categories.flatMap(id => intelFeeds[id]?.events ?? []),
+  ]), [planet, intel.categories, intelFeeds]);
+  const visibleIntel = useMemo(() => {
+    const since = Date.now() - intel.hours * 3600_000, query = intel.query.toLocaleLowerCase();
+    return intelEvents.filter(e => intel.categories.includes(e.category) && e.observedAt >= since
+      && (!query || `${e.title} ${e.location} ${e.id}`.toLocaleLowerCase().includes(query))
+      && (intel.scope !== 'viewport' || (bounds && e.lon !== null && e.lat !== null && e.lat >= bounds[1] && e.lat <= bounds[3]
+        && (!camera.current || distanceKm(camera.current.lat, camera.current.lon, e.lat, e.lon) < 10000)
+        && (bounds[2] - bounds[0] >= 360 || [e.lon, e.lon - 360, e.lon + 360].some(lon => lon >= bounds[0] && lon <= bounds[2])))));
+  }, [intelEvents, intel, bounds]);
+  const intelMarkers = useMemo(() => intelEnabled ? visibleIntel.filter(e => !layers.events || !e.earthId) : [], [intelEnabled, visibleIntel, layers.events]);
+  const pickIntel = (event: IntelEvent) => {
+    setIntelOpen(true); setIntelEnabled(true); setIntel(old => ({ ...old, selected: event.id }));
+    globe.current?.stopRotation();
+    if (event.lat !== null && event.lon !== null) globe.current?.flyTo(event.lon, event.lat, 'travel');
+  };
   const earth = useMemo(() => earthItems(planet), [planet.quakes, planet.events]);
   const pulse = useMemo(() => pulseItems(planet, Date.now()), [planet]);
   const allEvents = useMemo(() => [...new Map([...earth, ...pulse].map((e) => [e.id, e])).values()], [earth, pulse]);
@@ -327,11 +354,13 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
   // ── URL always reflects the selected stream and camera ─────────────────────
   const writeUrl = useCallback(() => {
     if (!restored.current) return;
-    const qs = sceneQuery({ camera: camera.current, stream: other?.kind === 'tools' ? other.stream : selectedId, target: focusTarget(other), layers, sky, snapshots, weather, follow });
+    const params = new URLSearchParams(sceneQuery({ camera: camera.current, stream: other?.kind === 'tools' ? other.stream : selectedId, target: focusTarget(other), layers, sky, snapshots, weather, follow }));
+    if (intelEnabled) writeIntel(params, intel);
+    const qs = params.toString();
     if (window.location.search !== `?${qs}`) window.history.replaceState(null, '', `?${qs}`);
-  }, [selectedId, other, layers, sky, snapshots, weather, follow]);
+  }, [selectedId, other, layers, sky, snapshots, weather, follow, intelEnabled, intel]);
   useEffect(() => { if (restored.current) writeUrl(); }, [writeUrl]);
-  const onCamera = useCallback((c: Camera) => { camera.current = c; writeUrl(); }, [writeUrl]);
+  const onCamera = useCallback((c: Camera) => { camera.current = c; setBounds(globe.current?.getBounds() ?? null); writeUrl(); }, [writeUrl]);
   const openTools = (tab: ExploreTab = 'places', point?: ExplorePoint) => {
     const c = globe.current?.getCamera() ?? camera.current ?? { lon: -30, lat: 20, zoom: 2 };
     camera.current = c;
@@ -348,7 +377,8 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
     setSelectedId(null); globe.current?.stopRotation();
   };
   const searchResult = (r: SearchResult) => {
-    if (r.kind === 'camera') { setLayers((l) => ({ ...l, cameras: true })); select(r.stream, 'travel'); }
+    if (r.kind === 'intel') pickIntel(r.event);
+    else if (r.kind === 'camera') { setLayers((l) => ({ ...l, cameras: true })); select(r.stream, 'travel'); }
     else if (r.kind === 'flight') openFlight(r.flight);
     else if (r.kind === 'ship') { setLayers((l) => ({ ...l, ships: true })); openShip(r.ship); }
     else if (r.kind === 'satellite') openSatellite(r.satellite.id);
@@ -434,7 +464,9 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
       <Header
         streams={catalog?.streams ?? []}
         searchRef={search}
-        searchData={{ flights, ships, sats, events: allEvents, onActive: setSearching, onResult: searchResult }}
+        searchData={{ flights, ships, sats, events: allEvents, intel: intelEnabled ? intelEvents : [], onActive: setSearching, onResult: searchResult }}
+        intelOpen={intelOpen}
+        onIntel={() => { setIntelOpen(v => !v); setIntelEnabled(true); globe.current?.stopRotation(); }}
         layers={layers}
         counts={{
           cameras: streams?.length ?? null,
@@ -463,6 +495,8 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
           {boot && (
             <GlobeView
               ref={globe}
+              intel={intelMarkers}
+              onIntel={pickIntel}
               explore={{ places, imports, trail: trail.fixes, measureMode, points: measurePoints, weather, warnings, radar,
                 onMeasurePoint: (lon, lat) => setMeasurePoints((ps) => ps.length < 100 ? [...ps, [wrapLon(lon), lat]] : ps) }}
               streams={streams}
@@ -507,6 +541,8 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
           )}
           {layers.flights && <FlightNotice error={flightError} partial={flightPartial} count={flights?.length ?? null} />}
           {error && <CatalogError message={error} onRetry={() => setAttempt((a) => a + 1)} />}
+          {intelOpen && <IntelPanel settings={intel} events={visibleIntel} feeds={intelFeeds} earthReady={!!planet.quakes && !!planet.events}
+            onChange={setIntel} onPick={pickIntel} onClose={() => setIntelOpen(false)} onDossier={(lat, lon) => { setIntelOpen(false); openDossier(lat, lon); }} />}
         </section>
 
         {panelOpen && (

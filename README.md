@@ -338,3 +338,34 @@ Open **Explore** in the toolbar, or use a Dossier's save, compare or share butto
 
 Saved places and alert filters use browser local storage. No account, API key or new package is required.
 Run `npm test`, `npm run typecheck`, and `npm run build` for validation; stop the development server before building so Next.js does not share its output directory with another process.
+
+## Earth and INTEL upgrade stages
+
+Sky → Earth detail offers Standard, Enhanced and Automatic. Terrain uses actual elevation at 1× scale.
+Enhanced adds OSM building extrusions; Automatic reduces geometry and canvas resolution on constrained devices.
+These are mapped/estimated building heights, not textured photogrammetry. Quality is included in shared links.
+Real-time sunlight retains the existing UTC terminator and NASA city lights; imagery contains baked shadows.
+
+INTEL opens a compact, dismissible panel beside the globe. Enable multiple categories, choose 1 hour–7 days,
+filter headlines/locations, or restrict geographically located records to the current viewport. The chronological
+feed is collapsed initially. Select a record for its source, status, observation/indexing time and Dossier link.
+Loaded intelligence is included in universal search. Categories, filters and selected records are shareable.
+
+`GET /api/intel?category=news` (also conflicts, accidents, safety, internet, economics, space, infrastructure)
+uses GDELT DOC 2.0 with fixed, safely encoded queries, 75 recent records/category over seven days, and a
+15-minute Next.js data/CDN cache. Requests coalesce and serialize per warm instance with 5.5-second spacing;
+independent instances do not share a rate-limit lock. Timeouts, exponential failure backoff and retained
+warm-instance results handle outages. No comprehensive news coverage is promised. GDELT's indexing date is
+not a publication date. Publisher country is never treated as event geography; unlocated news stays off-map.
+Only exact normalized URLs deduplicate: matching headlines alone do not establish corroboration.
+
+USGS, EONET and The Space Devs reuse the existing Earth requests. Earth and INTEL do not duplicate disaster
+markers, and existing Pulse significance/notification rules remain in effect. Existing USGS coverage is the
+last 24 hours, EONET open events cover 30 days, and launch data covers upcoming launches; selecting a wider
+INTEL time filter does not extend those upstream windows. Provider failure is reported independently.
+
+No new dependencies, accounts, environment variables or paid services are required for these stages.
+Still pending from the full master brief: Google/Cesium 3D Tiles compatibility and authorized access,
+photorealistic coverage/fallback testing, adaptive FPS feedback, manual night lighting, GDELT geographic
+context, country intelligence/indicators, GDACS, UCDP, optional ACLED/NTSB/Radar enrichment, and regional
+filters. These integrations are not represented as working or replaced with simulated data.

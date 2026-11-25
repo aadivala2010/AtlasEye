@@ -24,6 +24,8 @@ const LAYERS: { id: Layer; label: string; title: string }[] = [
 export interface Tool { id: string; label: string; title: string; on: boolean; count?: number | null; key: string }
 
 interface Props {
+  intelOpen: boolean;
+  onIntel(): void;
   streams: Stream[];
   searchRef: Ref<SearchHandle>;
   searchData: SearchData;
@@ -103,6 +105,7 @@ export default function Header(p: Props) {
         );
       })}
       <span className="mx-1 h-4 w-px shrink-0 bg-strong" aria-hidden />
+      <button type="button" aria-expanded={p.intelOpen} aria-haspopup="dialog" onClick={p.onIntel} title="Public news, disasters and global developments" className={`${CHIP} ${chipState(p.intelOpen)}`}>Intel</button>
       <button type="button" aria-pressed={p.layers.dossier} onClick={() => p.onToggleLayer('dossier')}
         title="Click anywhere on the globe for a dossier of that spot" className={`${CHIP} ${chipState(p.layers.dossier)}`}>
         Dossier

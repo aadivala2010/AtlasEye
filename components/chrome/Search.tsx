@@ -9,13 +9,14 @@ import type { PulseItem } from '@/lib/events';
 import { parseCoordinates, validPoint } from '@/lib/explore';
 import { countryName } from '@/components/stream/StreamPanel';
 import { IconSearch } from './icons';
+import { INTEL_CATEGORIES, type IntelEvent } from '@/lib/intel';
 
 export interface SearchHandle { focus(): void }
 export type SearchResult = { label: string; detail: string } & (
   { kind: 'camera'; stream: Stream } | { kind: 'flight'; flight: Flight } | { kind: 'ship'; ship: Ship } | { kind: 'satellite'; satellite: Sat }
-  | { kind: 'event'; event: PulseItem } | { kind: 'place'; lat: number; lon: number }
+  | { kind: 'event'; event: PulseItem } | { kind: 'intel'; event: IntelEvent } | { kind: 'place'; lat: number; lon: number }
 );
-export interface SearchData { flights: Flight[] | null; ships: Ship[] | null; sats: Sat[] | null; events: PulseItem[]; onActive(on: boolean): void; onResult(result: SearchResult): void }
+export interface SearchData { flights: Flight[] | null; ships: Ship[] | null; sats: Sat[] | null; events: PulseItem[]; intel?: IntelEvent[]; onActive(on: boolean): void; onResult(result: SearchResult): void }
 const fold = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 
 export default function Search({ ref, streams, data }: { ref?: Ref<SearchHandle>; streams: Stream[]; data: SearchData }) {
@@ -39,9 +40,10 @@ export default function Search({ ref, streams, data }: { ref?: Ref<SearchHandle>
       ...(data.ships ?? []).filter((s) => match(`${s.name ?? ''} ${s.mmsi} ${s.imo ?? ''}`)).slice(0, 3).map((ship) => ({ kind: 'ship' as const, ship, label: ship.name || `MMSI ${ship.mmsi}`, detail: `Ship · MMSI ${ship.mmsi}` })),
       ...(data.sats ?? []).filter((s) => match(`${s.name} ${s.id}`)).slice(0, 3).map((satellite) => ({ kind: 'satellite' as const, satellite, label: satellite.name, detail: `Satellite · NORAD ${satellite.id}` })),
       ...data.events.filter((e) => match(`${e.title} ${e.detail}`)).slice(0, 3).map((event) => ({ kind: 'event' as const, event, label: event.title, detail: event.detail })),
+      ...(data.intel ?? []).filter(e => match(`${e.title} ${e.location} ${INTEL_CATEGORIES[e.category].label} ${e.id}`)).slice(0, 4).map(event => ({ kind: 'intel' as const, event, label: event.title, detail: `Intel · ${event.sourceName} · ${event.location}` })),
       ...index.filter((s) => terms.every((t) => s.hay.includes(t))).slice(0, 5).map(({ s: stream }) => ({ kind: 'camera' as const, stream, label: stream.name, detail: `Camera · ${stream.place}, ${stream.country}` })),
     ];
-  }, [query, data.flights, data.ships, data.sats, data.events, index]);
+  }, [query, data.flights, data.ships, data.sats, data.events, data.intel, index]);
   const results = [...remote, ...local];
   const pick = (r?: SearchResult) => { if (!r) return; data.onResult(r); setQ(''); setRemote([]); setOpen(false); request.current?.abort(); input.current?.blur(); };
   const findPlaces = async () => {

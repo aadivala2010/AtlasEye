@@ -22,6 +22,8 @@ import type { Station } from '@/lib/radio';
 import { GROUP_LABEL, footprint, groundTrack, periodMin, positions, subpoint, type Sat } from '@/lib/satellites';
 import ExploreLayers, { type ExploreMapProps } from './ExploreLayers';
 import { sourceStatus } from '@/lib/sources';
+import IntelLayers from './IntelLayers';
+import type { IntelEvent } from '@/lib/intel';
 
 export interface Camera { lon: number; lat: number; zoom: number; bearing?: number; pitch?: number }
 export interface GlobeHandle {
@@ -30,9 +32,12 @@ export interface GlobeHandle {
   flyTo(lon: number, lat: number, mode: 'near' | 'travel'): void;
   stopRotation(): void;
   getCamera(): Camera | null;
+  getBounds(): [number, number, number, number] | null;
 }
 
 interface Props {
+  intel: IntelEvent[];
+  onIntel(event: IntelEvent): void;
   ref?: Ref<GlobeHandle>;
   explore: ExploreMapProps;
   streams: Stream[] | null;
@@ -527,6 +532,12 @@ export default function GlobeView(props: Props) {
     }
   };
   const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    const c = map.getCenter();
+    cb.current.onCamera({ lon: c.lng, lat: c.lat, zoom: map.getZoom(), bearing: map.getBearing(), pitch: map.getPitch() });
+  }, [ready]);
   /** A fly requested before the map existed (e.g. a shared link that resolves before the map loads). */
   const pendingFly = useRef<[number, number, 'near' | 'travel'] | null>(null);
   const flyOpts = useRef({ bottomInset, reducedMotion });
@@ -881,7 +892,7 @@ export default function GlobeView(props: Props) {
       map.on('click', (e) => {
         if (cb.current.explore.measureMode !== 'off') { cb.current.explore.onMeasurePoint(e.lngLat.lng, e.lngLat.lat); return; }
         if (!map || !cb.current.dossier) return;
-        if (map.queryRenderedFeatures(e.point, { layers: HIT_LAYERS.filter((id) => map!.getLayer(id)) }).length) return;
+        if (map.queryRenderedFeatures(e.point, { layers: [...HIT_LAYERS, 'intel-points', 'intel-clusters'].filter((id) => map!.getLayer(id)) }).length) return;
         cb.current.onDossier(e.lngLat.lat, e.lngLat.lng);
       });
       map.on('click', 'clusters', async (e) => {
@@ -1183,6 +1194,7 @@ export default function GlobeView(props: Props) {
 
   // ── imperative camera ──────────────────────────────────────────────────────
   useImperativeHandle(ref, () => ({
+    getBounds() { const b = mapRef.current?.getBounds(); return b ? [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()] : null; },
     stopRotation() { rotating.current = false; },
     getCamera() { const m = mapRef.current; if (!m) return null; const c = m.getCenter(); return { lon: c.lng, lat: c.lat, zoom: m.getZoom(), bearing: m.getBearing(), pitch: m.getPitch() }; },
     flyToStream(s, mode) { this.flyTo(s.longitude, s.latitude, mode); },
@@ -1199,6 +1211,7 @@ export default function GlobeView(props: Props) {
       <div ref={halo} className="pointer-events-none absolute left-0 top-0 rounded-full opacity-0" aria-hidden />
       <div ref={container} className="relative h-full w-full" />
       <ExploreLayers map={ready ? mapRef.current : null} {...props.explore} />
+      <IntelLayers map={ready ? mapRef.current : null} events={props.intel} onPick={props.onIntel} reducedMotion={reducedMotion} />
       {props.explore.measureMode !== 'off' && <div className="pointer-events-none absolute bottom-10 left-3 z-10 rounded border border-accent-muted bg-panel p-2 text-xs text-accent">Tap the globe to measure {props.explore.measureMode} · {props.explore.points.length}/100 points</div>}
       {props.airports && airport && (
         <div className="absolute right-3 top-3 z-10 max-h-[calc(100%-24px)] w-72 max-w-[calc(100%-24px)] overflow-y-auto overscroll-contain rounded-[4px] border border-accent-muted bg-panel/95 p-3 shadow-xl">
