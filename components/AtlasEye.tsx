@@ -35,7 +35,7 @@ type Focus =
   | { kind: 'flight'; flight: Flight }
   | { kind: 'ship'; ship: Ship }
   | { kind: 'ship-link'; mmsi: number }
-  | { kind: 'dossier'; lat: number; lon: number }
+  | { kind: 'dossier'; lat: number; lon: number; countryCode?: string }
   /** The Pulse list; `at` is the item last flown to. */
   | { kind: 'pulse' | 'earth'; at?: { lat: number; lon: number }; eventId?: string }
   | { kind: 'satellite'; id: number }
@@ -313,10 +313,10 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
     setOther({ kind: 'ship', ship });
     requestAnimationFrame(() => globe.current?.flyTo(ship.lon, ship.lat, 'near'));
   }, []);
-  const openDossier = useCallback((lat: number, lon: number) => {
+  const openDossier = useCallback((lat: number, lon: number, countryCode?: string) => {
     setSelectedId(null);
     walk.current = null;
-    setOther({ kind: 'dossier', lat, lon });
+    setOther({ kind: 'dossier', lat, lon, countryCode });
   }, []);
   const openSatellite = useCallback((id: number) => {
     setSelectedId(null);
@@ -542,7 +542,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
           {layers.flights && <FlightNotice error={flightError} partial={flightPartial} count={flights?.length ?? null} />}
           {error && <CatalogError message={error} onRetry={() => setAttempt((a) => a + 1)} />}
           {intelOpen && <IntelPanel settings={intel} events={visibleIntel} feeds={intelFeeds} earthReady={!!planet.quakes && !!planet.events}
-            onChange={setIntel} onPick={pickIntel} onClose={() => setIntelOpen(false)} onDossier={(lat, lon) => { setIntelOpen(false); openDossier(lat, lon); }} />}
+            onChange={setIntel} onPick={pickIntel} onClose={() => setIntelOpen(false)} onDossier={(lat, lon, code) => { setIntelOpen(false); openDossier(lat, lon, code); globe.current?.flyTo(lon, lat, 'travel'); }} />}
         </section>
 
         {panelOpen && (
@@ -608,6 +608,7 @@ export default function AtlasEye({ starfield }: { starfield: ReactNode }) {
                 />
               ) : other?.kind === 'dossier' ? (
                 <DossierPanel
+                  countryCode={other.countryCode}
                   key={`${other.lat},${other.lon}`}
                   lat={other.lat}
                   lon={other.lon}

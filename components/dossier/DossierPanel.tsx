@@ -13,8 +13,10 @@ import { IconButton, Row } from '@/components/stream/StreamPanel';
 import { IconClose } from '@/components/chrome/icons';
 import type { ExploreTab } from '@/components/explore/ExplorePanel';
 import { sourceFetch } from '@/lib/sources';
+import CountryContext from '@/components/intel/CountryContext';
 
 interface Props {
+  countryCode?: string;
   lat: number;
   lon: number;
   streams: Stream[];
@@ -71,7 +73,7 @@ function useJson<T>(url: string | null): { data: T | null; error: boolean } {
  * there (Wikipedia, street-level photos, cameras, radio), what's above it (aircraft, satellites)
  * and what's shaken it lately.
  */
-export default function DossierPanel({ lat, lon, streams, sats, stations, onPickStream, onPickFlight, onPickSat, onPlay, onClose, onExplore }: Props) {
+export default function DossierPanel({ lat, lon, streams, sats, stations, onPickStream, onPickFlight, onPickSat, onPlay, onClose, onExplore, countryCode }: Props) {
   const [checkWarnings, setCheckWarnings] = useState(false);
   const { data: warnings, error: warningError } = useJson<GeoJSON.FeatureCollection>(checkWarnings ? `/api/weather?lat=${lat.toFixed(3)}&lon=${lon.toFixed(3)}` : null);
   const ll = `latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}`;
@@ -163,6 +165,7 @@ export default function DossierPanel({ lat, lon, streams, sats, stations, onPick
         </div>
 
         <div className="px-4 pt-4"><Clocks stream={{ timezone: zone, latitude: lat, longitude: lon }} /></div>
+        <div className="mx-4"><CountryContext key={countryCode ?? ''} initialCode={countryCode} /></div>
         <div className="explore mx-4 mt-3 flex flex-wrap gap-2">
           <button type="button" onClick={() => onExplore('places')}>Save place</button>
           <button type="button" onClick={() => onExplore('imagery')}>Compare imagery</button>

@@ -12,7 +12,7 @@ export interface AlertFilter { level: number; kinds: PulseItem['kind'][]; placeI
 export const DEFAULT_FILTER: AlertFilter = { level: 2, kinds: [...KINDS], placeId: '' };
 export interface WeatherLayers { alerts: boolean; cyclones: boolean; radar: boolean }
 export const WEATHER_OFF: WeatherLayers = { alerts: false, cyclones: false, radar: false };
-export type Target = { kind: 'dossier'; lat: number; lon: number } | { kind: 'satellite'; id: number }
+export type Target = { kind: 'dossier'; lat: number; lon: number; countryCode?: string } | { kind: 'satellite'; id: number }
   | { kind: 'flight'; hex: string } | { kind: 'ship'; mmsi: number } | { kind: 'earth' | 'pulse'; lat?: number; lon?: number; eventId?: string };
 export interface Scene { camera: Camera | null; stream: string | null; target: Target | null; layers: Layers; sky: Sky; snapshots: boolean; weather: WeatherLayers; follow: boolean }
 export const validPoint = (lat: unknown, lon: unknown): boolean => typeof lat === 'number' && typeof lon === 'number' && Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
@@ -45,6 +45,7 @@ export function readScene(search: string): Scene {
   const point = parseCoordinates(p.get('at') ?? '');
   const kind = p.get('target');
   if (kind === 'dossier' && point) target = { kind, ...point };
+  if (target?.kind === 'dossier' && /^[A-Z]{3}$/.test(p.get('country') ?? '')) target.countryCode = p.get('country')!;
   if ((kind === 'earth' || kind === 'pulse')) target = { kind, ...point, eventId: p.get('event')?.slice(0, 200) };
   if (kind === 'satellite' && /^\d{1,9}$/.test(p.get('id') ?? '')) target = { kind, id: Number(p.get('id')) };
   if (kind === 'flight' && /^[a-f\d]{6}$/i.test(p.get('id') ?? '')) target = { kind, hex: p.get('id')!.toLowerCase() };
@@ -70,6 +71,7 @@ export function sceneQuery(s: Scene): string {
     if ('hex' in t) p.set('id', t.hex);
     if ('mmsi' in t) p.set('id', String(t.mmsi));
     if ('eventId' in t && t.eventId) p.set('event', t.eventId);
+    if (t.kind === 'dossier' && t.countryCode) p.set('country', t.countryCode);
   }
   if (s.follow && t?.kind === 'satellite') p.set('follow', '1');
   return p.toString();

@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { deduplicateIntel, INTEL_DEFAULT, planetIntel, readIntel, safeSourceUrl, writeIntel } from '../lib/intel';
 import { parseGdelt } from '../lib/intel-news';
+import { parseCountries, parseCountryIndicators } from '../lib/worldbank-parsers';
+import { readScene, sceneQuery } from '../lib/explore';
 
 const now = Date.UTC(2026, 10, 25, 12);
 const item = { title: 'Published report', url: 'https://example.org/story?utm_source=test', seendate: '20261125T110000Z', sourcecountry: 'United States' };
@@ -27,3 +29,16 @@ assert.equal(planet[0].earthId, 'q:us1');
 assert.equal(planet[0].lat, 0);
 assert.equal(planet[0].status, 'Official report');
 console.log('intel selftest passed: provenance, malformed feeds, unsafe URLs, deduplication, shared links and shared Earth records');
+const country = { id: 'USA', name: 'United States', capitalCity: 'Washington, D.C.', region: { id: 'NAC', value: 'North America' }, latitude: '38.9', longitude: '-77' };
+const directory = parseCountries([{}, [country, { ...country, id: 'WLD', region: { id: 'NA', value: 'Aggregates' } }, {}]]);
+assert.equal(directory.length, 1, 'country picker must exclude regional and world aggregates');
+assert.equal(parseCountries([{}, [{ ...country, latitude: '', longitude: '' }]])[0].lat, null, 'missing capital coordinates must not become zero');
+const indicator = { indicator: { id: 'FP.CPI.TOTL.ZG' }, countryiso3code: 'USA', date: '2024', value: 0 };
+const profile = parseCountryIndicators([{ lastupdated: '2026-11-11' }, [indicator, { ...indicator, date: '2023', value: 5 }, { ...indicator, date: '2025', value: null }, { ...indicator, countryiso3code: 'GBR', date: '2026', value: 8 }]], directory[0], now);
+assert.deepEqual(profile.indicators, [{ id: 'FP.CPI.TOTL.ZG', year: '2024', value: 0 }], 'keep latest non-null value and its own year, including zero');
+assert.equal(profile.datasetUpdated, '2026-11-11');
+assert.throws(() => parseCountries([{ message: 'error' }]));
+const countryScene = { ...readScene(''), target: { kind: 'dossier' as const, lat: 38.9, lon: -77, countryCode: 'USA' } };
+assert.deepEqual(readScene(sceneQuery(countryScene)).target, countryScene.target);
+assert.equal(readScene('?target=dossier&at=0,0&country=../key').target && 'countryCode' in readScene('?target=dossier&at=0,0&country=../key').target!, false);
+console.log('country selftest passed: aggregate exclusion, missing coordinates, indicator dates, zero values and shared country dossiers');

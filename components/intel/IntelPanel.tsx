@@ -1,11 +1,12 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { INTEL_CATEGORIES, INTEL_IDS, type IntelCategory, type IntelEvent, type IntelFeed, type IntelSettings } from '@/lib/intel';
+import CountryContext from './CountryContext';
 
 interface Props {
   settings: IntelSettings; events: IntelEvent[]; feeds: Partial<Record<IntelCategory, IntelFeed>>;
   earthReady: boolean; onChange(value: IntelSettings): void; onPick(event: IntelEvent): void;
-  onDossier(lat: number, lon: number): void; onClose(): void;
+  onDossier(lat: number, lon: number, countryCode?: string): void; onClose(): void;
 }
 const date = (at: number) => new Date(at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 export default function IntelPanel(p: Props) {
@@ -42,6 +43,7 @@ export default function IntelPanel(p: Props) {
       <label>Geography<select value={p.settings.scope} onChange={e => p.onChange({ ...p.settings, scope: e.target.value as IntelSettings['scope'] })} className="mt-1 min-h-9 w-full rounded border border-strong bg-raised px-1 text-primary"><option value="world">Worldwide</option><option value="viewport">Current viewport</option></select></label>
     </div>
     <label className="mt-3 block text-xs text-secondary">Filter headlines and locations<input value={p.settings.query} maxLength={120} onChange={e => p.onChange({ ...p.settings, query: e.target.value })} placeholder="Headline, place or incident ID" className="mt-1 min-h-9 w-full rounded border border-strong bg-raised px-2 text-primary" /></label>
+    <CountryContext onDossier={country => p.onDossier(country.lat!, country.lon!, country.code)} />
     <p className="mt-2 text-[11px] leading-4 text-secondary">News location unverified? It stays in the feed without a map pin. News times indicate when GDELT indexed a report. Upcoming launches remain visible.</p>
     {p.settings.scope === 'viewport' && <p className="mt-2 text-[11px] text-secondary">Viewport excludes reports without verified geography.</p>}
     <div role="status" className="mt-2 text-[11px] leading-4 text-secondary">

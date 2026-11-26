@@ -364,8 +364,15 @@ markers, and existing Pulse significance/notification rules remain in effect. Ex
 last 24 hours, EONET open events cover 30 days, and launch data covers upcoming launches; selecting a wider
 INTEL time filter does not extend those upstream windows. Provider failure is reported independently.
 
+Country context in INTEL and Dossier uses the World Bank country directory and World Development Indicators.
+Choose a country to see its capital, population, GDP, GDP per capita, inflation and modeled ILO unemployment.
+Each value keeps its own observation year and source link; missing values stay unavailable. The dataset update
+date and retrieval date are separate. Country profiles and the directory cache for one day, with retained
+successful responses during background refresh failures. A capital's Dossier can carry its country in shared links.
+`GET /api/intel/countries` lists non-aggregate countries/territories; `GET /api/intel/country/USA` returns a dated profile.
+
 No new dependencies, accounts, environment variables or paid services are required for these stages.
 Still pending from the full master brief: Google/Cesium 3D Tiles compatibility and authorized access,
 photorealistic coverage/fallback testing, adaptive FPS feedback, manual night lighting, GDELT geographic
-context, country intelligence/indicators, GDACS, UCDP, optional ACLED/NTSB/Radar enrichment, and regional
+context, country news/conflict aggregation, GDACS, UCDP, optional ACLED/NTSB/Radar enrichment, and regional
 filters. These integrations are not represented as working or replaced with simulated data.
